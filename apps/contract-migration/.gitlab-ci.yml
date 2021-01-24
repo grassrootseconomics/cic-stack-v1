@@ -1,0 +1,11 @@
+.contract-migration-changes-target:
+    rules:
+        - changes:
+            - $CONTEXT/*
+
+build-contract-migration:
+    extends:
+        - .contract-migration-changes-target
+        - .py-build
+    variables:
+        CONTEXT: apps/contract-migration
