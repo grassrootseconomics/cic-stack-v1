@@ -1,0 +1,12 @@
+[submodule "apps/cic-eth"]
+	path = apps/cic-eth
+	url = git@gitlab.com:grassrootseconomics/cic-eth.git
+[submodule "apps/cic-ussd"]
+	path = apps/cic-ussd
+	url = git@gitlab.com:grassrootseconomics/cic-ussd.git
+[submodule "apps/cic-notify"]
+	path = apps/cic-notify
+	url = git@gitlab.com:grassrootseconomics/cic-notify.git
+[submodule "apps/cic-cache"]
+	path = apps/cic-cache
+	url = git@gitlab.com:grassrootseconomics/cic-cache.git
