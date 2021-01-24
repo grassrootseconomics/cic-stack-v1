@@ -1,5 +1,6 @@
 include:
   - local: 'ci_templates/.cic-base.yml'
+  - local: 'apps/contract-migration/.gitlab-ci.yml'
 
 stages:
   - build
