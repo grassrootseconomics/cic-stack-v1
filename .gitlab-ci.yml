@@ -1,0 +1,7 @@
+include:
+  - local: 'ci_templates/.cic-base.yml'
+
+stages:
+  - build
+  - test
+  - release

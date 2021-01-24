@@ -1,0 +1,22 @@
+.py-build
+    stage: build
+    image: docker:19.03.13
+    variables:
+    # docker host
+    DOCKER_HOST: tcp://docker:2376
+    # container, thanks to volume mount from config.toml
+    DOCKER_TLS_CERTDIR: "/certs"
+    # These are usually specified by the entrypoint, however the
+    # Kubernetes executor doesn't run entrypoints
+    # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4125
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+    services:
+    - docker:19.03.13-dind
+    before_script:
+    - docker info
+    - cd $CONTEXT
+    script:
+    - docker build -t $CI_PROJECT_PATH_SLUG:$CI_COMMIT_SHORT_SHA .
+
+
