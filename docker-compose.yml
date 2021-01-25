@@ -5,6 +5,7 @@ volumes:
   postgres-db: {}
   contract-config: {}
   bee-data: {}
+  signer-data: {}
 
 networks:
   default:
@@ -87,7 +88,7 @@ services:
     depends_on:
       - postgres
       - eth
-    command: 
+    command:
        - /bin/sh
        - -c
        - |
@@ -117,38 +118,46 @@ services:
 #         condition: on-failure
 #     command: "/root/start_uwsgi.sh"
 
-#   cic-eth-tasker:
-#     image: grassrootseconomics:cic-eth-service
-#     environment:
-#       ETH_PROVIDER: $ETH_PROVIDER
-#       ETH_ABI_DIR: $ETH_ABI_DIR
-#       ETH_GAS_PROVIDER_ADDRESS: $DEV_ETH_ACCOUNT_GAS_PROVIDER
-#       DATABASE_USER: $DATABASE_USER
-#       DATABASE_HOST: $DATABASE_HOST
-#       DATABASE_PASSWORD: $DATABASE_PASSWORD
-#       DATABASE_NAME: $DATABASE_NAME_CIC_ETH
-#       DATABASE_PORT: $DATABASE_PORT
-#       DATABASE_ENGINE: $DATABASE_ENGINE
-#       DATABASE_DRIVER: $DATABASE_DRIVER
-#       PGPASSWORD: $DATABASE_PASSWORD
-#       CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
-#       CIC_CHAIN_SPEC: $CIC_CHAIN_SPEC
-#       BANCOR_DIR: $BANCOR_DIR
-#       CELERY_BROKER_URL: $CELERY_BROKER_URL
-#       CELERY_RESULT_URL: $CELERY_RESULT_URL
-#       SIGNER_SOCKET_PATH: $SIGNER_SOCKET_PATH
-#       SIGNER_SECRET: $SIGNER_SECRET
-#       ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: $DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER
-#     depends_on:
-#       - eth
-#       - postgres
-#       - redis
-#     deploy:
-#       restart_policy:
-#         condition: on-failure
-#     volumes:
-#       - ${LOCAL_VOLUME_DIR:-/tmp/cic}/signer:/tmp/cic/signer
-#     command: "/root/start_tasker.sh -q cic-eth -vv"
+  cic-eth-tasker:
+    # image: grassrootseconomics:cic-eth-service
+    build: 
+        context: apps/cic-eth/
+        dockerfile: docker/Dockerfile
+    environment:
+      CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
+      ETH_PROVIDER: ${ETH_PROVIDER:-http://eth:8545}
+      ETH_ABI_DIR: ${ETH_ABI_DIR:-/usr/local/share/cic/solidity/abi}
+      ETH_GAS_PROVIDER_ADDRESS: $DEV_ETH_ACCOUNT_GAS_PROVIDER
+      DATABASE_USER: ${DATABASE_USER:-grassroots}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-tralala}
+      DATABASE_NAME: ${DATABASE_NAME_CIC_CACHE:-cic_cache}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
+      DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
+      PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-8995}
+      BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://}
+      CELERY_RESULT_URL: ${CELERY_RESULT_URL:-""}
+      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-/tmp/cic/signer/jsonrpc.ipc}
+      SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
+      ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
+    depends_on:
+      - eth
+      - postgres
+      - redis
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - signer-data:/tmp/cic/signer
+    command:
+      - /bin/sh
+      - -c
+      - |
+        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        "/root/start_tasker.sh -q cic-eth -vv"
 
 #   cic-eth-manager-head:
 #     image: grassrootseconomics:cic-eth-service
