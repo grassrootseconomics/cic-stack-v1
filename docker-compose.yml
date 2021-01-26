@@ -45,7 +45,7 @@ services:
     container_name: bee
     environment:
       BEE_NETWORK_ID: ${BEE_NETWORK_ID:-313}
-      BEE_PASSWORD: $BEE_PASSWORD
+      BEE_PASSWORD: ${BEE_PASSWORD:-password}
     ports:
       - 1633
       - 1635
