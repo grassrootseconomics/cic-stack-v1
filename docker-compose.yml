@@ -121,8 +121,8 @@ services:
   cic-eth-tasker:
     # image: grassrootseconomics:cic-eth-service
     build: 
-        context: apps/cic-eth/
-        dockerfile: docker/Dockerfile
+        context: apps/
+        dockerfile: cic-eth/docker/Dockerfiles
     environment:
       CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
       ETH_PROVIDER: ${ETH_PROVIDER:-http://eth:8545}
