@@ -1,3 +1,7 @@
+before_script:
+  - ls
+  - ls apps 
+
 include:
   - local: 'ci_templates/.cic-template.yml'
   - local: 'apps/contract-migration/.gitlab-ci.yml'
