@@ -54,7 +54,9 @@ services:
       - bee-data:/tmp/cic/bee
 
   contract-migration:
-    build: apps/contract-migration
+    build:
+      context: apps/contract-migration
+      dockerfile: apps/contract-migration/docker/
     environment:
       # ETH_PROVIDER should be broken out into host/port but cic-eth expects this
       ETH_PROVIDER: http://eth:8545
@@ -125,9 +127,9 @@ services:
         dockerfile: cic-eth/docker/Dockerfile
     environment:
       CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
-      ETH_PROVIDER: ${ETH_PROVIDER:-http://eth:8545}
-      ETH_ABI_DIR: ${ETH_ABI_DIR:-/usr/local/share/cic/solidity/abi}
       ETH_GAS_PROVIDER_ADDRESS: $DEV_ETH_ACCOUNT_GAS_PROVIDER
+      ETH_PROVIDER: http://eth:8545
+      ETH_ABI_DIR: ${ETH_ABI_DIR:-/usr/local/share/cic/solidity/abi}
       DATABASE_USER: ${DATABASE_USER:-grassroots}
       DATABASE_HOST: ${DATABASE_HOST:-postgres}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-tralala}
@@ -136,10 +138,10 @@ services:
       DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
       DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
       PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
-      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-8995}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:8995}
       BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://}
-      CELERY_RESULT_URL: ${CELERY_RESULT_URL:-""}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
+      CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
       SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-/tmp/cic/signer/jsonrpc.ipc}
       SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
       ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}

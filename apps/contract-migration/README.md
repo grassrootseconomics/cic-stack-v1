@@ -15,7 +15,7 @@ Now build this repo's image and run it against the 'eth' service (ganache, for e
 
 Here is how to do that in one shot:
 ```
-docker build -t registry.gitlab.com/grassrootseconomics/cic-docker-internal . && docker run --env ETH_PROVIDER=http://eth:8545 --net cic-network -v cic-docker-internal_contract-config:/tmp/cic/config --rm -it registry.gitlab.com/grassrootseconomics/cic-docker-internal reset.sh
+docker build -t registry.gitlab.com/grassrootseconomics/cic-docker-internal -f docker/ . && docker run --env ETH_PROVIDER=http://eth:8545 --net cic-network -v cic-docker-internal_contract-config:/tmp/cic/config --rm -it registry.gitlab.com/grassrootseconomics/cic-docker-internal reset.sh
 ```
 
 Stop the containers and bring down the services with
