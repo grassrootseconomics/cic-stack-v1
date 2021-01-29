@@ -17,7 +17,7 @@ delete data
 docker-compose down -v
 ```
 
-rebuild all the images
+rebuild an images
 ```
-docker-compose build --no-cache
+docker-compose up -d --no-deps --build <service_name>
 ```

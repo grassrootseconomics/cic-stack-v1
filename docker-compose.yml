@@ -122,7 +122,7 @@ services:
     # image: grassrootseconomics:cic-eth-service
     build: 
         context: apps/
-        dockerfile: cic-eth/docker/Dockerfiles
+        dockerfile: cic-eth/docker/Dockerfile
     environment:
       CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
       ETH_PROVIDER: ${ETH_PROVIDER:-http://eth:8545}
@@ -153,11 +153,14 @@ services:
     volumes:
       - signer-data:/tmp/cic/signer
     command:
-      - /bin/sh
+      - /bin/bash
       - -c
       - |
         if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
-        "/root/start_tasker.sh -q cic-eth -vv"
+        pwd
+        ls
+        ./start_tasker.sh -q cic-eth -vv
+    # command: [/bin/sh, "./start_tasker.sh", -q, cic-eth, -vv ]
 
 #   cic-eth-manager-head:
 #     image: grassrootseconomics:cic-eth-service

@@ -38,7 +38,6 @@ vobject==0.9.6.1
 web3==5.12.2
 websockets==8.1
 yaml-acl==0.0.1
-semver==2.13.0
 rlp==2.0.1
 cryptocurrency-cli-tools==0.0.4
 giftable-erc20-token==0.0.7b5
