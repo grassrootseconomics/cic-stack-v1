@@ -7,7 +7,7 @@ before_script:
 include:
   - local: 'ci_templates/.cic-template.yml'
   - local: 'apps/contract-migration/.gitlab-ci.yml'
-  - local: 'apps/cic-eth/.gitlab-ci.yml'
+  # - local: 'apps/cic-eth/.gitlab-ci.yml'
 
 stages:
   - build
