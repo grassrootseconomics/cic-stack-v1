@@ -1,0 +1,114 @@
+- 0.10.0
+	* Move api to subpackage
+	* Add version identifier to package top level
+	* Add gas price proxy middleware
+	* Make initial queue send status inactive, introduce new status READYSEND for initial send attempt
+	* Add maintenance mode locks, and automatic account lock when node rejects to send a tx to network 
+	* Add nonce repair tool
+	* Add tx resend admin api
+	* Add pure tcp and redis task api callbacks
+	* Add optional outgoing log status tracing
+	* Add lock lister and lock/unlock cli tool
+- 0.9.0
+	* Require chain spec parameter in api
+	* Pass chain spec between tasks
+- 0.8.9 
+	* Change executable argument flag names for contract keys and chain spec
+	* Take over auxiliary code from cic-registry
+	* Use cic-bancor package for bancor related code
+- 0.8.8
+	* Implement transaction granularity for syncers
+- 0.8.7
+	* Add registration option on api account creation
+- 0.8.6
+	* Add persistent account role index
+- 0.8.5
+	* Add refill gas api call
+- 0.8.4
+	* Add settable abi dir to executables
+- 0.8.3
+	* Add faucet task, tests
+	* Add retry tx on incoming gas refill trigger
+	* Add transfer approval task, tests
+- 0.8.2
+	* Upgrade cic-registry
+	* Fix broken history syncer test
+- 0.8.1
+	* Upgrade dependencies
+- 0.8.0
+	* Rehabilitate tasker script
+	* Move tasker and manager scripts to console scripts setup entrypoints
+- 0.7.1
+	* Make tx hash optional in check-gas-and-send signature builder
+- 0.7.0
+	* Define callback tasks in API with qualified celery task strings
+- 0.6.4
+	* Add mock tx cache data generator
+	* Change sql tx cache value fields to bigint 
+- 0.6.3
+	* Remove CIC-cache related code
+- 0.6.2
+	* Rename tx_number member of TxCache object to tx_index
+- 0.6.1
+	* Add postgres-only stored procedures for per-address balances and transactions queries
+- 0.6.0
+	* Configurable celery in worker script
+- 0.5.8
+	* Upgrade crypto-dev-signer (now uses SQLAlchemy)
+	* Use sql backend db for tests
+	* Use filesystem backend for celery tests
+- 0.5.7
+	* Remove environment variable dependencies in tests
+	* Update dependencies
+- 0.5.6
+	* Upgrade signer
+- 0.5.5
+	* Implement env-prefix switch in scripts
+- 0.5.4
+	* Add ipc path parameter to web3ext instantiation
+- 0.5.3 
+	* Add alembic migration script customizable with confini
+- 0.5.2
+	* Upgrade crypto-dev-signer
+- 0.5.1
+	* Move tasker back to scripts
+- 0.5.0
+	* Create Api object, persists callback and queue across methods
+- 0.4.1
+	* Add docstrings
+	* Rehabilitate tests
+	* Correctly scope db sessions in tasks
+	* Add API for create account
+- 0.4.0
+	* Use config files instead of environment for cic-dev-tasker
+- 0.3.0
+	* Add queues
+- 0.2.0
+	* Add documentation
+	* Rename cic-dev-syncer to cic-dev-manager
+	* Rename cic-dev-track to cic-dev-tracker
+- 0.1.1
+	* Remove cic_eth.eth from packaging
+- 0.1.0
+	* Extract tx factory object controlling nonce and gasprice
+	* Fix bug from adapting method call to EthereumTester 
+	* Package api for external use
+	* Add missing otx saves for transactions
+- 0.0.6
+	* Add missing "approve zero" for convert in monitor queue
+- 0.0.5
+	* Add customized eth_tester replacement for active web3 backend
+- 0.0.4
+	* Add api caller callback for completed tasks
+	* Add semaphore for web3 calls
+	* Add missing subtasks in bancor convert chain
+- 0.0.3
+	* Separate out registry and sempo to external packages
+- 0.0.2
+	* Add erc20 transfer task
+	* Add transaction queue tasker and database
+- 0.0.1
+	* Add registry
+	* Add bancor token lookup and convert tasks
+	* Add sempo token register tasks
+	* Add environment variable docs

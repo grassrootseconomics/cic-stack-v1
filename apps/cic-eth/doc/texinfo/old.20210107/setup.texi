@@ -1,0 +1,98 @@
+@node Setup
+@chapter Setup
+
+@section Prerequisites
+
+@itemize
+@item A running ETH provider with:
+@itemize
+@item Deployed bancor contracts
+@item Sufficient balances for system accounts
+@end itemize
+@item A running ETH signer provider, that can handle the following 'web3' JSON-RPC calls:
+@itemize
+@item @command{personal_newAccount}
+@item @command{eth_signTransaction}
+@end itemize
+@end itemize
+
+@section Database migration
+
+Execute @code{alembic upgrade head} in @file{cic_eth/db/migrations} to generate the schema in the database.
+
+@section Configuration settings
+
+@file{cic-eth} uses configuration files in @code{'ini'} format. All names are translated to upper case letters, and all values are concatenated to sections with a @key{_}. Example:
+
+@verbatim
+[foo]
+bar_baz = 42
+@end verbatim
+
+The above entry becomes @code{FOO_BAR_BAZ} with value @code{42}
+
+@subsection Database
+@table @code
+@item DATABASE_NAME
+@item DATABASE_USER
+@item DATABASE_PASSWORD
+@item DATABASE_HOST
+@item DATABASE_PORT
+Postgres database settings
+@end table
+
+@subsection Redis
+
+@table @code
+@item REDIS_BROKER_URL
+Redis settings
+@end table
+
+@subsection SSL
+
+@table @code
+@item SSL_ENABLE_CLIENT
+Use SSL client certification for outgoing web requests (boolean)
+@item SSL_CERT_FILE
+Absolute path to client certificate file
+@item SSL_KEY_FILE
+Absolute path to client key file
+@item SSL_PASSWORD
+Password to unlock client key
+@item SSL_CA_FILE
+The client certificate's authority chain
+@end table
+
+@subsection Ethereum
+
+@table @code
+@item ETH_PROVIDER
+URL to JSON-RPC API provider
+@item ETH_GAS_PROVIDER_ADDRESS
+Address providing gas to fund transactions for accounts in keystore
+@end table
+
+@subsection Bancor
+
+@table @code
+@item BANCOR_REGISTRY_ADDRESS
+Contract address for the ContractRegistry contract
+@item BANCOR_DIR
+Absolute path to root of the Bancor Solidity contract GIT repository
+@end table
+
+@subsection Syncer
+
+@table @code
+@item SYNCER_LOOP_DELAY
+Delay in seconds to wait between polls when no data has been found
+@end table
+
+@subsection Signer
+
+@table @code
+@item SIGNER_SECRET (development only)
+Key used by keystore to encrypt secrets
+@item SIGNER_PASSWORD 
+Password for additional private key encryption on keystore
+@end table

@@ -1,0 +1,34 @@
+@node Running the application
+@chapter Running the application
+
+@section Celery worker
+
+The helper script @file{scripts/cic-eth-tasker.py} will connect to redis and the ethereum node and spawn a worker for all celery tasks.
+
+@section Transaction controller
+
+The celery task chains the process outgoing transactions only send the transactions to the network, after which their responsibility ends. And further processing is handled by @file{scripts/cic-eth-manager.py}.
+
+@subsection Monitor transaction state
+
+Records of transactions are added to the database, and the daemon looks for confirmations in block for these transaction, updating their state accordingly. The resulting state may @emph{only} by either @strong{SUCCESS} or @strong{REVERT}. A transaction is any of these states is finalized and won't be retried.
+
+@subsection Perform transfer after convert
+
+Handles the compound workflow where sender with token @code{A} wishes to send tokens to recipient with token @code{B}.
+
+The task worker only submits the convert transaction, because the actual amount of received tokens is not known before the convert takes place. The full amount of recevied tokens will be transferred after the successful convert.
+
+Convert-then-transfer tasks are recorded separately, and if the controller receive a confirmed convert transaction that has a local record, it submits a new transfer task to the task workers.
+
+@subsection Retry after timeout
+
+@strong{Not yet implemented!}.
+
+If a transaction lingers too long without being confirmed, the controller will attempt to re-submit the task and all its dependent tasks with a higher gas price.
+
+
+@section Transaction monitor
+
+@file{scripts/cic-eth-track.py} looks for token transfer or convert transaction for all known tokens on the network, and stores them in a local database cache.
+

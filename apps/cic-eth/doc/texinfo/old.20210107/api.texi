@@ -1,0 +1,34 @@
+@node Python API
+@chapter Python API
+
+@section Installation
+
+A @code{setuptools} file is provided to install @code{cic-eth} as a normal python package.
+
+The API will send tasks to the celery and immediately return task @code{uuid}. If an HTTP callback is provided, the result of the operation will be sent to it as a @code{POST} request with @code{application/json} content-type, with the following payload as pseudo-schema:
+
+@verbatim
+{
+	'root': <string: uuid of topmost task in the chain>,
+	'status': <integer: anything but 0 is error>,
+	'message': <contextual data payload>,
+	'result': <return value of last subtask if success, or uuid of last subtask on failure>
+}
+@end verbatim
+
+@subsection API calls
+
+Please refer to inline code docstrings in @file{cic_eth/api.py} for details on API function signatures and behaviors.
+
+@itemize 
+@item
+@code{create_account(...)} - Create a new account and add the private key to the keystore
+@item
+@code{balance(...)} - Query the token balance of an address
+@item
+@code{transfer(...)} - Transfer tokens between addresses
+@item
+@code{convert(...)} - Convert between tokens for same address
+@item
+@code{convert_transfer(...)} - Convert tokens and send destination token to a specified address
+@end itemize

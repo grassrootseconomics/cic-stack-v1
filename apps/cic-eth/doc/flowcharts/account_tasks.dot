@@ -1,0 +1,21 @@
+digraph {
+
+	create_account [
+		label="CIC-ETH API:\create account";
+		shape="ellipse";
+	];
+
+	callback [
+		label="callback";
+		shape="ellipse";
+		style="dashed";
+	];
+
+	create_account -> "eth.account.create";
+	create_account -> "eth.account.register" -> "eth.account.cache_account_data"; 
+	"eth.account.register" -> "queue.tx,create";
+	"eth.account.register" -> "eth.tx.check_gas";
+	"eth.tx.check_gas" -> "eth.tx.refill_gas" [ style="dashed" ];
+	"eth.tx.check_gas" -> callback [ style="dashed" ];
+	"eth.tx.refill_gas" -> callback [ style="dashed" ];
+}

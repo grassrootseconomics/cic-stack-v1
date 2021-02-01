@@ -1,0 +1,11 @@
+.contract-migration-changes-target:
+    rules:
+        - changes:
+            - $CONTEXT/*
+
+build-cic-eth:
+    extends:
+        - .contract-migration-changes-target
+        - .py-build
+    variables:
+        CONTEXT: apps/cic-eth

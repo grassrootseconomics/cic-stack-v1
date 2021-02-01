@@ -1,0 +1,17 @@
+digraph {
+
+	dispatcher [
+		label="CIC-ETH-DISPATCHER";
+		shape="ellipse";
+	];
+
+	send [
+		label="eth.tx.send";
+		shape="ellipse";
+	];
+
+	dispatcher -> send;
+	send -> "queue.tx.set_[sent|final|fubar]_status";
+	send -> "(send tx on blockchain)";
+	"queue.tx.set_[sent|final|fubar]_status" -> send [ style="dashed" ];
+}

@@ -1,0 +1,57 @@
+digraph {
+
+	convert_transfer [
+		label="CIC-ETH API:\nconvert_transfer";	
+		shape="ellipse";
+	];
+
+	callback [
+		label="callback";
+		shape="ellipse";
+		style="dashed";
+	];
+
+	convert_approve_zero [
+		label="eth.token.approve (zero)";
+		shape="ellipse";
+	];
+
+	convert_approve_amount [
+		label="eth.token.approve (amount)";
+		shape="ellipse";
+	];
+
+	cache_approve_zero [
+		label="eth.token.otx_cache_approve";
+		shape="ellipse";
+	];
+
+	cache_approve_amount [
+		label="eth.token.otx_cache_approve";
+		shape="ellipse";
+	];
+
+	queue_approve_zero [
+		label="queue.tx.create";
+		shape="ellipse";
+	];
+
+	queue_approve_amount [
+		label="queue.tx.create";
+		shape="ellipse";
+	];
+
+	convert_transfer -> "eth.token.resolve_tokens_by_symbol" -> "eth.bancor.convert_with_default_reserve";
+	"eth.bancor.convert_with_default_reserve" -> convert_approve_zero -> cache_approve_zero;
+	convert_approve_zero -> queue_approve_zero;
+	"eth.bancor.convert_with_default_reserve" -> convert_approve_amount -> cache_approve_amount;
+	convert_approve_amount -> queue_approve_amount;
+	"eth.bancor.convert_with_default_reserve" -> "eth.bancor.otx_cache_convert";
+	"eth.bancor.convert_with_default_reserve" -> "queue.tx.create";
+	"eth.bancor.convert_with_default_reserve" -> "eth.tx.check_gas";
+	"eth.bancor.convert_with_default_reserve" -> "eth.bancor.save_convert_recipient";
+	"eth.tx.check_gas" -> "eth.tx.refill_gas" [ style="dashed" ];
+	"eth.tx.check_gas" -> callback [ style="dashed" ];
+	"eth.tx.refill_gas" -> callback [ style="dashed" ];
+
+}

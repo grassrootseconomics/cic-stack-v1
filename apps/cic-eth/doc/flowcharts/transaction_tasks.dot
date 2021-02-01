@@ -1,0 +1,22 @@
+digraph {
+
+	send [
+		label="CIC-ETH API:\ntransfer";
+		shape="ellipse";
+	];
+
+	callback [
+		label="callback";
+		shape="ellipse";
+		style="dashed";
+	];
+
+	send -> "eth.token.resolve_tokens_by_symbol"
+	"eth.token.resolve_tokens_by_symbol" -> "eth.token.transfer" -> "eth.queue.otx_cache_transfer";
+	"eth.token.transfer" -> "eth.queue.tx.create";
+	"eth.token.transfer" -> "eth.tx.check_gas";
+	"eth.tx.check_gas" -> "eth.tx.refill_gas" [ style="dashed" ];
+	"eth.tx.check_gas" -> callback [ style="dashed" ];
+	"eth.tx.refill_gas" -> callback [ style="dashed" ];
+
+}

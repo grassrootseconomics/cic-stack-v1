@@ -1,0 +1,12 @@
+digraph {
+	
+	send [
+		label="CIC-MANAGER\nregistration filter";
+		shape="ellipse";
+	];
+
+	send -> "eth.account.gift" -> "eth.account.cache_gift_data";
+	"eth.account.gift" -> "queue.tx.create";
+	"eth.account.gift" -> "eth.tx.check_gas";
+	"eth.tx.check_gas" -> "eth.tx.refill_gas" [ style="dashed" ];
+}

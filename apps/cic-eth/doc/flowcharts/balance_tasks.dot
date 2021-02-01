@@ -1,0 +1,16 @@
+digraph {
+	balance [
+		label="CIC-ETH API:\nbalance";
+		shape="ellipse";
+	];
+
+	callback [
+		label="callback";
+		shape="ellipse";
+		style="dashed";
+	];
+
+	balance -> "eth.token.resolve_tokens_by_symbol"
+	"eth.token.resolve_tokens_by_symbol" -> "eth.token.balance"
+	"eth.token.balance" -> callback [ style="dashed" ];
+}

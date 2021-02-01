@@ -1,0 +1,65 @@
+digraph {
+
+	transferauthorization [
+		label="CIC-ETH API:\ntransfer authorization";
+		shape="ellipse";
+	];
+
+	callback [
+		label="callback";
+		shape="ellipse";
+		style="dashed";
+	];
+
+	resolve_transferauthorization [
+		label="eth.token.resolve_tokens_by_symbol";
+		shape="ellipse";
+	];
+
+	resolve_approve [
+		label="eth.token.resolve_tokens_by_symbol";
+		shape="ellipse";
+	];
+
+	checkgas_transferauthorization [
+		label="eth.tx.check_gas";
+		shape="ellipse";
+	];
+
+	checkgas_approve [
+		label="eth.tx.check_gas";
+		shape="ellipse";
+	];
+
+	refill_transferauthorization [
+		label="eth.tx.refill_gas";
+		shape="ellipse";
+	];
+
+	refill_approve [
+		label="eth.tx.refill_gas";
+		shape="ellipse";
+	];
+
+	queue_create_transferauthorization [
+		label="queue.tx.create";
+		shape="ellipse";
+	];
+
+	queue_create_approve [
+		label="queue.tx.create";
+		shape="ellipse";
+	];
+
+	transferauthorization ->  resolve_approve -> "eth.token.approve" -> "eth.token.otx_cache_approve";
+	"eth.token.approve" -> queue_create_approve;
+	"eth.token.approve" -> checkgas_approve;
+	checkgas_approve -> refill_approve [ style="dashed" ];
+
+	transferauthorization -> resolve_transferauthorization -> "eth.request.transfer_approve_request" -> "eth.token.otx_cache_transfer_approval_request";
+	"eth.request.transfer_approve_request" -> queue_create_transferauthorization;
+	"eth.request.transfer_approve_request" -> checkgas_transferauthorization;
+	checkgas_transferauthorization -> refill_transferauthorization [ style="dashed" ];
+	checkgas_approve -> callback [ style="dashed" ];
+	refill_approve -> callback [ style="dashed" ];
+}

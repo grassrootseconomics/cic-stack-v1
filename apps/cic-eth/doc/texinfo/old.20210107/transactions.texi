@@ -1,0 +1,26 @@
+@chapter Transactions
+
+@section States
+
+@subsection Send transaction to network
+
+@multitable @columnfractions .35 .15 .15 .35
+@headitem Item @tab Exception @tab Action
+
+@item Chain node unreachable
+@tab ChainUnavailableError
+@tab Retry: unlimited, backoff
+
+@item Cannot save tx state to database
+@tab DatabaseUnavailableError
+@tab Crash: Notify by email
+
+@item Signer unreachable
+@tab SignerUnavailableError
+@tab Retry: unlimited, backoff
+
+@item Unknown address
+@tab SignerAccountUnknownError
+@tab Fail
+
+

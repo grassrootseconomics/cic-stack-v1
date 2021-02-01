@@ -1,0 +1,10 @@
+digraph {
+
+	tx [
+		label="CIC-MANAGER\ncallbacks filter, tokengift";
+		shape="ellipse";
+	];
+
+	tx -> callback [ style="dashed" ];
+
+}

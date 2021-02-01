@@ -1,0 +1,15 @@
+digraph {
+
+	tx [
+		label="CIC-MANAGER;\nconvert_filter";
+		shape="ellipse";
+	];
+
+	tx -> "eth.bancor.transfer_converted" -> "eth.token.otx_cache_transfer";
+	"eth.bancor.transfer_converted" -> "queue.tx.create";
+	"eth.bancor.transfer_converted" -> "eth.bancor.save_convert_transfer";
+	"eth.bancor.transfer_converted" -> "eth.tx.check_gas";
+	"eth.tx.check_gas" -> "eth.tx.refill_gas" [ style="dashed" ];
+	"eth.tx.check_gas" -> callback [ style="dashed" ];
+	"eth.tx.refill_gas" -> callback [ style="dashed" ];
+}

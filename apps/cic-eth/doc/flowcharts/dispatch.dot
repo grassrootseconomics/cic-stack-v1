@@ -1,0 +1,159 @@
+digraph G {
+
+	send [
+		label = "transfer";
+		shape = "ellipse";
+	];
+
+	params [
+		label = "get token, value, sender, recipient";
+		shape = "parallelogram";
+	];
+
+	token_lookup [
+		label = "token known?";
+		shape = "diamond";	
+	];
+
+	token_lookup_x [
+		xlabel = "UnknownTokenError";
+		shape = "point";
+	];
+
+	nonce [
+		label = "get sender nonce";
+		shape = "box";
+		style = "dashed";
+	];
+
+	sign_tx [
+		label = "sign tx";
+		shape = "box";
+	];
+
+	sign_tx_x [
+		xlabel = "SignerError";
+		shape = "point";
+	];
+
+	cache [
+		label = "queue signed tx";
+		shape = "cylinder";
+	];
+
+	gas [
+		label = "safe sender balance for gas?";
+		shape = "diamond";
+	];
+
+	gas_rq_exists [
+		label = "gas request already pending?"
+		shape = "diamond";
+	];
+
+	gas_rq [
+		label = "queue request for gas";
+		shape = "parallelogram";
+	];
+
+	gas_tx [
+		label = "enough gas for this tx?";
+		shape = "diamond";
+	];
+
+	cache_waitforgas [
+		label = "set status to WAITFORGAS";
+		shape = "parallelogram";
+	];
+
+	gas_tx_x [
+		xlabel = "OutOfGasError";
+		shape = "point";
+	];
+
+	tx_fail [
+		label = "temporary error?"
+		shape = "diamond"
+	];
+
+	tx_fail_known [
+		label = "known error?"
+		shape = "diamond"
+	];
+
+	cache_sent [
+		label = "set tx status to SENT";
+		shape = "cylinder";	
+	];
+
+	cache_unsent [
+		label = "set tx status to SENDFAIL";
+		shape = "cylinder";	
+	];
+
+	cache_revert [
+		label = "set tx status to REVERTED";
+		shape = "cylinder";	
+	];
+
+	cache_fubar [
+		label = "set tx status to FUBAR";
+		shape = "cylinder";	
+	];
+
+	send_tx_x_tmp [
+		xlabel = "TemporaryTxError";
+		shape = "point";
+	];
+
+	send_tx_x_final [
+		xlabel = "PermanentTxError";
+		shape = "point";
+	];
+
+	ok [
+		shape = "point";
+	];
+	
+
+	send -> params -> token_lookup;
+	
+	token_lookup -> token_lookup_x [ label = "no"; ];
+
+	token_lookup -> nonce [ label = "yes"; ];
+	nonce -> sign_tx;
+
+	sign_tx -> sign_tx_x [ label = "fail"; ];
+
+	sign_tx -> cache [ label = "ok"; ];
+	cache -> gas;
+
+	gas -> gas_rq_exists [ label = "no"; ];
+	gas_rq_exists -> gas_rq [ label = "no"; ];
+	gas_rq_exists -> gas_tx [ label = "yes"; ];
+	gas_rq -> gas_tx;
+
+	gas -> send_tx [ label = "yes"; ];	
+
+	gas_tx -> cache_waitforgas -> gas_tx_x [ label = "no"; ];
+
+	gas_tx -> send_tx [ label = "yes"; ];
+
+	send_tx -> tx_fail [ label = "fail"; ];
+
+	tx_fail -> cache_unsent [ label = "yes"; ];
+	cache_unsent -> send_tx_x_tmp;
+
+	tx_fail -> tx_fail_known [ label = "no"; ];
+
+	tx_fail_known -> cache_fubar [ label = "no"; ];
+
+	cache_fubar -> send_tx_x_final;
+
+	tx_fail_known -> cache_revert [ label = "yes"; ];
+	cache_revert -> send_tx_x_final;
+
+	send_tx -> cache_sent [ label = "ok"; ];
+	cache_sent -> ok;
+
+}

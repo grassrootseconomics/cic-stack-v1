@@ -1,0 +1,42 @@
+@node Overview
+@chapter Overview
+This is the core component for the CIC token network system. It provides a task worker infrastructure to interact with the Ethereum blockchain, aswell as daemons to monitor transactions.
+
+@section Reading this document
+
+Any paths in this document are relative to the root of the cic-eth git repository.
+
+@section Contents
+
+@itemize @bullet
+@item Python API that dispatches celery tasks for high-level actions
+@item Daemon for monitoring the state of and retrying outgoing transactions
+@item Daemon for monitoring new transactions of interest confirmed onchain
+@end itemize
+
+@section Dependencies
+
+Python dependencies can be acquired by running the usual python setup and/or using the provided requiremens.txt file.
+
+The application has the following non-python dependencies:
+
+@itemize @bullet
+@item
+@strong{PostgreSQL}: Database backend.
+@item
+@strong{Redis}: Broker and results for Celery workers.
+@item
+@strong{Bancor contracts}: A clone of the Bancor contact repository
+@item
+@strong{Ethereum node}: A synced ethereum node with keystore
+@end itemize
+
+@section Caveats
+
+The application @emph{must not} use private keys for which transactions may be generated from other sources.
+
+It application retrieves the transaction nonce for every transaction directly from the network. Any transaction submitted to it are passed on to the network with sequential nonces. The caller code needs to keep this in mind when considering whether to allow the account holder to submit additional transaction tasks before the current has been completed.
+
+@section Known issues
+
+The author has not yet figured out how to get @code{pytest-celery} to work with queues. Currently the functional tests hang when trying to run them.

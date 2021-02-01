@@ -1,0 +1,9 @@
+digraph {
+
+	tx [
+		label="CIC-MANAGER;\ntx_filter";
+		shape="ellipse";
+	];
+
+	tx -> "queue.tx.set_final_status";
+}

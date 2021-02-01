@@ -1,0 +1,3 @@
+All *_tasks.dot files describe literal the literal tasks that get executed on the associated entry points. CIC-ETH API entrypoints refer to methods in "cic_eth/api/api_task.py"
+
+All *_semantic.dot files are flow charts decribing the processing of the associated entry points.
