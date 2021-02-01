@@ -18,9 +18,26 @@ services:
       - ${HTTP_PORT_ETH:-8545}
       - ${WS_PORT_ETH:-8546}
     # Note! -e switch doesnt work, whatever you  put there, it will be 100
-    command: "-i 8995 -e 100 -l 9000000 -m '${DEV_MNEMONIC:-\"history stumble mystery avoid embark arrive mom foil pledge keep grain dice\"}' -v --db /tmp/cic/ganache/ganache.db --noVMErrorsOnRPCResponse"
+    command: "-i 1337 -e 1000 -l 90000000 \
+            -m '${DEV_MNEMONIC:-\"history stumble mystery avoid embark arrive mom foil pledge keep grain dice\"}' \
+            -v --db /tmp/cic/ganache/ganache.db \
+            --noVMErrorsOnRPCResponse --allowUnlimitedContractSize"
     volumes:
       - ganache-db:/tmp/cic/ganache
+
+  eth:
+    image: grassrootseconomics:bloxberg-dev
+    hostname: eth
+    restart: unless-stopped
+    entrypoint: /start.sh
+    user: "0:0"
+    ports:
+      - ${HTTP_PORT_ETH:-8545}:8545
+      - 8546
+      - 30303
+    volumes:
+      - ./bloxberg_config:/home/parity/.local/share/io.parity.ethereum
+
 
   # See contents of /initdb/create_db.sql for app user, password and databases
   postgres:
@@ -63,6 +80,7 @@ services:
       # And these two are for wait-for-it (could parse this)
       ETH_PROVIDER_HOST: eth 
       ETH_PROVIDER_PORT: 8545
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
     command: ["./reset.sh"]
     depends_on:
       - eth
@@ -138,7 +156,7 @@ services:
       DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
       DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
       PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
-      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:8995}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
       BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
@@ -154,154 +172,230 @@ services:
         condition: on-failure
     volumes:
       - signer-data:/tmp/cic/signer
+      - contract-config:/tmp/cic/config/:ro
     command:
       - /bin/bash
       - -c
       - |
         if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
-        pwd
-        ls
         ./start_tasker.sh -q cic-eth -vv
     # command: [/bin/sh, "./start_tasker.sh", -q, cic-eth, -vv ]
 
-#   cic-eth-manager-head:
-#     image: grassrootseconomics:cic-eth-service
-#     environment:
-#       ETH_PROVIDER: $ETH_PROVIDER
-#       DATABASE_USER: $DATABASE_USER
-#       DATABASE_HOST: $DATABASE_HOST
-#       DATABASE_PORT: $DATABASE_PORT
-#       DATABASE_PASSWORD: $DATABASE_PASSWORD
-#       DATABASE_NAME: $DATABASE_NAME_CIC_ETH
-#       DATABASE_ENGINE: $DATABASE_ENGINE
-#       DATABASE_DRIVER: $DATABASE_DRIVER
-#       CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
-#       CIC_CHAIN_SPEC: $CIC_CHAIN_SPEC
-#       BANCOR_DIR: $BANCOR_DIR
-#       CELERY_BROKER_URL: $CELERY_BROKER_URL
-#       CELERY_RESULT_URL: $CELERY_RESULT_URL
-#       TASKS_TRANSFER_CALLBACKS: $TASKS_TRANSFER_CALLBACKS
-#     depends_on:
-#       - eth
-#       - postgres
-#       - redis
-#     deploy:
-#       restart_policy:
-#         condition: on-failure
-#     command: "/root/start_manager.sh head -vv"
+  cic-eth-manager-head:
+    build:
+        context: apps/
+        dockerfile: cic-eth/docker/Dockerfile
+    environment:
+      CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
+      ETH_GAS_PROVIDER_ADDRESS: $DEV_ETH_ACCOUNT_GAS_PROVIDER
+      ETH_PROVIDER: http://eth:8545
+      ETH_ABI_DIR: ${ETH_ABI_DIR:-/usr/local/share/cic/solidity/abi}
+      DATABASE_USER: ${DATABASE_USER:-grassroots}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-tralala}
+      DATABASE_NAME: ${DATABASE_NAME_CIC_CACHE:-cic_cache}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
+      DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
+      PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
+      CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
+      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-/tmp/cic/signer/jsonrpc.ipc}
+      SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
+      ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
+    depends_on:
+      - eth
+      - postgres
+      - redis
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - contract-config:/tmp/cic/config/:ro
+    command:
+      - /bin/bash
+      - -c
+      - |
+        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        ./start_manager.sh head -vv
+    # command: "/root/start_manager.sh head -vv"
 
-#   cic-eth-manager-history:
-#     image: grassrootseconomics:cic-eth-service
-#     environment:
-#       ETH_PROVIDER: $ETH_PROVIDER
-#       DATABASE_USER: $DATABASE_USER
-#       DATABASE_HOST: $DATABASE_HOST
-#       DATABASE_PORT: $DATABASE_PORT
-#       DATABASE_PASSWORD: $DATABASE_PASSWORD
-#       DATABASE_NAME: $DATABASE_NAME_CIC_ETH
-#       DATABASE_ENGINE: $DATABASE_ENGINE
-#       DATABASE_DRIVER: $DATABASE_DRIVER
-#       CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
-#       CIC_CHAIN_SPEC: $CIC_CHAIN_SPEC
-#       BANCOR_DIR: $BANCOR_DIR
-#       CELERY_BROKER_URL: $CELERY_BROKER_URL
-#       CELERY_RESULT_URL: $CELERY_RESULT_URL
-#     depends_on:
-#       - eth
-#       - postgres
-#       - redis
-#         #deploy:
-#       #restart_policy:
-#       #  condition: on-failure
-#     command: "/root/start_manager.sh history -vv"
+  cic-eth-manager-history:
+    build:
+        context: apps/
+        dockerfile: cic-eth/docker/Dockerfile
+    environment:
+      CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
+      ETH_GAS_PROVIDER_ADDRESS: $DEV_ETH_ACCOUNT_GAS_PROVIDER
+      ETH_PROVIDER: http://eth:8545
+      ETH_ABI_DIR: ${ETH_ABI_DIR:-/usr/local/share/cic/solidity/abi}
+      DATABASE_USER: ${DATABASE_USER:-grassroots}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-tralala}
+      DATABASE_NAME: ${DATABASE_NAME_CIC_CACHE:-cic_cache}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
+      DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
+      PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
+      CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
+      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-/tmp/cic/signer/jsonrpc.ipc}
+      SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
+      ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
+    depends_on:
+      - eth
+      - postgres
+      - redis
+        #deploy:
+      #restart_policy:
+      #  condition: on-failure
+    volumes:
+        - contract-config:/tmp/cic/config/:ro
+    command:
+      - /bin/bash
+      - -c
+      - |
+        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        ./start_manager.sh history -vv
+    # command: "/root/start_manager.sh history -vv"
 
-#   cic-eth-dispatcher:
-#     image: grassrootseconomics:cic-eth-service
-#     environment:
-#       ETH_PROVIDER: $ETH_PROVIDER
-#       DATABASE_USER: $DATABASE_USER
-#       DATABASE_HOST: $DATABASE_HOST
-#       DATABASE_PORT: $DATABASE_PORT
-#       DATABASE_PASSWORD: $DATABASE_PASSWORD
-#       DATABASE_NAME: $DATABASE_NAME_CIC_ETH
-#       DATABASE_ENGINE: $DATABASE_ENGINE
-#       DATABASE_DRIVER: $DATABASE_DRIVER
-#       CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
-#       CIC_CHAIN_SPEC: $CIC_CHAIN_SPEC
-#       BANCOR_DIR: $BANCOR_DIR
-#       CELERY_BROKER_URL: $CELERY_BROKER_URL
-#       CELERY_RESULT_URL: $CELERY_RESULT_URL
-#     depends_on:
-#       - eth
-#       - postgres
-#       - redis
-#     deploy:
-#       restart_policy:
-#         condition: on-failure
-#     command: "/root/start_dispatcher.sh -q cic-eth -vv"
+  cic-eth-dispatcher:
+    build:
+        context: apps/
+        dockerfile: cic-eth/docker/Dockerfile
+    environment:
+      CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
+      ETH_GAS_PROVIDER_ADDRESS: $DEV_ETH_ACCOUNT_GAS_PROVIDER
+      ETH_PROVIDER: http://eth:8545
+      ETH_ABI_DIR: ${ETH_ABI_DIR:-/usr/local/share/cic/solidity/abi}
+      DATABASE_USER: ${DATABASE_USER:-grassroots}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-tralala}
+      DATABASE_NAME: ${DATABASE_NAME_CIC_CACHE:-cic_cache}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
+      DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
+      PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
+      CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
+      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-/tmp/cic/signer/jsonrpc.ipc}
+      SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
+      ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
+    depends_on:
+      - eth
+      - postgres
+      - redis
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+        - contract-config:/tmp/cic/config/:ro
+    command:
+      - /bin/bash
+      - -c
+      - |
+        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        ./start_dispatcher.sh history -vv
+    # command: "/root/start_dispatcher.sh -q cic-eth -vv"
 
 
-#   cic-eth-retrier:
-#     image: grassrootseconomics:cic-eth-service
-#     environment:
-#       ETH_PROVIDER: $ETH_PROVIDER
-#       DATABASE_USER: $DATABASE_USER
-#       DATABASE_HOST: $DATABASE_HOST
-#       DATABASE_PORT: $DATABASE_PORT
-#       DATABASE_PASSWORD: $DATABASE_PASSWORD
-#       DATABASE_NAME: $DATABASE_NAME_CIC_ETH
-#       DATABASE_ENGINE: $DATABASE_ENGINE
-#       DATABASE_DRIVER: $DATABASE_DRIVER
-#       CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
-#       CIC_CHAIN_SPEC: $CIC_CHAIN_SPEC
-#       BANCOR_DIR: $BANCOR_DIR
-#       CELERY_BROKER_URL: $CELERY_BROKER_URL
-#       CELERY_RESULT_URL: $CELERY_RESULT_URL
-#     depends_on:
-#       - eth
-#       - postgres
-#       - redis
-#     deploy:
-#       restart_policy:
-#         condition: on-failure
-#     command: "/root/start_retry.sh -q cic-eth -vv"
+  cic-eth-retrier:
+    build:
+        context: apps/
+        dockerfile: cic-eth/docker/Dockerfile
+    environment:
+      CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
+      ETH_GAS_PROVIDER_ADDRESS: $DEV_ETH_ACCOUNT_GAS_PROVIDER
+      ETH_PROVIDER: http://eth:8545
+      ETH_ABI_DIR: ${ETH_ABI_DIR:-/usr/local/share/cic/solidity/abi}
+      DATABASE_USER: ${DATABASE_USER:-grassroots}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-tralala}
+      DATABASE_NAME: ${DATABASE_NAME_CIC_CACHE:-cic_cache}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
+      DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
+      PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
+      CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
+      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-/tmp/cic/signer/jsonrpc.ipc}
+      SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
+      ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
+    depends_on:
+      - eth
+      - postgres
+      - redis
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+        - contract-config:/tmp/cic/config/:ro
+    command:
+      - /bin/bash
+      - -c
+      - |
+        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        ./start_retry.sh history -vv
+    # command: "/root/start_retry.sh -q cic-eth -vv"
 
 
-#   cic-eth-server:
-#     image: grassrootseconomics:cic-eth-service
-#     environment:
-# #      ETH_PROVIDER: $ETH_PROVIDER
-# #      DATABASE_USER: $DATABASE_USER
-# #      DATABASE_HOST: $DATABASE_HOST
-# #      DATABASE_PORT: $DATABASE_PORT
-# #      DATABASE_PASSWORD: $DATABASE_PASSWORD
-# #      DATABASE_NAME: $DATABASE_NAME_CIC_ETH
-# #      DATABASE_ENGINE: $DATABASE_ENGINE
-# #      DATABASE_DRIVER: $DATABASE_DRIVER
-# #      CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
-#       CIC_CHAIN_SPEC: $CIC_CHAIN_SPEC
-# #      BANCOR_DIR: $BANCOR_DIR
-#       CELERY_BROKER_URL: $CELERY_BROKER_URL
-#       CELERY_RESULT_URL: $CELERY_RESULT_URL
-#       SERVER_PORT: 80
-#     ports:
-#       - ${HTTP_PORT_CIC_ETH}:80
-#     depends_on:
-# #      - eth
-# #      - postgres
-#       - redis
-#     deploy:
-#       restart_policy:
-#         condition: on-failure
-#           #command: "/bin/bash-c uwsgi --wsgi-file /usr/src/cic-eth/cic_eth/runnable/server_agent.py --http :80 --pyargv '-vv'"
-#           #command: "uwsgi"
+  cic-eth-server:
+    build:
+        context: apps/
+        dockerfile: cic-eth/docker/Dockerfile
+    environment:
+      CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
+      ETH_GAS_PROVIDER_ADDRESS: $DEV_ETH_ACCOUNT_GAS_PROVIDER
+      ETH_PROVIDER: http://eth:8545
+      ETH_ABI_DIR: ${ETH_ABI_DIR:-/usr/local/share/cic/solidity/abi}
+      DATABASE_USER: ${DATABASE_USER:-grassroots}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-tralala}
+      DATABASE_NAME: ${DATABASE_NAME_CIC_CACHE:-cic_cache}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
+      DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
+      PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
+      CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
+      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-/tmp/cic/signer/jsonrpc.ipc}
+      SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
+      ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
+    depends_on:
+      - eth
+      - postgres
+      - redis
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+        - contract-config:/tmp/cic/config/:ro
+    command:
+      - /bin/bash
+      - -c
+      - |
+        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        "/usr/local/bin/uwsgi" \
+        --wsgi-file /usr/src/cic-eth/cic_eth/runnable/server_agent.py \
+        --http :80 \
+        --pyargv -vv
 #     entrypoint:
 #       - "/usr/local/bin/uwsgi"
 #       - "--wsgi-file"
 #       - "/usr/src/cic-eth/cic_eth/runnable/server_agent.py"
 #       - "--http"
 #       - ":80"
-#     command: "--pyargv -vv"
+    # command: "--pyargv -vv"
 
 
 
