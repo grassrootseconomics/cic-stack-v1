@@ -6,38 +6,36 @@ volumes:
   contract-config: {}
   bee-data: {}
   signer-data: {}
+  bloxberg-data: {}
 
 networks:
   default:
     name: cic-network
 
 services:
-  eth:
-    image: trufflesuite/ganache-cli
-    ports:
-      - ${HTTP_PORT_ETH:-8545}
-      - ${WS_PORT_ETH:-8546}
-    # Note! -e switch doesnt work, whatever you  put there, it will be 100
-    command: "-i 1337 -e 1000 -l 90000000 \
-            -m '${DEV_MNEMONIC:-\"history stumble mystery avoid embark arrive mom foil pledge keep grain dice\"}' \
-            -v --db /tmp/cic/ganache/ganache.db \
-            --noVMErrorsOnRPCResponse --allowUnlimitedContractSize"
-    volumes:
-      - ganache-db:/tmp/cic/ganache
+  # eth:
+  #   image: trufflesuite/ganache-cli
+  #   ports:
+  #     - ${HTTP_PORT_ETH:-8545}
+  #     - ${WS_PORT_ETH:-8546}
+  #   # Note! -e switch doesnt work, whatever you  put there, it will be 100
+  #   command: "-i 8996 -e 1000 -l 90000000 \
+  #           -m '${DEV_MNEMONIC:-\"history stumble mystery avoid embark arrive mom foil pledge keep grain dice\"}' \
+  #           -v --db /tmp/cic/ganache/ganache.db \
+  #           --noVMErrorsOnRPCResponse --allowUnlimitedContractSize"
+  #   volumes:
+  #     - ganache-db:/tmp/cic/ganache
 
   eth:
-    image: grassrootseconomics:bloxberg-dev
-    hostname: eth
+    build: apps/bloxbergValidatorSetup
     restart: unless-stopped
-    entrypoint: /start.sh
-    user: "0:0"
     ports:
       - ${HTTP_PORT_ETH:-8545}:8545
       - 8546
       - 30303
     volumes:
-      - ./bloxberg_config:/home/parity/.local/share/io.parity.ethereum
-
+      - ./apps/bloxbergValidatorSetup/keys:/root/keys # stores the signing key locally
+      - bloxberg-data:/root/.local/share/io.parity.ethereum/chains/Bloxberg/db/
 
   # See contents of /initdb/create_db.sql for app user, password and databases
   postgres:
@@ -80,7 +78,7 @@ services:
       # And these two are for wait-for-it (could parse this)
       ETH_PROVIDER_HOST: eth 
       ETH_PROVIDER_PORT: 8545
-      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:8996}
     command: ["./reset.sh"]
     depends_on:
       - eth
@@ -156,7 +154,7 @@ services:
       DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
       DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
       PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
-      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:8996}
       BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
@@ -198,7 +196,7 @@ services:
       DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
       DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
       PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
-      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:8996}
       BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
@@ -239,7 +237,7 @@ services:
       DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
       DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
       PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
-      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:8996}
       BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
@@ -280,7 +278,7 @@ services:
       DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
       DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
       PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
-      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:8996}
       BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
@@ -322,7 +320,7 @@ services:
       DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
       DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
       PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
-      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:8996}
       BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
@@ -364,7 +362,7 @@ services:
       DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
       DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
       PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
-      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:1337}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-Bloxberg:8996}
       BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
