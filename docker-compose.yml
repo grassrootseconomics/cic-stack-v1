@@ -27,14 +27,15 @@ services:
   #     - ganache-db:/tmp/cic/ganache
 
   eth:
-    build: apps/bloxbergValidatorSetup
+    build:
+      context: apps/bloxbergValidatorSetup
     restart: unless-stopped
     ports:
       - ${HTTP_PORT_ETH:-8545}:8545
       - 8546
       - 30303
     volumes:
-      - ./apps/bloxbergValidatorSetup/keys:/root/keys # stores the signing key locally
+      - keys:/root/keys # stores the signing key locally
       - bloxberg-data:/root/.local/share/io.parity.ethereum/chains/Bloxberg/db/
 
   # See contents of /initdb/create_db.sql for app user, password and databases
