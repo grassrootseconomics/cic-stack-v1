@@ -1,6 +1,3 @@
-[submodule "apps/cic-eth"]
-	path = apps/cic-eth
-	url = git@gitlab.com:grassrootseconomics/cic-eth.git
 [submodule "apps/cic-ussd"]
 	path = apps/cic-ussd
 	url = git@gitlab.com:grassrootseconomics/cic-ussd.git
