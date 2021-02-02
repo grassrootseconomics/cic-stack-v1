@@ -19,5 +19,7 @@ docker-compose down -v
 
 rebuild an images
 ```
-docker-compose up -d --no-deps --build <service_name>
-```
+docker-compose up --build <service_name>
+``
+
+Deployment variables are writtend to service-configs/.env after everthing is up.`
