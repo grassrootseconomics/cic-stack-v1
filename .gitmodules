@@ -10,6 +10,3 @@
 [submodule "apps/cic-meta"]
 	path = apps/cic-meta
 	url = git@gitlab.com:grassrootseconomics/cic-meta.git
-[submodule "apps/bloxbergValidatorSetup"]
-	path = apps/bloxbergValidatorSetup
-	url = git@gitlab.com:grassrootseconomics/bloxbergValidatorSetup.git

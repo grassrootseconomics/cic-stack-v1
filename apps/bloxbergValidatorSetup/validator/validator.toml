@@ -1,0 +1,34 @@
+[parity]
+chain = "/root/bloxberg.json"
+auto_update = "all"
+
+[network]
+port = 30303
+reserved_peers = "/root/bootnodes.txt"
+nat = "any"
+discovery = false
+
+[rpc]
+port = 8545
+apis = ["web3", "eth", "net", "personal", "parity", "parity_set", "traces", "rpc", "parity_accounts"]
+interface = "all"
+
+[websockets]
+disable = false
+port = 8546
+interface = "all"
+origins = ["none"]
+
+[account]
+password = ["/root/validator.pwd"]
+
+[mining]
+#CHANGE ENGINE SIGNER TO VALIDATOR ADDRESS
+engine_signer = "0x0ade5bd2065debbb250e816f614bc342a6ef71c1"
+reseal_on_txs = "none"
+force_sealing = true
+min_gas_price = 1000000
+gas_floor_target = "10000000"
+
+[footprint]
+tracing = "off"
