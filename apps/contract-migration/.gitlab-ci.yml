@@ -1,11 +1,11 @@
 .contract-migration-changes-target:
     rules:
         - changes:
-            - $CONTEXT/*
+            - $CONTEXT/contract-migration/*
 
 build-contract-migration:
     extends:
         - .contract-migration-changes-target
         - .py-build
     variables:
-        CONTEXT: apps/contract-migration
+        DOCKERFILE_PATH: contract-migration/docker/Dockerfile

@@ -75,7 +75,7 @@ services:
 
   contract-migration:
     build:
-      context: apps/contract-migration
+      context: apps
       dockerfile: apps/contract-migration/docker/
     environment:
       # ETH_PROVIDER should be broken out into host/port but cic-eth expects this

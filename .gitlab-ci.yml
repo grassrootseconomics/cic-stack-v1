@@ -1,13 +1,7 @@
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
-before_script:
-  - git submodule sync --recursive
-  - git submodule update --init --recursive
-
 include:
   - local: 'ci_templates/.cic-template.yml'
   - local: 'apps/contract-migration/.gitlab-ci.yml'
-  # - local: 'apps/cic-eth/.gitlab-ci.yml'
+  - local: 'apps/cic-eth/.gitlab-ci.yml'
 
 stages:
   - build
