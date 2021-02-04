@@ -11,12 +11,14 @@
         # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4125
         DOCKER_TLS_VERIFY: 1
         DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-        DOCKERFILE_PATH: docker/
+        CONTEXT: apps/
     services:
     - docker:19.03.13-dind
     before_script:
     - docker info
     - cd $CONTEXT
+    - pwd 
+    - ls -la 
     script:
     - docker build -t $CI_PROJECT_PATH_SLUG:$CI_COMMIT_SHORT_SHA -f $DOCKERFILE_PATH .
 

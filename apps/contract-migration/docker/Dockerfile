@@ -52,7 +52,7 @@ RUN apt-get update && \
 
 RUN echo installing nodejs tooling
 
-COPY ./dev/nvm.sh /root/
+COPY contract-migration/dev/nvm.sh /root/
 
 # Install nvm with node and npm
 # https://stackoverflow.com/questions/25899912/how-to-install-nvm-in-docker
@@ -141,18 +141,18 @@ RUN pip install --extra-index-url $pip_extra_index_url \
 	crypto-dev-signer==0.4.13b9
 
 
-COPY testdata/pgp testdata/pgp
+COPY contract-migration/testdata/pgp testdata/pgp
 
 RUN mkdir -vp /tmp/cic/pgp
-COPY testdata/pgp/* /tmp/cic/pgp/
+COPY contract-migration/testdata/pgp/* /tmp/cic/pgp/
 
 # COPY .env_config_template .env_config_template
 # COPY .env_dockercompose_template .env_dockercompose_template
 
-COPY reset.sh .
+COPY contract-migration/reset.sh .
 # COPY data.sh data.sh
-COPY keystore keystore
-COPY wait-for-it.sh .
+COPY contract-migration/keystore keystore
+COPY contract-migration/wait-for-it.sh .
 RUN chmod +x reset.sh wait-for-it.sh
 
 LABEL version="4"
