@@ -1,6 +1,7 @@
-variables:
-    APP_NAME: cic-eth
-    DOCKERFILE_PATH: $APP_NAME/docker/Dockerfile
+.app_variables:
+    variables:
+        APP_NAME: cic-eth
+        DOCKERFILE_PATH: $APP_NAME/docker/Dockerfile
 
 .this_changes_target:
     rules:
@@ -11,10 +12,12 @@ build-mr-cic-eth:
     extends:
         - .this_changes_target
         - .py_build_merge_request
+        - .app_variables
 
 build-push-cic-eth:
     extends:
         - .this_changes_target
         - .py_build_push
+        - .app_variables
         
 
