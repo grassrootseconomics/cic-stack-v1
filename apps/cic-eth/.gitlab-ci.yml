@@ -1,12 +1,20 @@
-.contract-migration-changes-target:
+variables:
+    APP_NAME: cic-eth
+    DOCKERFILE_PATH: $APP_NAME/docker/Dockerfile
+
+.this_changes_target:
     rules:
         - changes:
-            - $CONTEXT/cic-eth/*
+            - $CONTEXT/$APP_NAME/*
 
-build-cic-eth:
+build-mr-cic-eth:
     extends:
-        - .contract-migration-changes-target
-        - .py-build
-    variables:
-        DOCKERFILE_PATH: cic-eth/docker/Dockerfile
+        - .this_changes_target
+        - .py_build_merge_request
+
+build-push-cic-eth:
+    extends:
+        - .this_changes_target
+        - .py_build_push
+        
 
