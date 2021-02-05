@@ -1,11 +1,18 @@
-.contract-migration-changes-target:
+variables:
+    APP_NAME: contract-migration
+    DOCKERFILE_PATH: $APP_NAME/docker/Dockerfile
+
+.this_changes_target:
     rules:
         - changes:
-            - $CONTEXT/contract-migration/*
+            - $CONTEXT/$APP_NAME/*
 
-build-contract-migration:
+build-mr-contract-migration:
     extends:
-        - .contract-migration-changes-target
-        - .py-build
-    variables:
-        DOCKERFILE_PATH: contract-migration/docker/Dockerfile
+        - .this_changes_target
+        - .py_build_merge_request
+
+build-push-contract-migration:
+    extends:
+        - .this_changes_target
+        - .py_build_push
