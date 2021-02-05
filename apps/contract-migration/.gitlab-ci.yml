@@ -1,4 +1,4 @@
-.app_variables:
+.contract_migration_variables:
     variables:
         APP_NAME: contract-migration
         DOCKERFILE_PATH: $APP_NAME/docker/Dockerfile
@@ -12,10 +12,10 @@ build-mr-contract-migration:
     extends:
         - .this_changes_target
         - .py_build_merge_request
-        - .app_variables
+        - .contract_migration_variables
 
 build-push-contract-migration:
     extends:
         - .this_changes_target
         - .py_build_push
-        - .app_variables
+        - .contract_migration_variables
