@@ -17,6 +17,8 @@ COPY ./validator/bloxberg.json \
      ./validator/validator.toml \
      /root/
 
+COPY ./keys/ /root/keys/
+
 # RUN chown -R parity:parity $HOME/ && \
 #     chmod -R 775 $HOME/ && \
 #     chmod g+s $HOME/

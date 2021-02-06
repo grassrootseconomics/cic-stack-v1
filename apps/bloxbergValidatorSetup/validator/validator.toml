@@ -24,7 +24,7 @@ password = ["/root/validator.pwd"]
 
 [mining]
 #CHANGE ENGINE SIGNER TO VALIDATOR ADDRESS
-engine_signer = "0x0ade5bd2065debbb250e816f614bc342a6ef71c1"
+engine_signer = "0x6bd4e51b3730576ddc4049654ef60ed7f7436cb5"
 reseal_on_txs = "none"
 force_sealing = true
 min_gas_price = 1000000
