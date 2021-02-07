@@ -1,0 +1,28 @@
+\input texinfo
+@settitle Grassroots Economics CIC notify 0.2.0
+
+@copying
+Released 2020 under GPL3
+@end copying
+
+@titlepage
+@title Community Inclusion Currency Network 
+@author Louis Holbrook
+
+@end titlepage
+
+@c
+@contents
+
+@ifnottex
+@node Top
+@top Grassroots Economics CIC ETH
+
+This document describes microservices that broker external notifications from the CIC network
+@end ifnottex
+
+
+@include overview.texi
+@include setup.texi
+@include run.texi
+@include api.texi

@@ -1,0 +1,5 @@
+celery~=4.4.7
+confini~=0.3.6a1
+alembic~=1.4.2
+redis~=3.5.3
+semver==2.13.0

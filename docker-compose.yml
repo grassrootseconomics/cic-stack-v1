@@ -404,29 +404,29 @@ services:
 
 
 
-#   cic-notify-tasker:
-#     image: grassrootseconomics:cic-notify-service
-#     environment:
-#       DATABASE_USER: $DATABASE_USER
-#       DATABASE_HOST: $DATABASE_HOST
-#       DATABASE_PORT: $DATABASE_PORT
-#       DATABASE_PASSWORD: $DATABASE_PASSWORD
-#       DATABASE_NAME: $DATABASE_NAME_CIC_NOTIFY
-#       DATABASE_ENGINE: $DATABASE_ENGINE
-#       DATABASE_DRIVER: $DATABASE_DRIVER
-#       PGPASSWORD: $DATABASE_PASSWORD
-#       CELERY_BROKER_URL: $CELERY_BROKER_URL
-#       CELERY_RESULT_URL: $CELERY_RESULT_URL
-#       TASKS_AFRICASTALKING: $TASKS_AFRICASTALKING
-#       TASKS_SMS_DB: $TASKS_SMS_DB
-#       TASKS_LOG: $TASKS_LOG
-#     depends_on:
-#       - postgres
-#       - redis
-#     deploy:
-#       restart_policy:
-#         condition: on-failure
-#     command: "/root/start_tasker.sh -q cic-notify"
+  cic-notify-tasker:
+    image: grassrootseconomics:cic-notify-service
+    environment:
+      DATABASE_USER: ${DATABASE_USER:-grassroots}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-tralala}
+      DATABASE_NAME: ${DATABASE_NAME_CIC_NOTIFY:-cic_notify}
+      DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
+      DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
+      PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
+      CELERY_RESULT_URL: ${CELERY_BROKER_URL:-redis://redis}
+      TASKS_AFRICASTALKING: $TASKS_AFRICASTALKING
+      TASKS_SMS_DB: $TASKS_SMS_DB
+      TASKS_LOG: $TASKS_LOG
+    depends_on:
+      - postgres
+      - redis
+    deploy:
+      restart_policy:
+        condition: on-failure
+    command: "/root/start_tasker.sh -q cic-notify"
 
 
 #   cic-meta-server:
