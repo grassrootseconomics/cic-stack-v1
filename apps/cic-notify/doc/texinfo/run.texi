@@ -1,0 +1,4 @@
+@node Run
+@chapter Running the Application
+
+A convenience task runner is provided in @file{scripts/cic-notify-tasker.py}.
