@@ -26,7 +26,7 @@ before_script:
     - cd $CONTEXT
   variables:
     CI_DEBUG_TRACE: "true"
-    IMAGE_TAG: $APP_NAME:$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME-$CI_COMMIT_SHORT_SHA
+    IMAGE_TAG: $APP_NAME:$CI_COMMIT_SHORT_SHA
   script:
     - docker build -t $IMAGE_TAG -f $DOCKERFILE_PATH .
   rules:

@@ -10,7 +10,7 @@ RUN apk update && \
 	
 WORKDIR /usr/src
 
-ARG cic_config_commit=2fa9fd511f6782a0a527d730edb52a3fe86f571b
+ARG cic_config_commit=6c5bda473d3806844696d5716845d51416ed1b47
 ARG cic_config_url=https://gitlab.com/grassrootseconomics/cic-config.git/
 RUN echo Install confini schema files && \
 	git clone --depth 1 $cic_config_url cic-config && \
@@ -40,6 +40,7 @@ RUN echo Install ABI collection for solidity interfaces used across all componen
 FROM python:3.8.6-slim-buster
 
 COPY --from=1 /usr/local/share/cic/ /usr/local/share/cic/
+COPY --from=1 /usr/local/etc/ /usr/local/etc/
 
 LABEL authors="Louis Holbrook <dev@holbrook.no> 0826EDA1702D1E87C6E2875121D2E7BB88C2A746"
 LABEL spdx-license-identifier="GPL-3.0-or-later"
@@ -104,72 +105,60 @@ RUN cd root && \
 RUN cd cic-bancor/python && \
 	pip install --extra-index-url $pip_extra_index_url .
 
+RUN echo installing common python tooling
+ARG cic_python_commit=a684ed3450a31f349ce1d860dfe3b8607f15bbe2
+ARG cic_python_url=https://gitlab.com/grassrootseconomics/cic-python.git/
+RUN echo Install sum of python dependencies across all components && \
+	git clone --depth 1 $cic_python_url cic-python && \
+	cd cic-python && \
+	git fetch --depth 1 origin $cic_python_commit && \
+	git checkout $cic_python_commit && \
+	pip install --extra-index-url $pip_extra_index_url -r requirements.txt
+
+RUN echo Install dev-only provisions
 ARG cryptocurrency_cli_tools_version=0.0.4
-# RUN pip install --extra-index-url $pip_extra_index_url cryptocurrency-cli-tools==$cryptocurrency_cli_tools_version
+RUN pip install --extra-index-url $pip_extra_index_url cryptocurrency-cli-tools==$cryptocurrency_cli_tools_version
 
-ARG giftable_erc20_token_version=0.0.7b1
-# RUN pip install --extra-index-url $pip_extra_index_url giftable-erc20-token==$giftable_erc20_token_version 
+RUN echo Install smart contract interface implementations, least frequently changed first
+ARG giftable_erc20_token_version=0.0.7b7
+RUN pip install --extra-index-url $pip_extra_index_url giftable-erc20-token==$giftable_erc20_token_version 
 
-ARG eth_accounts_index_version=0.0.10a2
-# RUN pip install --extra-index-url $pip_extra_index_url eth-accounts-index==$eth_accounts_index_version
+ARG eth_accounts_index_version=0.0.10a6
+RUN pip install --extra-index-url $pip_extra_index_url eth-accounts-index==$eth_accounts_index_version
 
-ARG erc20_approval_escrow_version=0.3.0a1
-# RUN pip install --extra-index-url $pip_extra_index_url erc20-approval-escrow==$erc20_approval_escrow_version 
+ARG erc20_approval_escrow_version=0.3.0a4
+RUN pip install --extra-index-url $pip_extra_index_url erc20-approval-escrow==$erc20_approval_escrow_version 
 
-ARG erc20_single_shot_faucet_version=0.2.0a1
-# RUN pip install --extra-index-url $pip_extra_index_url erc20-single-shot-faucet==$erc20_single_shot_faucet_version 
+ARG erc20_single_shot_faucet_version=0.2.0a5
+RUN pip install --extra-index-url $pip_extra_index_url erc20-single-shot-faucet==$erc20_single_shot_faucet_version 
 
-ARG eth_address_index_version==0.1.0a1
-# RUN pip install --extra-index-url $pip_extra_index_url eth-address-index==$eth_address_index_version
+ARG eth_address_index_version==0.1.0a6
+RUN pip install --extra-index-url $pip_extra_index_url eth-address-index==$eth_address_index_version
 
-# RUN echo Install cic specific python packages
-ARG  cic_registry_version=0.5.3a4
-# RUN pip install  --extra-index-url  $pip_extra_index_url  cic-registry==$cic_registry_version
+RUN echo Install cic specific python packages
+ARG cic_registry_version=0.5.3a10
+RUN pip install  --extra-index-url  $pip_extra_index_url  cic-registry==$cic_registry_version
 
-# RUN pip install  --extra-index-url $pip_extra_index_url  crypto-dev-signer==0.4.13b9
+RUN echo Install misc helpers
+
+ARG crypto_dev_signer_version==0.4.13rc2
+RUN pip install  --extra-index-url $pip_extra_index_url crypto-dev-signer==$crypto_dev_signer_version
+
+ARG eth_gas_proxy_version==0.0.1a4
+RUN pip install  --extra-index-url $pip_extra_index_url eth-gas-proxy==$eth_gas_proxy_version
+
 WORKDIR /root
 
-# RUN pip install --extra-index-url $pip_extra_index_url  crypto-dev-signer==0.4.12
-
-RUN pip install --extra-index-url $pip_extra_index_url \
-	cryptocurrency-cli-tools==$cryptocurrency_cli_tools_version \
-	giftable-erc20-token==$giftable_erc20_token_version \
-	eth-accounts-index==$eth_accounts_index_version \
-	erc20-approval-escrow==$erc20_approval_escrow_version \
-	erc20-single-shot-faucet==$erc20_single_shot_faucet_version \
-	cic-registry==$cic_registry_version \
-	crypto-dev-signer==0.4.13b9
-
-
 COPY contract-migration/testdata/pgp testdata/pgp
-
-RUN mkdir -vp /tmp/cic/pgp
-COPY contract-migration/testdata/pgp/* /tmp/cic/pgp/
-
-# COPY .env_config_template .env_config_template
-# COPY .env_dockercompose_template .env_dockercompose_template
-
-COPY contract-migration/reset.sh .
-# COPY data.sh data.sh
-COPY contract-migration/keystore keystore
 COPY contract-migration/wait-for-it.sh .
-RUN chmod +x reset.sh wait-for-it.sh
+RUN chmod +x ./wait-for-it.sh
+
+# COPY contract-migration/.env_config_template .env_config_template
+# COPY contract-migration/.env_dockercompose_template .env_dockercompose_template
+
+COPY contract-migration/reset.sh reset.sh
+COPY contract-migration/keystore keystore
 
 LABEL version="4"
 
-# DEFAULTS ASSUME THE FOLLOWING MNEMONIC ON GANACHE-CLI
-# history stumble mystery avoid embark arrive mom foil pledge keep grain dice
-ENV DEV_ETH_ACCOUNT_RESERVE_OWNER="0xc14958CD9A605AB0d9A36850362AaD2b9D42DF97"
-ENV DEV_ETH_ACCOUNT_RESERVE_MINTER="0xe3C4db5947409Aff0FF8D643047EA41515cA4B8e"
-ENV DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER="0xEb3907eCad74a0013c259D5874AE7f22DcBcC95C"
-ENV DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_OWNER="0x1AB26f3AAaaa884B651E213508592F3Ec6BfCe74"
-ENV DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER="0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA"
-ENV DEV_ETH_RESERVE_AMOUNT="1000000000000000000000000"
-ENV CIC_CHAIN_SPEC="Bloxberg:8995"
-ENV CIC_DATA_DIR="/tmp/cic/config"
-
-# populated internally when running provisioning script (reset.sh)
-# ENV DEV_ETH_RESERVE_ADDRESS
-# ENV BANCOR_REGISTRY_ADDRESS
-# ENV DEV_ETH_ACCOUNTS_INDEX_ADDRESS
-
+ENTRYPOINT [ "/bin/bash" ]
