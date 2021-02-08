@@ -4,6 +4,7 @@ include:
   - local: 'apps/cic-eth/.gitlab-ci.yml'
   - local: 'apps/cic-ussd/.gitlab-ci.yml'
   - local: 'apps/cic-notify/.gitlab-ci.yml'
+  - local: 'apps/cic-meta/.gitlab-ci.yml'
 
 stages:
   - build

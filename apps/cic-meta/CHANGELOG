@@ -1,0 +1,10 @@
+* 0.0.6
+	- Add server build
+* 0.0.5
+	- Set build on install
+* 0.0.4
+	- Change phone key generator to arbitrary value input
+* 0.0.3
+	- Add asset key generator
+	- Add crypto polyfill (node uses native crypto, web uses webcrypto)
+	- Add phone asset
