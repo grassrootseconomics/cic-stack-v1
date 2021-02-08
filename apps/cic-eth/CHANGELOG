@@ -9,6 +9,8 @@
 	* Add pure tcp and redis task api callbacks
 	* Add optional outgoing log status tracing
 	* Add lock lister and lock/unlock cli tool
+	* Add resend executable tool
+	* Add account create executable tool
 - 0.9.0
 	* Require chain spec parameter in api
 	* Pass chain spec between tasks
