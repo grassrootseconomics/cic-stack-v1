@@ -16,8 +16,10 @@ interface = "all"
 [websockets]
 disable = false
 port = 8546
+#apis = ["web3", "eth", "net", "personal", "parity", "parity_set", "traces", "rpc", "parity_accounts"]
+apis = ["all"]
 interface = "all"
-origins = ["none"]
+origins = ["*"]
 
 [account]
 password = ["/root/validator.pwd"]
