@@ -211,6 +211,11 @@ def main():
 
     chain_registry = ChainRegistry(chain_spec)
     CICRegistry.add_chain_registry(chain_registry, True)
+    try:
+        CICRegistry.get_contract(chain_spec, 'CICRegistry')
+    except Exception as e:
+        logg.exception('Eek, registry failure is baaad juju {}'.format(e))
+        sys.exit(1)
 
     if config.get('ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER') != None:
         CICRegistry.add_role(chain_spec, config.get('ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER'), 'AccountRegistry', True)

@@ -51,27 +51,34 @@ args_override = {
 config.dict_override(args_override, 'cli')
 celery_app = celery.Celery(broker=config.get('CELERY_BROKER_URL'), backend=config.get('CELERY_RESULT_URL'))
 
-redis_host = config.get('REDIS_HOST')
-redis_port = config.get('REDIS_PORT')
-redis_db = config.get('REDIS_DB')
-redis_channel = str(uuid.uuid4())
-r = redis.Redis(redis_host, redis_port, redis_db)
-ps = r.pubsub()
-ps.subscribe(redis_channel)
-ps.get_message()
 
-api = Api(
-        config.get('CIC_CHAIN_SPEC'),
-        queue=args.q,
-        callback_param='{}:{}:{}:{}'.format(args.redis_host_callback, args.redis_port_callback, redis_db, redis_channel),
-        callback_task='cic_eth.callbacks.redis.redis',
-        callback_queue=args.q,
-        )
+def main():
+    redis_host = config.get('REDIS_HOST')
+    redis_port = config.get('REDIS_PORT')
+    redis_db = config.get('REDIS_DB')
+    redis_channel = str(uuid.uuid4())
+    r = redis.Redis(redis_host, redis_port, redis_db)
 
-register = not args.no_register
-logg.debug('register {}'.format(register))
-t = api.create_account(register=register)
+    ps = r.pubsub()
+    ps.subscribe(redis_channel)
+    ps.get_message()
 
-ps.get_message()
-m = ps.get_message(timeout=args.timeout)
-print(json.loads(m['data']))
+    api = Api(
+            config.get('CIC_CHAIN_SPEC'),
+            queue=args.q,
+            callback_param='{}:{}:{}:{}'.format(args.redis_host_callback, args.redis_port_callback, redis_db, redis_channel),
+            callback_task='cic_eth.callbacks.redis.redis',
+            callback_queue=args.q,
+            )
+
+    register = not args.no_register
+    logg.debug('register {}'.format(register))
+    t = api.create_account(register=register)
+
+    ps.get_message()
+    m = ps.get_message(timeout=args.timeout)
+    print(json.loads(m['data']))
+
+
+if __name__ == '__main__':
+    main()
