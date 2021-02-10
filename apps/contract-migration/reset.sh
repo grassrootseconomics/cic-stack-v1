@@ -1,5 +1,11 @@
 #!/bin/bash
 
+set -a
+
+DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER=0xEb3907eCad74a0013c259D5874AE7f22DcBcC95C
+DEV_ETH_ACCOUNT_RESERVE_MINTER=${DEV_ETH_ACCOUNT_RESERVE_MINTER:-$DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER}
+DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER=${DEV_ETH_ACCOUNT_RESERVE_MINTER:-$DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER}
+DEV_ETH_RESERVE_AMOUNT=${DEV_ETH_RESERVE_AMOUNT:-""10000000000000000000000000000000000}
 keystore_file=$(realpath ./keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c)
 
 echo "environment:"
@@ -12,7 +18,8 @@ echo \n
 # define these parameters at runtime
 # pushd /usr/src
 
-#!/bin/sh
+init_level_file=${CIC_DATA_DIR}/.init
+echo -n 0 > $init_level_file
 
 # Abort on any error (including if wait-for-it fails).
 set -e
@@ -22,8 +29,7 @@ if [[ -n "${ETH_PROVIDER}" ]]; then
 	echo "waiting for ${ETH_PROVIDER}..."
   	./wait-for-it.sh "${ETH_PROVIDER_HOST}:${ETH_PROVIDER_PORT}"
 
-	#DEV_ETH_RESERVE_ADDRESS=`giftable-token-deploy -p $ETH_PROVIDER -o $DEV_ETH_ACCOUNT_RESERVE_OWNER -m $DEV_ETH_ACCOUNT_RESERVE_MINTER $DEV_ETH_RESERVE_AMOUNT`
-	DEV_ETH_RESERVE_ADDRESS=`giftable-token-deploy -p $ETH_PROVIDER -y $keystore_file -i $CIC_CHAIN_SPEC --minter $DEV_ETH_ACCOUNT_RESERVE_MINTER -v -w --name "Sarafu" --symbol "SRF" $DEV_ETH_RESERVE_AMOUNT`
+	DEV_ETH_RESERVE_ADDRESS=`giftable-token-deploy -p $ETH_PROVIDER -y $keystore_file -i $CIC_CHAIN_SPEC --account $DEV_ETH_ACCOUNT_RESERVE_MINTER --minter $DEV_ETH_ACCOUNT_RESERVE_MINTER -v -w --name "Sarafu" --symbol "SRF" $DEV_ETH_RESERVE_AMOUNT`
 
 	#BANCOR_REGISTRY_ADDRESS=`cic-bancor-deploy --bancor-dir /usr/local/share/cic/bancor -z $DEV_ETH_RESERVE_ADDRESS -p $ETH_PROVIDER -o $DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER`
 
@@ -33,6 +39,12 @@ if [[ -n "${ETH_PROVIDER}" ]]; then
 	cic-registry-set -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -k CICRegistry  -p $ETH_PROVIDER $CIC_REGISTRY_ADDRESS -vv
 	#cic-registry-set -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -k BancorRegistry -p $ETH_PROVIDER $BANCOR_REGISTRY_ADDRESS -vv
 	cic-registry-set -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -k AccountRegistry -p $ETH_PROVIDER $CIC_ACCOUNTS_INDEX_ADDRESS  -vv
+
+	# Deploy address declarator registry
+	>&2 echo "deploy address declarator contract"
+	declarator_description=0x546869732069732074686520434943206e6574776f726b000000000000000000
+	CIC_DECLARATOR_ADDRESS=`eth-address-declarator-deploy -y $keystore_file -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -w -v $declarator_description`
+
 else
 	echo "\$ETH_PROVIDER not set!"
 	exit 1
@@ -44,12 +56,18 @@ mkdir -p $CIC_DATA_DIR
 cat << EOF > $CIC_DATA_DIR/.env
 export DEV_ETH_RESERVE_ADDRESS=$DEV_ETH_RESERVE_ADDRESS
 export DEV_ETH_RESERVE_AMOUNT=$DEV_ETH_RESERVE_AMOUNT
-export DEV_ETH_ACCOUNTS_INDEX_ADDRESS=$DEV_ETH_ACCOUNTS_INDEX_ADDRESS
+export DEV_ETH_ACCOUNTS_INDEX_ADDRESS=$CIC_ACCOUNTS_INDEX_ADDRESS
 export BANCOR_REGISTRY_ADDRESS=$BANCOR_REGISTRY_ADDRESS
 export CIC_REGISTRY_ADDRESS=$CIC_REGISTRY_ADDRESS
 
 EOF
 
+cat $CIC_DATA_DIR/envlist | bash from_env.sh > $CIC_DATA_DIR/.env_all
 # popd
+
+set +a
+set +e
+
+echo -n 1 > $init_level_file
 
 exec "$@"

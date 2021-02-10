@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e
 . ./db.sh
 
 # set CONFINI_ENV_PREFIX to override the env prefix to override env vars
@@ -27,3 +28,4 @@ while true; do
   sleep 15;
 done
 
+set +e

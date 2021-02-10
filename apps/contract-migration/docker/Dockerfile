@@ -10,7 +10,7 @@ RUN apk update && \
 	
 WORKDIR /usr/src
 
-ARG cic_config_commit=6c5bda473d3806844696d5716845d51416ed1b47
+ARG cic_config_commit=35c69ba75f00c8147150acf325565d5391cf25bf
 ARG cic_config_url=https://gitlab.com/grassrootseconomics/cic-config.git/
 RUN echo Install confini schema files && \
 	git clone --depth 1 $cic_config_url cic-config && \
@@ -106,7 +106,7 @@ RUN cd cic-bancor/python && \
 	pip install --extra-index-url $pip_extra_index_url .
 
 RUN echo installing common python tooling
-ARG cic_python_commit=a684ed3450a31f349ce1d860dfe3b8607f15bbe2
+ARG cic_python_commit=beecee783ceac2ea0fa711f888ce4c82f1a81490
 ARG cic_python_url=https://gitlab.com/grassrootseconomics/cic-python.git/
 RUN echo Install sum of python dependencies across all components && \
 	git clone --depth 1 $cic_python_url cic-python && \
@@ -132,11 +132,11 @@ RUN pip install --extra-index-url $pip_extra_index_url erc20-approval-escrow==$e
 ARG erc20_single_shot_faucet_version=0.2.0a5
 RUN pip install --extra-index-url $pip_extra_index_url erc20-single-shot-faucet==$erc20_single_shot_faucet_version 
 
-ARG eth_address_index_version==0.1.0a6
+ARG eth_address_index_version==0.1.0a8
 RUN pip install --extra-index-url $pip_extra_index_url eth-address-index==$eth_address_index_version
 
 RUN echo Install cic specific python packages
-ARG cic_registry_version=0.5.3a10
+ARG cic_registry_version=0.5.3a11
 RUN pip install  --extra-index-url  $pip_extra_index_url  cic-registry==$cic_registry_version
 
 RUN echo Install misc helpers
@@ -157,6 +157,9 @@ RUN chmod +x ./wait-for-it.sh
 # COPY contract-migration/.env_dockercompose_template .env_dockercompose_template
 
 COPY contract-migration/reset.sh reset.sh
+COPY contract-migration/from_env.sh from_env.sh
+COPY contract-migration/seed_cic_eth.sh seed_cic_eth.sh
+COPY contract-migration/sarafu_declaration.json sarafu_declaration.json
 COPY contract-migration/keystore keystore
 
 LABEL version="4"
