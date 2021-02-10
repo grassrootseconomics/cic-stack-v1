@@ -3,20 +3,19 @@
         APP_NAME: cic-ussd
         DOCKERFILE_PATH: $APP_NAME/docker/Dockerfile
 
-.this_changes_target:
+.cic_ussd_changes_target:
     rules:
         - changes:
             - $CONTEXT/$APP_NAME/*
 
 build-mr-cic-ussd:
     extends:
-        - .this_changes_target
+        - .cic_ussd_changes_target
         - .py_build_merge_request
         - .cic_ussd_variables
 
 build-push-cic-ussd:
     extends:
-        - .this_changes_target
         - .py_build_push
         - .cic_ussd_variables
         
