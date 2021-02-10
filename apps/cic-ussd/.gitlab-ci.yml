@@ -18,5 +18,5 @@ build-push-cic-ussd:
     extends:
         - .py_build_push
         - .cic_ussd_variables
-        
+
 
