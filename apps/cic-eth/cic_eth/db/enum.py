@@ -1,6 +1,26 @@
 # standard imports
 import enum
 
+
+@enum.unique
+class StatusBits(enum.IntEnum):
+    QUEUED = 0x01
+    IN_NETWORK = 0x08
+   
+    DEFERRED = 0x10
+    GAS_ISSUES = 0x20
+
+    LOCAL_ERROR = 0x100
+    NODE_ERROR = 0x200
+    NETWORK_ERROR = 0x400
+    UNKNOWN_ERROR = 0x800
+
+    FINAL = 0x1000
+    OBSOLETE = 0x2000
+    MANUAL = 0x8000
+
+
+@enum.unique
 class StatusEnum(enum.IntEnum):
     """
 
@@ -22,21 +42,27 @@ class StatusEnum(enum.IntEnum):
         * SUCCESS: THe transaction was successfully mined. (Block number will be set)
 
     """
-    PENDING=-9
-    SENDFAIL=-8
-    RETRY=-7
-    READYSEND=-6
-    OBSOLETED=-2
-    WAITFORGAS=-1
-    SENT=0
-    FUBAR=1
-    CANCELLED=2
-    OVERRIDDEN=3
-    REJECTED=7
-    REVERTED=8
-    SUCCESS=9
+    PENDING = 0
+
+    SENDFAIL = StatusBits.DEFERRED | StatusBits.LOCAL_ERROR
+    RETRY = StatusBits.QUEUED | StatusBits.DEFERRED 
+    READYSEND = StatusBits.QUEUED
+
+    OBSOLETED = StatusBits.OBSOLETE | StatusBits.IN_NETWORK
+
+    WAITFORGAS = StatusBits.GAS_ISSUES
+
+    SENT = StatusBits.IN_NETWORK
+    FUBAR = StatusBits.FINAL | StatusBits.UNKNOWN_ERROR
+    CANCELLED = StatusBits.IN_NETWORK | StatusBits.FINAL | StatusBits.OBSOLETE
+    OVERRIDDEN = StatusBits.FINAL | StatusBits.OBSOLETE | StatusBits.MANUAL
+
+    REJECTED = StatusBits.NODE_ERROR | StatusBits.FINAL
+    REVERTED = StatusBits.IN_NETWORK | StatusBits.FINAL | StatusBits.NETWORK_ERROR
+    SUCCESS = StatusBits.IN_NETWORK | StatusBits.FINAL 
 
 
+@enum.unique
 class LockEnum(enum.IntEnum):
     """
     STICKY: When set, reset is not possible
@@ -48,4 +74,40 @@ class LockEnum(enum.IntEnum):
     CREATE=2
     SEND=4
     QUEUE=8
+    QUERY=16
     ALL=int(0xfffffffffffffffe)
+
+
+def status_str(v, bits_only=False):
+    s = ''
+    if not bits_only:
+        try:
+            s = StatusEnum(v).name
+            return s
+        except ValueError:
+            pass
+
+    for i in range(16):
+        b = (1 << i)
+        if (b & 0xffff) & v:
+            n = StatusBits(b).name
+            if len(s) > 0:
+                s += ','
+            s += n
+    if not bits_only:
+        s += '*'
+    return s
+
+
+def all_errors():
+    return StatusBits.LOCAL_ERROR | StatusBits.NODE_ERROR | StatusBits.NETWORK_ERROR | StatusBits.UNKNOWN_ERROR
+
+
+def is_error_status(v):
+    return bool(v & all_errors())
+
+
+def is_alive(v):
+    return bool(v & (StatusBits.FINAL | StatusBits.OBSOLETE) == 0)
+
+
