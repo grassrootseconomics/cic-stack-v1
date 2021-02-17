@@ -44,6 +44,7 @@ if [[ -n "${ETH_PROVIDER}" ]]; then
 	>&2 echo "deploy address declarator contract"
 	declarator_description=0x546869732069732074686520434943206e6574776f726b000000000000000000
 	CIC_DECLARATOR_ADDRESS=`eth-address-declarator-deploy -y $keystore_file -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -w -v $declarator_description`
+	cic-registry-set -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -k AddressDeclarator -p $ETH_PROVIDER $CIC_DECLARATOR_ADDRESS  -vv
 
 else
 	echo "\$ETH_PROVIDER not set!"
@@ -59,6 +60,7 @@ export DEV_ETH_RESERVE_AMOUNT=$DEV_ETH_RESERVE_AMOUNT
 export DEV_ETH_ACCOUNTS_INDEX_ADDRESS=$CIC_ACCOUNTS_INDEX_ADDRESS
 export BANCOR_REGISTRY_ADDRESS=$BANCOR_REGISTRY_ADDRESS
 export CIC_REGISTRY_ADDRESS=$CIC_REGISTRY_ADDRESS
+export CIC_TRUST_ADDRESS=$DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER
 
 EOF
 
