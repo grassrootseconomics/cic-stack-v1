@@ -378,7 +378,6 @@ def get_tx_cache(tx_hash):
 
     session.close()
 
-    values = txc.values()
     tx = {
         'tx_hash': otx.tx_hash,
         'signed_tx': otx.signed_tx,
@@ -389,8 +388,8 @@ def get_tx_cache(tx_hash):
         'destination_token': txc.destination_token_address,
         'sender': txc.sender,
         'recipient': txc.recipient,
-        'from_value': values[0],
-        'to_value': values[1],
+        'from_value': int(txc.from_value),
+        'to_value': int(txc.to_value),
         'date_created': txc.date_created,
         'date_updated': txc.date_updated,
         'date_checked': txc.date_checked,
