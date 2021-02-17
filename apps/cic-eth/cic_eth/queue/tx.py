@@ -5,6 +5,7 @@ import datetime
 
 # third-party imports
 import celery
+from hexathon import strip_0x
 from sqlalchemy import or_
 from sqlalchemy import not_
 from sqlalchemy import tuple_
@@ -12,6 +13,7 @@ from sqlalchemy import func
 
 # local imports
 from cic_registry import CICRegistry
+from cic_registry.chain import ChainSpec
 from cic_eth.db.models.otx import Otx
 from cic_eth.db.models.otx import OtxStateLog
 from cic_eth.db.models.tx import TxCache
@@ -22,6 +24,7 @@ from cic_eth.db.enum import (
         LockEnum,
         StatusBits,
         is_alive,
+        dead,
         )
 from cic_eth.eth.util import unpack_signed_raw_tx # TODO: should not be in same sub-path as package that imports queue.tx
 from cic_eth.error import NotLocalTxError
@@ -686,6 +689,4 @@ def get_account_tx(address, as_sender=True, as_recipient=True, counterpart=None)
     session.close()
 
     return txs
-
-
 

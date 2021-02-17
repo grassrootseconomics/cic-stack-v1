@@ -187,7 +187,6 @@ def balance(tokens, holder_address, chain_str):
     """
     #abi = ContractRegistry.abi('ERC20Token')
     chain_spec = ChainSpec.from_chain_str(chain_str)
-    balances = []
     c = RpcClient(chain_spec)
     for t in tokens:
         #token = CICRegistry.get_address(t['address'])
@@ -195,9 +194,9 @@ def balance(tokens, holder_address, chain_str):
         #o = c.w3.eth.contract(abi=abi, address=t['address'])
         o = CICRegistry.get_address(chain_spec, t['address']).contract
         b = o.functions.balanceOf(holder_address).call()
-        logg.debug('balance {} for {}: {}'.format(t['address'], holder_address, b))
-        balances.append(b)
-    return b
+        t['balance_network'] = b
+
+    return tokens
 
 
 @celery_app.task(bind=True)
@@ -326,7 +325,7 @@ def resolve_tokens_by_symbol(token_symbols, chain_str):
         token = CICRegistry.get_token(chain_spec, token_symbol)
         tokens.append({
             'address': token.address(),
-            #'converters': [],
+            'converters': [],
             })
     return tokens
 

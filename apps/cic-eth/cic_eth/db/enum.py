@@ -4,20 +4,23 @@ import enum
 
 @enum.unique
 class StatusBits(enum.IntEnum):
-    QUEUED = 0x01
-    IN_NETWORK = 0x08
+    """Individual bit flags that are combined to define the state and legacy of a queued transaction
+
+    """
+    QUEUED = 0x01 # transaction should be sent to network
+    IN_NETWORK = 0x08 # transaction is in network
    
-    DEFERRED = 0x10
-    GAS_ISSUES = 0x20
+    DEFERRED = 0x10 # an attempt to send the transaction to network has failed
+    GAS_ISSUES = 0x20 # transaction is pending sender account gas funding
 
-    LOCAL_ERROR = 0x100
-    NODE_ERROR = 0x200
-    NETWORK_ERROR = 0x400
-    UNKNOWN_ERROR = 0x800
+    LOCAL_ERROR = 0x100 # errors that originate internally from the component
+    NODE_ERROR = 0x200 # errors originating in the node (invalid RLP input...)
+    NETWORK_ERROR = 0x400 # errors that originate from the network (REVERT)
+    UNKNOWN_ERROR = 0x800 # unclassified errors (the should not occur)
 
-    FINAL = 0x1000
-    OBSOLETE = 0x2000
-    MANUAL = 0x8000
+    FINAL = 0x1000 # transaction processing has completed
+    OBSOLETE = 0x2000 # transaction has been replaced by a different transaction with higher fee
+    MANUAL = 0x8000 # transaction processing has been manually overridden
 
 
 @enum.unique
@@ -79,6 +82,19 @@ class LockEnum(enum.IntEnum):
 
 
 def status_str(v, bits_only=False):
+    """Render a human-readable string describing the status
+
+    If the bit field exactly matches a StatusEnum value, the StatusEnum label will be returned.
+
+    If a StatusEnum cannot be matched, the string will be postfixed with "*", unless explicitly instructed to return bit field labels only.
+
+    :param v: Status bit field
+    :type v: number
+    :param bits_only: Only render individual bit labels.
+    :type bits_only: bool
+    :returns: Status string
+    :rtype: str
+    """
     s = ''
     if not bits_only:
         try:
@@ -100,14 +116,39 @@ def status_str(v, bits_only=False):
 
 
 def all_errors():
+    """Bit mask of all error states
+
+    :returns: Error flags
+    :rtype: number
+    """
     return StatusBits.LOCAL_ERROR | StatusBits.NODE_ERROR | StatusBits.NETWORK_ERROR | StatusBits.UNKNOWN_ERROR
 
 
 def is_error_status(v):
+    """Check if value is an error state
+
+    :param v: Status bit field
+    :type v: number
+    :returns: True if error
+    :rtype: bool
+    """
     return bool(v & all_errors())
 
 
+def dead():
+    """Bit mask defining whether a transaction is still likely to be processed on the network.
+
+    :returns: Bit mask
+    :rtype: number
+    """
+    return StatusBits.FINAL | StatusBits.OBSOLETE
+
+
 def is_alive(v):
-    return bool(v & (StatusBits.FINAL | StatusBits.OBSOLETE) == 0)
+    """Check if transaction is still likely to be processed on the network.
 
+    The contingency of "likely" refers to the case a transaction has been obsoleted after sent to the network, but the network still confirms the obsoleted transaction. The return value of this method will not change as a result of this, BUT the state itself will (as the FINAL bit will be set).
 
+    :returns: 
+    """
+    return bool(v & dead() == 0)
