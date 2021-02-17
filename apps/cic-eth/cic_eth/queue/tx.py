@@ -386,6 +386,8 @@ def get_tx_cache(tx_hash):
         'status_code': otx.status,
         'source_token': txc.source_token_address,
         'destination_token': txc.destination_token_address,
+        'block_number': txc.block_number,
+        'tx_index': txc.tx_index,
         'sender': txc.sender,
         'recipient': txc.recipient,
         'from_value': int(txc.from_value),
@@ -661,6 +663,7 @@ def get_account_tx(address, as_sender=True, as_recipient=True, counterpart=None)
     """
     if not as_sender and not as_recipient:
         raise ValueError('at least one of as_sender and as_recipient must be True')
+
     txs = {}
 
     session = SessionBase.create_session()
@@ -676,6 +679,9 @@ def get_account_tx(address, as_sender=True, as_recipient=True, counterpart=None)
 
     results = q.all()
     for r in results:
+        if txs.get(r.tx_hash) != None:
+            logg.debug('tx {} already recorded'.format(r.tx_hash))
+            continue
         txs[r.tx_hash] = r.signed_tx
     session.close()
 

@@ -417,6 +417,73 @@ class Api:
         return t
 
 
+    def list(self, address, limit=10, external_task=None, external_queue=None):
+        """Retrieve an aggregate list of latest transactions of internal and (optionally) external origin in reverse chronological order.
+
+        The array of transactions returned have the same dict layout as those passed by the callback filter in cic_eth/runnable/manager
+
+        If the external task is defined, this task will be used to query external transactions. If this is not defined, no external transactions will be included. The task must accept (offset, limit, address) as input parameters, and return a bloom filter that will be used to retrieve transaction data for the matching transactions. See cic_eth.ext.tx.list_tx_by_bloom for details on the bloom filter dat format.
+
+        :param address: Ethereum address to list transactions for
+        :type address: str, 0x-hex
+        :param limit: Amount of results to return
+        :type limit: number
+        :param external_task: Celery task providing external transactions
+        :type external_task: str
+        :param external_queue: Celery task queue providing exernal transactions task
+        :type external_queue: str
+        :returns: List of transactions
+        :rtype: list of dict
+        """
+        offset = 0
+        s_local = celery.signature(
+            'cic_eth.queue.tx.get_account_tx',
+            [
+                address,
+                ],
+            queue=self.queue,
+            )
+
+        s_brief = celery.signature(
+            'cic_eth.ext.tx.tx_collate',
+            [
+                self.chain_str,
+                offset,
+                limit
+                ],
+            queue=self.queue,
+            )
+        if self.callback_param != None:
+            s_assemble.link(self.callback_success).on_error(self.callback_error)
+
+        t = None
+        if external_task != None:
+            s_external_get = celery.signature(
+                external_task,
+                [
+                    address,
+                    offset,
+                    limit,
+                    ],
+                queue=external_queue,
+                )
+
+            s_external_process = celery.signature(
+                'cic_eth.ext.tx.list_tx_by_bloom',
+                [
+                    address,
+                    self.chain_str,
+                    ],
+                queue=self.queue,
+                    )
+            c = celery.chain(s_external_get, s_external_process)
+            t = celery.chord([s_local, c])(s_brief)
+        else:
+            t = s_local.apply_sync()
+
+        return t
+
+
     def ping(self, r):
         """A noop callback ping for testing purposes.
 
