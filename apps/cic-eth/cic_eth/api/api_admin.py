@@ -267,7 +267,9 @@ class AdminApi:
         """
         s = celery.signature(
                 'cic_eth.queue.tx.get_account_tx',
-                [address],
+                [
+                    address,
+                    ],
                 queue=self.queue,
                 )
         txs = s.apply_async().get()

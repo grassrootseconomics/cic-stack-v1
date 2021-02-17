@@ -422,7 +422,7 @@ class Otx(SessionBase):
 
 
     @staticmethod
-    def get(status=0, limit=4096, status_exact=True):
+    def get(status=0, limit=4096, status_exact=True, session=None):
         """Returns outgoing transaction lists by status.
 
         Status may either be matched exactly, or be an upper bound of the integer value of the status enum.
@@ -437,26 +437,32 @@ class Otx(SessionBase):
         :rtype: tuple, where first element is transaction hash
         """
         e = None
-        session = Otx.create_session()
+
+        session = SessionBase.bind_session(session)
+
         if status_exact:
             e = session.query(Otx.tx_hash).filter(Otx.status==status).order_by(Otx.date_created.asc()).limit(limit).all()
         else:
             e = session.query(Otx.tx_hash).filter(Otx.status<=status).order_by(Otx.date_created.asc()).limit(limit).all()
-        session.close()
+        
+        SessionBase.release_session(session)
         return e
 
 
     @staticmethod
-    def load(tx_hash):
+    def load(tx_hash, session=None):
         """Retrieves the outgoing transaction record by transaction hash.
 
         :param tx_hash: Transaction hash
         :type tx_hash: str, 0x-hex
         """
-        session = Otx.create_session()
+        session = SessionBase.bind_session(session)
+        
         q = session.query(Otx)
         q = q.filter(Otx.tx_hash==tx_hash)
-        session.close()
+
+        SessionBase.release_session(session)
+
         return q.first()
 
 
