@@ -344,7 +344,6 @@ def send(self, txs, chain_str):
 
     chain_spec = ChainSpec.from_chain_str(chain_str)
 
-
     tx_hex = txs[0]
     logg.debug('send transaction {}'.format(tx_hex))
 

@@ -287,7 +287,6 @@ class Otx(SessionBase):
 
         self.__set_status(StatusBits.IN_NETWORK, session)
         self.__reset_status(StatusBits.DEFERRED | StatusBits.QUEUED | StatusBits.LOCAL_ERROR | StatusBits.NODE_ERROR, session)
-        logg.debug('<<< status {}'.format(status_str(self.status)))
 
         if self.tracing:
             self.__state_log(session=session)
