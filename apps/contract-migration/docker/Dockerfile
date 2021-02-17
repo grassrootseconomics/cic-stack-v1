@@ -136,7 +136,7 @@ ARG eth_address_index_version==0.1.0a8
 RUN pip install --extra-index-url $pip_extra_index_url eth-address-index==$eth_address_index_version
 
 RUN echo Install cic specific python packages
-ARG cic_registry_version=0.5.3a11
+ARG cic_registry_version=0.5.3a18
 RUN pip install  --extra-index-url  $pip_extra_index_url  cic-registry==$cic_registry_version
 
 RUN echo Install misc helpers
