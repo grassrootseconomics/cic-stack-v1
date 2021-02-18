@@ -131,8 +131,8 @@ services:
 
   cic-cache-tracker:
     build:
-      context: apps/cic-cache/
-      dockerfile: docker/Dockerfile
+      context: apps
+      dockerfile: cic-cache/docker/Dockerfile
     environment:
       CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS # supplied at contract-config after contract provisioning
       ETH_PROVIDER: ${ETH_PROVIDER:-http://eth:8545}
@@ -167,8 +167,8 @@ services:
 
   cic-cache-server:
     build: 
-        context: apps/cic-cache/
-        dockerfile: docker/Dockerfile
+        context: apps
+        dockerfile: cic-cache/docker/Dockerfile
     environment:
       DATABASE_USER: $DATABASE_USER
       DATABASE_HOST: $DATABASE_HOST
