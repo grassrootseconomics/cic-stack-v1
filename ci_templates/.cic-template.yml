@@ -41,7 +41,7 @@ before_script:
     variables:
         CI_DEBUG_TRACE: "true"
         IMAGE_TAG: $CI_REGISTRY_IMAGE/$APP_NAME:$CI_COMMIT_BRANCH-$CI_COMMIT_SHORT_SHA
-        LATEST_TAG: $CI_REGISTRY_IMAGE/$APP_NAME:$CI_COMMIT_BRANCH-latest
+        LATEST_TAG: $CI_REGISTRY_IMAGE/$APP_NAME:latest
     script:
       - docker build -t $IMAGE_TAG -f $DOCKERFILE_PATH .
       - docker push $IMAGE_TAG
