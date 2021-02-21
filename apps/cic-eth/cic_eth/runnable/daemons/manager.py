@@ -178,7 +178,7 @@ def main():
 
     tx_filter = TxFilter(queue)
 
-    registration_filter = RegistrationFilter()
+    registration_filter = RegistrationFilter(queue)
 
     gas_filter = GasFilter(c.gas_provider(), queue)
 

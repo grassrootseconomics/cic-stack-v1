@@ -137,6 +137,7 @@ async function processRequest(req, res) {
 		console.debug('mode', mod);
 		let content = '';
 		let contentType = 'application/json';
+		console.debug('handling data', data);
 		let r:any = undefined;
 		try {
 			switch (mod) {
@@ -192,14 +193,16 @@ async function processRequest(req, res) {
 		}
 
 		if (content === undefined) {
+			console.error('empty onctent', data);
 			res.writeHead(400, {"Content-Type": "text/plain"});
 			res.end();
 			return;
 		}
 
+		const responseContentLength = (new TextEncoder().encode(content)).length;
 		res.writeHead(200, {
 			"Content-Type": contentType,
-			"Content-Length": content.length,
+			"Content-Length": responseContentLength,
 		});
 		res.write(content);
 		res.end();
