@@ -32,6 +32,7 @@ from cic_eth.admin import ctrl
 from cic_eth.eth.rpc import RpcClient
 from cic_eth.eth.rpc import GasOracle
 from cic_eth.queue import tx
+from cic_eth.queue import balance
 from cic_eth.callbacks import Callback
 from cic_eth.callbacks import http
 from cic_eth.callbacks import tcp
@@ -49,6 +50,7 @@ argparser = argparse.ArgumentParser()
 argparser.add_argument('-p', '--provider', dest='p', type=str, help='web3 provider')
 argparser.add_argument('-c', type=str, default=config_dir, help='config file')
 argparser.add_argument('-q', type=str, default='cic-eth', help='queue name for worker tasks')
+argparser.add_argument('-r', type=str, help='CIC registry address')
 argparser.add_argument('--abi-dir', dest='abi_dir', type=str, help='Directory containing bytecode and abi')
 argparser.add_argument('--trace-queue-status', default=None, dest='trace_queue_status', action='store_true', help='set to perist all queue entry status changes to storage')
 argparser.add_argument('-i', '--chain-spec', dest='i', type=str, help='chain spec')
@@ -68,6 +70,7 @@ config.process()
 args_override = {
         'ETH_ABI_DIR': getattr(args, 'abi_dir'),
         'CIC_CHAIN_SPEC': getattr(args, 'i'),
+        'CIC_REGISTRY_ADDRESS': getattr(args, 'r'),
         'ETH_PROVIDER': getattr(args, 'p'),
         'TASKS_TRACE_QUEUE_STATUS': getattr(args, 'trace_queue_status'),
         }
@@ -228,7 +231,7 @@ def main():
     for address in trusted_addresses:
         logg.info('using trusted address {}'.format(address))
     oracle = DeclaratorOracleAdapter(declarator.contract, trusted_addresses)
-    chain_registry.add_oracle('naive_erc20_oracle', oracle)
+    chain_registry.add_oracle(oracle, 'naive_erc20_oracle')
 
 
     #chain_spec = CICRegistry.default_chain_spec

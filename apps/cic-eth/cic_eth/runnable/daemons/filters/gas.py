@@ -5,9 +5,10 @@ import logging
 from cic_registry.chain import ChainSpec
 
 # local imports
+from cic_eth.db.enum import StatusBits
 from cic_eth.db.models.base import SessionBase
 from cic_eth.db.models.tx import TxCache
-from cic_eth.db import Otx
+from cic_eth.db.models.otx import Otx
 from cic_eth.queue.tx import get_paused_txs
 from cic_eth.eth.task import create_check_gas_and_send_task
 from .base import SyncFilter
@@ -39,7 +40,7 @@ class GasFilter(SyncFilter):
                 return
 
             chain_spec = ChainSpec.from_chain_str(chain_str)
-            txs = get_paused_txs(StatusEnum.WAITFORGAS, r[0], chain_spec.chain_id(), session=session)
+            txs = get_paused_txs(StatusBits.GAS_ISSUES, r[0], chain_spec.chain_id(), session=session)
 
             SessionBase.release_session(session)
 

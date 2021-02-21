@@ -53,7 +53,7 @@ RUN apt-get update && \
 
 RUN echo installing nodejs tooling
 
-COPY contract-migration/dev/nvm.sh /root/
+COPY contract-migration/nvm.sh /root/
 
 # Install nvm with node and npm
 # https://stackoverflow.com/questions/25899912/how-to-install-nvm-in-docker
@@ -106,7 +106,7 @@ RUN cd cic-bancor/python && \
 	pip install --extra-index-url $pip_extra_index_url .
 
 RUN echo installing common python tooling
-ARG cic_python_commit=beecee783ceac2ea0fa711f888ce4c82f1a81490
+ARG cic_python_commit=9bd1d5319aad8791ebf353707eabbb7b3e7ab5d0
 ARG cic_python_url=https://gitlab.com/grassrootseconomics/cic-python.git/
 RUN echo Install sum of python dependencies across all components && \
 	git clone --depth 1 $cic_python_url cic-python && \
@@ -120,38 +120,47 @@ ARG cryptocurrency_cli_tools_version=0.0.4
 RUN pip install --extra-index-url $pip_extra_index_url cryptocurrency-cli-tools==$cryptocurrency_cli_tools_version
 
 RUN echo Install smart contract interface implementations, least frequently changed first
-ARG giftable_erc20_token_version=0.0.7b10
+ARG giftable_erc20_token_version=0.0.7b12
 RUN pip install --extra-index-url $pip_extra_index_url giftable-erc20-token==$giftable_erc20_token_version 
 
-ARG eth_accounts_index_version=0.0.10a6
+ARG eth_accounts_index_version=0.0.10a9
 RUN pip install --extra-index-url $pip_extra_index_url eth-accounts-index==$eth_accounts_index_version
 
-ARG erc20_approval_escrow_version=0.3.0a4
-RUN pip install --extra-index-url $pip_extra_index_url erc20-approval-escrow==$erc20_approval_escrow_version 
+#ARG erc20_approval_escrow_version=0.3.0a4
+#RUN pip install --extra-index-url $pip_extra_index_url erc20-approval-escrow==$erc20_approval_escrow_version 
+ARG erc20_transfer_authorization_version=0.3.0a9
+RUN pip install --extra-index-url $pip_extra_index_url erc20-transfer-authorization==$erc20_transfer_authorization_version
 
 #ARG erc20_single_shot_faucet_version=0.2.0a5
 #RUN pip install --extra-index-url $pip_extra_index_url erc20-single-shot-faucet==$erc20_single_shot_faucet_version 
 
-ARG sarafu_faucet_version==0.0.1a10
+ARG sarafu_faucet_version=0.0.1a11
 RUN pip install --extra-index-url $pip_extra_index_url sarafu-faucet==$sarafu_faucet_version
 
-ARG eth_address_index_version==0.1.0a8
+ARG eth_address_index_version=0.1.0a10
 RUN pip install --extra-index-url $pip_extra_index_url eth-address-index==$eth_address_index_version
 
 RUN echo Install cic specific python packages
-ARG cic_registry_version=0.5.3a18
-RUN pip install  --extra-index-url  $pip_extra_index_url  cic-registry==$cic_registry_version
+ARG cic_registry_version=0.5.3a20+build.30d0026c
+RUN pip install  --extra-index-url $pip_extra_index_url  cic-registry==$cic_registry_version
 
 RUN echo Install misc helpers
 
-ARG crypto_dev_signer_version==0.4.13rc2
+ARG crypto_dev_signer_version=0.4.13rc2
 RUN pip install  --extra-index-url $pip_extra_index_url crypto-dev-signer==$crypto_dev_signer_version
 
-ARG eth_gas_proxy_version==0.0.1a4
+ARG eth_gas_proxy_version=0.0.1a4
 RUN pip install  --extra-index-url $pip_extra_index_url eth-gas-proxy==$eth_gas_proxy_version
 
-ARG cic_contracts_version==0.0.2a2
+ARG cic_contracts_version=0.0.2a2
 RUN pip install  --extra-index-url $pip_extra_index_url cic-contracts==$cic_contracts_version
+
+ARG chainlib_version=0.0.1a16
+RUN pip install  --extra-index-url $pip_extra_index_url chainlib==$chainlib_version
+
+ARG chainsyncer_version=0.0.1a8
+RUN pip install  --extra-index-url $pip_extra_index_url chainsyncer==$chainsyncer_version
+
 
 WORKDIR /root
 
