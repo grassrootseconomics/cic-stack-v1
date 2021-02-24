@@ -101,6 +101,18 @@ function parseDigest(url) {
 
 async function processRequest(req, res) {
 	let digest = undefined;
+	const headers = {
+		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Methods": "OPTIONS, POST, GET, PUT",
+		"Access-Control-Max-Age": 2592000, // 30 days
+		"Access-Control-Allow-Headers": 'Access-Control-Allow-Origin, Content-Type, x-cic-automerge'
+	};
+
+	if (req.method === "OPTIONS") {
+		res.writeHead(200, headers);
+		res.end();
+		return;
+	}
 
 	if (!['PUT', 'GET', 'POST'].includes(req.method)) {
 		res.writeHead(405, {"Content-Type": "text/plain"});
@@ -201,6 +213,7 @@ async function processRequest(req, res) {
 
 		const responseContentLength = (new TextEncoder().encode(content)).length;
 		res.writeHead(200, {
+			"Access-Control-Allow-Origin": "*",
 			"Content-Type": contentType,
 			"Content-Length": responseContentLength,
 		});

@@ -93,7 +93,7 @@ function orderDict(src) {
 	return dst;
 }
 
-class Syncable implements JSONSerializable, Authoritative {
+class Syncable implements JSONSerializable, Authoritative, Signable {
 
 	id:		string
 	timestamp:	number
