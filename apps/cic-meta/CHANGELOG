@@ -1,6 +1,7 @@
 * 0.0.7-pending
 	- Add immutable content
 	- Add db lock on server
+	- Add ArgPair and KeyStore to src exports
 * 0.0.6
 	- Add server build
 * 0.0.5
