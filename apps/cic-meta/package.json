@@ -1,6 +1,6 @@
 {
 	"name": "cic-client-meta",
-	"version": "0.0.7-alpha.2",
+	"version": "0.0.7-alpha.3",
 	"description": "Signed CRDT metadata graphs for the CIC network",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -32,6 +32,12 @@
 		"webpack-cli": "^4.2.0"
 	},
 	"author": "Louis Holbrook <dev@holbrook.no>",
+	"contributors": [
+		{
+			"name": "Spencer Ofwiti",
+			"email": "maxspencer56@gmail.com"
+		}
+	],
 	"license": "GPL-3.0-or-later",
 	"engines": {
 		"node": "~15.3.0"
