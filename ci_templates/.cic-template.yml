@@ -40,8 +40,7 @@ before_script:
       - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
     variables:
         CI_DEBUG_TRACE: "true"
-        # <branch>-<sha1>-<timestamp> https://toolkit.fluxcd.io/guides/sortable-image-tags/
-        IMAGE_TAG: $CI_REGISTRY_IMAGE/$APP_NAME:$CI_COMMIT_BRANCH-$CI_COMMIT_SHORT_SHA-$CI_COMMIT_TIMESTAMP
+        IMAGE_TAG: $CI_REGISTRY_IMAGE/$APP_NAME:$CI_COMMIT_BRANCH-$CI_COMMIT_SHORT_SHA
         LATEST_TAG: $CI_REGISTRY_IMAGE/$APP_NAME:latest
     script:
       - docker build -t $IMAGE_TAG -f $DOCKERFILE_PATH .
