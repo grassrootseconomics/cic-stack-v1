@@ -8,6 +8,8 @@ import web3
 from cic_registry import CICRegistry
 from cic_registry import zero_address
 from cic_registry.chain import ChainSpec
+from hexathon import strip_0x
+from chainlib.status import Status as TxStatus
 
 # platform imports
 from cic_eth.db.models.tx import TxCache
@@ -19,6 +21,10 @@ from cic_eth.eth.task import create_check_gas_and_send_task
 from cic_eth.eth.factory import TxFactory
 from cic_eth.eth.util import unpack_signed_raw_tx
 from cic_eth.ext.address import translate_address
+from cic_eth.task import (
+        CriticalSQLAlchemyTask,
+        CriticalWeb3Task,
+    )
 
 celery_app = celery.current_app
 logg = logging.getLogger()
@@ -120,11 +126,12 @@ def unpack_transfer(data):
     :returns: Parsed parameters
     :rtype: dict
     """
-    f = data[2:10]
+    data = strip_0x(data)
+    f = data[:8]
     if f != contract_function_signatures['transfer']:
         raise ValueError('Invalid transfer data ({})'.format(f))
 
-    d = data[10:]
+    d = data[8:]
     return {
         'to': web3.Web3.toChecksumAddress('0x' + d[64-40:64]),
         'amount': int(d[64:], 16)
@@ -140,11 +147,12 @@ def unpack_transferfrom(data):
     :returns: Parsed parameters
     :rtype: dict
     """
-    f = data[2:10]
+    data = strip_0x(data)
+    f = data[:8]
     if f != contract_function_signatures['transferfrom']:
         raise ValueError('Invalid transferFrom data ({})'.format(f))
 
-    d = data[10:]
+    d = data[8:]
     return {
         'from': web3.Web3.toChecksumAddress('0x' + d[64-40:64]),
         'to': web3.Web3.toChecksumAddress('0x' + d[128-40:128]),
@@ -161,18 +169,19 @@ def unpack_approve(data):
     :returns: Parsed parameters
     :rtype: dict
     """
-    f = data[2:10]
+    data = strip_0x(data)
+    f = data[:8]
     if f != contract_function_signatures['approve']:
         raise ValueError('Invalid approval data ({})'.format(f))
 
-    d = data[10:]
+    d = data[8:]
     return {
         'to': web3.Web3.toChecksumAddress('0x' + d[64-40:64]),
         'amount': int(d[64:], 16)
         }
 
 
-@celery_app.task()
+@celery_app.task(base=CriticalWeb3Task)
 def balance(tokens, holder_address, chain_str):
     """Return token balances for a list of tokens for given address
 
@@ -199,7 +208,7 @@ def balance(tokens, holder_address, chain_str):
     return tokens
 
 
-@celery_app.task(bind=True)
+@celery_app.task(bind=True, base=CriticalSQLAlchemyTask)
 def transfer(self, tokens, holder_address, receiver_address, value, chain_str):
     """Transfer ERC20 tokens between addresses
 
@@ -253,7 +262,7 @@ def transfer(self, tokens, holder_address, receiver_address, value, chain_str):
     return tx_hash_hex
 
 
-@celery_app.task(bind=True)
+@celery_app.task(bind=True, base=CriticalSQLAlchemyTask)
 def approve(self, tokens, holder_address, spender_address, value, chain_str):
     """Approve ERC20 transfer on behalf of holder address
 
@@ -307,7 +316,7 @@ def approve(self, tokens, holder_address, spender_address, value, chain_str):
     return tx_hash_hex
 
 
-@celery_app.task()
+@celery_app.task(base=CriticalWeb3Task)
 def resolve_tokens_by_symbol(token_symbols, chain_str):
     """Returns contract addresses of an array of ERC20 token symbols
 
@@ -330,7 +339,7 @@ def resolve_tokens_by_symbol(token_symbols, chain_str):
     return tokens
 
 
-@celery_app.task()
+@celery_app.task(base=CriticalSQLAlchemyTask)
 def otx_cache_transfer(
         tx_hash_hex,
         tx_signed_raw_hex,
@@ -354,7 +363,7 @@ def otx_cache_transfer(
     return txc
 
 
-@celery_app.task()
+@celery_app.task(base=CriticalSQLAlchemyTask)
 def cache_transfer_data(
     tx_hash_hex,
     tx,
@@ -390,7 +399,7 @@ def cache_transfer_data(
     return (tx_hash_hex, cache_id)
 
 
-@celery_app.task()
+@celery_app.task(base=CriticalSQLAlchemyTask)
 def otx_cache_approve(
         tx_hash_hex,
         tx_signed_raw_hex,
@@ -414,7 +423,7 @@ def otx_cache_approve(
     return txc
 
 
-@celery_app.task()
+@celery_app.task(base=CriticalSQLAlchemyTask)
 def cache_approve_data(
     tx_hash_hex,
     tx,
@@ -470,6 +479,8 @@ class ExtendedTx:
         self.destination_token_symbol = ''
         self.source_token_decimals = ExtendedTx._default_decimals
         self.destination_token_decimals = ExtendedTx._default_decimals
+        self.status = TxStatus.PENDING.name
+        self.status_code = TxStatus.PENDING.value
 
 
     def set_actors(self, sender, recipient, trusted_declarator_addresses=None):
@@ -497,10 +508,18 @@ class ExtendedTx:
         self.destination_token_value = destination_value
 
 
+    def set_status(self, n):
+        if n:
+            self.status = TxStatus.ERROR.name
+        else:
+            self.status = TxStatus.SUCCESS.name
+        self.status_code = n
+
+
     def to_dict(self):
         o = {}
         for attr in dir(self):
-            if attr[0] == '_' or attr in ['set_actors', 'set_tokens', 'to_dict']:
+            if attr[0] == '_' or attr in ['set_actors', 'set_tokens', 'set_status', 'to_dict']:
                 continue
             o[attr] = getattr(self, attr)
         return o 

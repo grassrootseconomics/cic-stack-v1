@@ -8,6 +8,7 @@ from cic_registry import CICRegistry
 from cic_registry.chain import ChainSpec
 from erc20_single_shot_faucet import Faucet
 from cic_registry import zero_address
+from hexathon import strip_0x
 
 # local import
 from cic_eth.eth import RpcClient
@@ -21,6 +22,7 @@ from cic_eth.db.models.role import AccountRole
 from cic_eth.db.models.tx import TxCache
 from cic_eth.eth.util import unpack_signed_raw_tx
 from cic_eth.error import RoleMissingError
+from cic_eth.task import CriticalSQLAlchemyTask
 
 #logg = logging.getLogger(__name__)
 logg = logging.getLogger()
@@ -34,6 +36,7 @@ class AccountTxFactory(TxFactory):
             self,
             address,
             chain_spec,
+            session=None,
             ):
         """Register an Ethereum account address with the on-chain account registry
 
@@ -56,7 +59,7 @@ class AccountTxFactory(TxFactory):
             'gas': gas,
             'gasPrice': self.gas_price,
             'chainId': chain_spec.chain_id(),
-            'nonce': self.next_nonce(),
+            'nonce': self.next_nonce(session=session),
             'value': 0,
             })
         return tx_add
@@ -66,6 +69,7 @@ class AccountTxFactory(TxFactory):
             self,
             address,
             chain_spec,
+            session=None,
         ):
         """Trigger the on-chain faucet to disburse tokens to the provided Ethereum account
 
@@ -86,7 +90,7 @@ class AccountTxFactory(TxFactory):
             'gas': gas,
             'gasPrice': self.gas_price,
             'chainId': chain_spec.chain_id(),
-            'nonce': self.next_nonce(),
+            'nonce': self.next_nonce(session=session),
             'value': 0,
             })
         return tx_add
@@ -101,11 +105,12 @@ def unpack_register(data):
     :returns: Parsed parameters
     :rtype: dict
     """
-    f = data[2:10]
+    data = strip_0x(data)
+    f = data[:8]
     if f != '0a3b0a4f':
         raise ValueError('Invalid account index register data ({})'.format(f))
 
-    d = data[10:]
+    d = data[8:]
     return {
         'to': web3.Web3.toChecksumAddress('0x' + d[64-40:64]),
         }
@@ -120,17 +125,19 @@ def unpack_gift(data):
     :returns: Parsed parameters
     :rtype: dict
     """
-    f = data[2:10]
+    data = strip_0x(data)
+    f = data[:8]
     if f != '63e4bff4':
-        raise ValueError('Invalid account index register data ({})'.format(f))
+        raise ValueError('Invalid gift data ({})'.format(f))
 
-    d = data[10:]
+    d = data[8:]
     return {
         'to': web3.Web3.toChecksumAddress('0x' + d[64-40:64]),
         }
      
 
-@celery_app.task()
+# TODO: Separate out nonce initialization task
+@celery_app.task(base=CriticalSQLAlchemyTask)
 def create(password, chain_str):
     """Creates and stores a new ethereum account in the keystore.
 
@@ -149,9 +156,13 @@ def create(password, chain_str):
     logg.debug('created account {}'.format(a))
 
     # Initialize nonce provider record for account
+    # TODO: this can safely be set to zero, since we are randomly creating account
     n = c.w3.eth.getTransactionCount(a, 'pending')
     session = SessionBase.create_session()
-    o = session.query(Nonce).filter(Nonce.address_hex==a).first()
+    q = session.query(Nonce)
+    q = q.filter(Nonce.address_hex==a)
+    o = q.first()
+    session.flush()
     if o == None:
         o = Nonce()
         o.address_hex = a
@@ -162,7 +173,7 @@ def create(password, chain_str):
     return a
 
 
-@celery_app.task(bind=True, throws=(RoleMissingError,))
+@celery_app.task(bind=True, throws=(RoleMissingError,), base=CriticalSQLAlchemyTask)
 def register(self, account_address, chain_str, writer_address=None):
     """Creates a transaction to add the given address to the accounts index.
 
@@ -180,12 +191,11 @@ def register(self, account_address, chain_str, writer_address=None):
 
     session = SessionBase.create_session()
     if writer_address == None:
-        writer_address = AccountRole.get_address('ACCOUNTS_INDEX_WRITER', session)
-    session.close()
+        writer_address = AccountRole.get_address('ACCOUNTS_INDEX_WRITER', session=session)
 
     if writer_address == zero_address:
+        session.close()
         raise RoleMissingError(account_address)
-
 
     logg.debug('adding account address {} to index; writer {}'.format(account_address, writer_address))
     queue = self.request.delivery_info['routing_key']
@@ -193,7 +203,8 @@ def register(self, account_address, chain_str, writer_address=None):
     c = RpcClient(chain_spec, holder_address=writer_address)
     txf = AccountTxFactory(writer_address, c)
 
-    tx_add = txf.add(account_address, chain_spec)
+    tx_add = txf.add(account_address, chain_spec, session=session)
+    session.close()
     (tx_hash_hex, tx_signed_raw_hex) = sign_and_register_tx(tx_add, chain_str, queue, 'cic_eth.eth.account.cache_account_data')
 
     gas_budget = tx_add['gas'] * tx_add['gasPrice']
@@ -211,7 +222,7 @@ def register(self, account_address, chain_str, writer_address=None):
     return account_address
 
 
-@celery_app.task(bind=True)
+@celery_app.task(bind=True, base=CriticalSQLAlchemyTask)
 def gift(self, account_address, chain_str):
     """Creates a transaction to invoke the faucet contract for the given address.
 
@@ -326,7 +337,7 @@ def cache_gift_data(
     return (tx_hash_hex, cache_id)
 
 
-@celery_app.task()
+@celery_app.task(base=CriticalSQLAlchemyTask)
 def cache_account_data(
     tx_hash_hex,
     tx_signed_raw_hex,
