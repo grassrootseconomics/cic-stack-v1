@@ -40,7 +40,7 @@ before_script:
       - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
     variables:
         CI_DEBUG_TRACE: "true"
-        TIMESTAMP: `date +%F.%H%M%S`
+        TIMESTAMP: $(date +%F.%H%M%S)
         IMAGE_TAG: $CI_REGISTRY_IMAGE/$APP_NAME:$CI_COMMIT_BRANCH-$CI_COMMIT_SHORT_SHA-$TIMESTAMP
         LATEST_TAG: $CI_REGISTRY_IMAGE/$APP_NAME:latest
     script:
