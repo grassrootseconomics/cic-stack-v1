@@ -33,7 +33,7 @@ def sign_tx(tx, chain_str):
     return (tx_hash_hex, tx_transfer_signed['raw'],)
 
 
-def sign_and_register_tx(tx, chain_str, queue, cache_task=None):
+def sign_and_register_tx(tx, chain_str, queue, cache_task=None, session=None):
     """Signs the provided transaction, and adds it to the transaction queue cache (with status PENDING).
 
     :param tx: Standard ethereum transaction data
@@ -44,6 +44,7 @@ def sign_and_register_tx(tx, chain_str, queue, cache_task=None):
     :type queue: str
     :param cache_task: Cache task to call with signed transaction. If None, no task will be called.
     :type cache_task: str
+    :raises: sqlalchemy.exc.DatabaseError
     :returns: Tuple; Transaction hash, signed raw transaction data
     :rtype: tuple
     """
@@ -51,25 +52,13 @@ def sign_and_register_tx(tx, chain_str, queue, cache_task=None):
 
     logg.debug('adding queue tx {}'.format(tx_hash_hex))
 
-#    s = celery.signature(
-#        'cic_eth.queue.tx.create',
-#        [
-#            tx['nonce'],
-#            tx['from'],
-#            tx_hash_hex,
-#            tx_signed_raw_hex,
-#            chain_str,
-#            ],
-#        queue=queue,
-#        )
-
-    # TODO: consider returning this as a signature that consequtive tasks can be linked to
     queue_create(
         tx['nonce'],
         tx['from'],
         tx_hash_hex,
         tx_signed_raw_hex,
         chain_str,
+        session=session,
     )        
 
     if cache_task != None:

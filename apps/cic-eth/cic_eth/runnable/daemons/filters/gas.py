@@ -3,6 +3,7 @@ import logging
 
 # third-party imports
 from cic_registry.chain import ChainSpec
+from hexathon import add_0x
 
 # local imports
 from cic_eth.db.enum import StatusBits
@@ -13,20 +14,19 @@ from cic_eth.queue.tx import get_paused_txs
 from cic_eth.eth.task import create_check_gas_and_send_task
 from .base import SyncFilter
 
-logg = logging.getLogger()
+logg = logging.getLogger(__name__)
 
 
 class GasFilter(SyncFilter):
 
-    def __init__(self, gas_provider, queue=None):
+    def __init__(self, chain_spec, queue=None):
         self.queue = queue
-        self.gas_provider = gas_provider
+        self.chain_spec = chain_spec
 
 
-    def filter(self, w3, tx, rcpt, chain_str, session=None):
-        logg.debug('applying gas filter')
-        tx_hash_hex = tx.hash.hex()
-        if tx['value'] > 0:
+    def filter(self, conn, block, tx, session): #rcpt, chain_str, session=None):
+        tx_hash_hex = add_0x(tx.hash)
+        if tx.value > 0:
             logg.debug('gas refill tx {}'.format(tx_hash_hex))
             session = SessionBase.bind_session(session)
             q = session.query(TxCache.recipient)
@@ -35,23 +35,26 @@ class GasFilter(SyncFilter):
             r = q.first()
 
             if r == None:
-                logg.warning('unsolicited gas refill tx {}'.format(tx_hash_hex))
+                logg.debug('unsolicited gas refill tx {}'.format(tx_hash_hex))
                 SessionBase.release_session(session)
                 return
 
-            chain_spec = ChainSpec.from_chain_str(chain_str)
-            txs = get_paused_txs(StatusBits.GAS_ISSUES, r[0], chain_spec.chain_id(), session=session)
+            txs = get_paused_txs(StatusBits.GAS_ISSUES, r[0], self.chain_spec.chain_id(), session=session)
 
             SessionBase.release_session(session)
 
+            logg.info('resuming gas-in-waiting txs for {}'.format(r[0]))
             if len(txs) > 0:
-                logg.info('resuming gas-in-waiting txs for {}: {}'.format(r[0], txs.keys()))
                 s = create_check_gas_and_send_task(
                         list(txs.values()),
-                        str(chain_str),
+                        str(self.chain_spec),
                         r[0],
                         0,
                         tx_hashes_hex=list(txs.keys()),
                         queue=self.queue,
                 )
                 s.apply_async()
+
+
+    def __str__(self):
+        return 'eic-eth gasfilter'

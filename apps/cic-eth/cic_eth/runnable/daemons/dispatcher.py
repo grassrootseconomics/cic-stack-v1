@@ -21,14 +21,21 @@ import cic_eth
 from cic_eth.eth import RpcClient
 from cic_eth.db import SessionBase
 from cic_eth.db.enum import StatusEnum
+from cic_eth.db.enum import StatusBits
 from cic_eth.db.enum import LockEnum
 from cic_eth.db import dsn_from_config
-from cic_eth.queue.tx import get_upcoming_tx
+from cic_eth.queue.tx import (
+        get_upcoming_tx,
+        set_dequeue,
+        )
 from cic_eth.admin.ctrl import lock_send
 from cic_eth.sync.error import LoopDone
 from cic_eth.eth.tx import send as task_tx_send
-from cic_eth.error import PermanentTxError
-from cic_eth.error import TemporaryTxError
+from cic_eth.error import (
+        PermanentTxError,
+        TemporaryTxError,
+        NotLocalTxError,
+        )
 from cic_eth.eth.util import unpack_signed_raw_tx_hex
 
 logging.basicConfig(level=logging.WARNING)
@@ -109,6 +116,11 @@ class DispatchSyncer:
         for k in txs.keys():
             tx_raw = txs[k]
             tx = unpack_signed_raw_tx_hex(tx_raw, self.chain_spec.chain_id())
+            
+            try:
+                set_dequeue(tx['hash'])
+            except NotLocalTxError as e:
+                logg.warning('dispatcher was triggered with non-local tx {}'.format(tx['hash']))
 
             s_check = celery.signature(
                 'cic_eth.admin.ctrl.check_lock',
@@ -129,12 +141,13 @@ class DispatchSyncer:
                     )
             s_check.link(s_send)
             t = s_check.apply_async()
+            logg.info('processed {}'.format(k))
 
 
     def loop(self, w3, interval):
         while run:
             txs = {}
-            typ = StatusEnum.READYSEND
+            typ = StatusBits.QUEUED
             utxs = get_upcoming_tx(typ, chain_id=self.chain_id)
             for k in utxs.keys():
                 txs[k] = utxs[k]

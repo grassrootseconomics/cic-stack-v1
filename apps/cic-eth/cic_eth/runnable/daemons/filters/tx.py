@@ -3,39 +3,47 @@ import logging
 
 # third-party imports
 import celery
+from hexathon import (
+        add_0x,
+        )
 
 # local imports
 from cic_eth.db.models.otx import Otx
-from cic_eth.db.models.base import SessionBase
+from chainsyncer.db.models.base import SessionBase
+from chainlib.status import Status
 from .base import SyncFilter
 
-logg = logging.getLogger()
+logg = logging.getLogger(__name__)
 
 
 class TxFilter(SyncFilter):
 
-    def __init__(self, queue):
+    def __init__(self, chain_spec, queue):
         self.queue = queue
+        self.chain_spec = chain_spec
 
 
-    def filter(self, w3, tx, rcpt, chain_spec, session=None):
-        session = SessionBase.bind_session(session)
-        logg.debug('applying tx filter')
-        tx_hash_hex = tx.hash.hex()
-        otx = Otx.load(tx_hash_hex, session=session)
-        SessionBase.release_session(session)
+    def filter(self, conn, block, tx, db_session=None):
+        db_session = SessionBase.bind_session(db_session)
+        tx_hash_hex = tx.hash
+        otx = Otx.load(add_0x(tx_hash_hex), session=db_session)
         if otx == None:
             logg.debug('tx {} not found locally, skipping'.format(tx_hash_hex))
             return None
-        logg.info('otx found {}'.format(otx.tx_hash))
+        logg.info('local tx match {}'.format(otx.tx_hash))
+        SessionBase.release_session(db_session)
         s = celery.signature(
                 'cic_eth.queue.tx.set_final_status',
                 [
-                    tx_hash_hex,
-                    rcpt.blockNumber,
-                    rcpt.status == 0,
+                    add_0x(tx_hash_hex),
+                    tx.block.number,
+                    tx.status == Status.ERROR,
                     ],
                 queue=self.queue,
                 )
         t = s.apply_async()
         return t
+
+
+    def __str__(self):
+        return 'cic-eth erc20 transfer filter'

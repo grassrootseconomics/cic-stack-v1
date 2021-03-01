@@ -4,36 +4,48 @@ import logging
 # third-party imports
 import celery
 from chainlib.eth.address import to_checksum
+from hexathon import (
+        add_0x,
+        strip_0x,
+        )
 
 # local imports
 from .base import SyncFilter
 
-logg = logging.getLogger()
+logg = logging.getLogger(__name__)
 
 account_registry_add_log_hash = '0x5ed3bdd47b9af629827a8d129aa39c870b10c03f0153fe9ddb8e84b665061acd' # keccak256(AccountAdded(address,uint256))
 
 
 class RegistrationFilter(SyncFilter):
 
-    def __init__(self, queue):
+    def __init__(self, chain_spec, queue):
+        self.chain_spec = chain_spec
         self.queue = queue
 
 
-    def filter(self, w3, tx, rcpt, chain_spec, session=None):
-        logg.debug('applying registration filter')
+    def filter(self, conn, block, tx, db_session=None): 
         registered_address = None
-        for l in rcpt['logs']:
-            event_topic_hex = l['topics'][0].hex()
+        logg.debug('register filter checking log {}'.format(tx.logs))
+        for l in tx.logs:
+            event_topic_hex = l['topics'][0]
             if event_topic_hex == account_registry_add_log_hash:
-                address_bytes = l.topics[1][32-20:]
-                address = to_checksum(address_bytes.hex())
+                # TODO: use abi conversion method instead
+
+                address_hex = strip_0x(l['topics'][1])[64-40:]
+                address = to_checksum(add_0x(address_hex))
                 logg.debug('request token gift to {}'.format(address))
                 s = celery.signature(
                     'cic_eth.eth.account.gift',
                     [
                         address,
-                        str(chain_spec),
+                        str(self.chain_spec),
                         ],
                     queue=self.queue,
                     )
                 s.apply_async()
+
+
+    def __str__(self):
+        return 'cic-eth account registration'
+

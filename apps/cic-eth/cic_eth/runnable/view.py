@@ -18,6 +18,7 @@ import web3
 from cic_registry import CICRegistry
 from cic_registry.chain import ChainSpec
 from cic_registry.chain import ChainRegistry
+from hexathon import add_0x
 
 # local imports
 from cic_eth.api import AdminApi
@@ -36,8 +37,8 @@ default_abi_dir = '/usr/share/local/cic/solidity/abi'
 default_config_dir = os.path.join('/usr/local/etc/cic-eth')
 
 argparser = argparse.ArgumentParser()
-argparser.add_argument('-p', '--provider', dest='p', default='http://localhost:8545', type=str, help='Web3 provider url (http only)')
-argparser.add_argument('-r', '--registry-address', type=str, help='CIC registry address')
+argparser.add_argument('-p', '--provider', dest='p', type=str, help='Web3 provider url (http only)')
+argparser.add_argument('-r', '--registry-address', dest='r', type=str, help='CIC registry address')
 argparser.add_argument('-f', '--format', dest='f', default='terminal', type=str, help='Output format')
 argparser.add_argument('-c', type=str, default=default_config_dir, help='config root to use')
 argparser.add_argument('-i', '--chain-spec', dest='i', type=str, help='chain spec')
@@ -61,11 +62,15 @@ config.process()
 args_override = {
         'ETH_PROVIDER': getattr(args, 'p'),
         'CIC_CHAIN_SPEC': getattr(args, 'i'),
+        'CIC_REGISTRY_ADDRESS': getattr(args, 'r'),
         }
 # override args
+config.dict_override(args_override, 'cli args')
 config.censor('PASSWORD', 'DATABASE')
 config.censor('PASSWORD', 'SSL')
 logg.debug('config loaded from {}:\n{}'.format(config_dir, config))
+
+config.add(add_0x(args.query), '_QUERY', True)
 
 re_websocket = re.compile('^wss?://')
 re_http = re.compile('^https?://')
@@ -148,21 +153,20 @@ def render_lock(o, **kwargs):
 
 # TODO: move each command to submodule
 def main():
-    logg.debug('len {}'.format(len(args.query)))
     txs  = []
     renderer = render_tx
-    if len(args.query) > 66:
-        txs = [admin_api.tx(chain_spec, tx_raw=args.query)]
-    elif len(args.query) > 42:
-        txs = [admin_api.tx(chain_spec, tx_hash=args.query)]
-    elif len(args.query) == 42:
-        txs = admin_api.account(chain_spec, args.query, include_recipient=False)
+    if len(config.get('_QUERY')) > 66:
+        txs = [admin_api.tx(chain_spec, tx_raw=config.get('_QUERY'))]
+    elif len(config.get('_QUERY')) > 42:
+        txs = [admin_api.tx(chain_spec, tx_hash=config.get('_QUERY'))]
+    elif len(config.get('_QUERY')) == 42:
+        txs = admin_api.account(chain_spec, config.get('_QUERY'), include_recipient=False)
         renderer = render_account
-    elif len(args.query) >= 4 and args.query[:4] == 'lock':
+    elif len(config.get('_QUERY')) >= 4 and config.get('_QUERY')[:4] == 'lock':
         txs = admin_api.get_lock()
         renderer = render_lock
     else:
-        raise ValueError('cannot parse argument {}'.format(args.query))
+        raise ValueError('cannot parse argument {}'.format(config.get('_QUERY')))
 
     if len(txs) == 0:
         logg.info('no matches found')
