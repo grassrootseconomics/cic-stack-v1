@@ -312,7 +312,7 @@ class Tracker:
         session.close()
 
 (provider, w3) = web3_constructor()
-trust = config.get('CIC_TRUST_ADDRESS', []).split(",")
+trust = config.get('CIC_TRUST_ADDRESS', "").split(",")
 chain_spec = args.i
 
 try:
