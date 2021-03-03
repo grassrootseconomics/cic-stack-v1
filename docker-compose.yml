@@ -451,7 +451,7 @@ services:
         condition: on-failure
     volumes:
       - ${LOCAL_VOLUME_DIR:-/tmp/cic}/pgp:/tmp/cic/pgp
-    command: "/root/start_server.sh -vv"
+    # command: "/root/start_server.sh -vv"
 
   cic-ussd-server:
     # image: grassrootseconomics:cic-ussd
