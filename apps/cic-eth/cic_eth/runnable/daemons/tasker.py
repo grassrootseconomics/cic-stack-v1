@@ -26,7 +26,6 @@ from cic_eth.eth import bancor
 from cic_eth.eth import token
 from cic_eth.eth import tx
 from cic_eth.eth import account
-from cic_eth.eth import request
 from cic_eth.admin import debug
 from cic_eth.admin import ctrl
 from cic_eth.eth.rpc import RpcClient
@@ -40,6 +39,7 @@ from cic_eth.callbacks import redis
 from cic_eth.db.models.base import SessionBase
 from cic_eth.db.models.otx import Otx
 from cic_eth.db import dsn_from_config
+from cic_eth.ext import tx
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()

@@ -161,7 +161,7 @@ services:
       - -c
       - |
         if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
-        /usr/local/bin/cic-cache-tracker -v
+        /usr/local/bin/cic-cache-tracker -vv
     volumes:
       - contract-config:/tmp/cic/config/:ro
 
@@ -192,7 +192,7 @@ services:
         if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
         "/usr/local/bin/uwsgi" \
         --wsgi-file /usr/src/cic-cache/cic_cache/runnable/server.py \
-        --http :80 \
+        --http :8000 \
         --pyargv -vv
 
   cic-eth-tasker:
@@ -237,7 +237,7 @@ services:
       - -c
       - |
         if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
-        ./start_tasker.sh -q cic-eth -vv
+        ./start_tasker.sh -q cic-eth -v
     # command: [/bin/sh, "./start_tasker.sh", -q, cic-eth, -vv ]
 
   cic-eth-tracker:
