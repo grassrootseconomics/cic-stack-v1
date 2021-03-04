@@ -12,6 +12,8 @@ from confini import Config
 # local imports
 from cic_ussd.db import dsn_from_config
 from cic_ussd.db.models.base import SessionBase
+from cic_ussd.metadata.signer import Signer
+from cic_ussd.metadata.user import UserMetadata
 from cic_ussd.redis import InMemoryStore
 from cic_ussd.session.ussd_session import UssdSession as InMemoryUssdSession
 
@@ -37,6 +39,7 @@ config.censor('PASSWORD', 'DATABASE')
 # define log levels
 if args.vv:
     logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 elif args.v:
     logging.getLogger().setLevel(logging.INFO)
 
@@ -58,6 +61,14 @@ InMemoryStore.cache = redis.StrictRedis(host=config.get('REDIS_HOSTNAME'),
                                         db=config.get('REDIS_DATABASE'),
                                         decode_responses=True)
 InMemoryUssdSession.redis_cache = InMemoryStore.cache
+
+# define metadata URL
+UserMetadata.base_url = config.get('CIC_META_URL')
+
+# define signer values
+Signer.gpg_path = '/tmp/.gpg'
+Signer.gpg_passphrase = config.get('KEYS_PASSPHRASE')
+Signer.key_file_path = config.get('KEYS_PRIVATE')
 
 # set up celery
 current_app = celery.Celery(__name__)
