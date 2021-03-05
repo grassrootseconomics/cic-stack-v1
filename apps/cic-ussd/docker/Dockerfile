@@ -11,6 +11,9 @@ RUN apk update && \
         apk add git linux-headers postgresql-dev gnupg bash
 RUN apk add --update musl-dev gcc libffi-dev
 
+# create secrets directory
+RUN mkdir -vp pgp/keys
+
 # create application directory
 RUN mkdir -vp cic-ussd
 

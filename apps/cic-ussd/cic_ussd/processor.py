@@ -102,9 +102,9 @@ def process_exit_successful_transaction(display_key: str, user: User, ussd_sessi
     transaction_amount = to_wei(int(ussd_session.get('session_data').get('transaction_amount')))
     token_symbol = 'SRF'
     recipient_phone_number = ussd_session.get('session_data').get('recipient_phone_number')
-    sender_phone_number = user.phone_number
-    tx_recipient_information = recipient_phone_number
-    tx_sender_information = sender_phone_number
+    recipient = get_user_by_phone_number(phone_number=recipient_phone_number)
+    tx_recipient_information = define_account_tx_metadata(user=recipient)
+    tx_sender_information = define_account_tx_metadata(user=user)
 
     return translation_for(
         key=display_key,
@@ -184,10 +184,10 @@ def format_transactions(transactions: list, preferred_language: str):
         for transaction in transactions:
             recipient_phone_number = transaction.get('recipient_phone_number')
             sender_phone_number = transaction.get('sender_phone_number')
-            value = transaction.get('destination_value')
+            value = transaction.get('to_value')
             timestamp = transaction.get('timestamp')
             action_tag = transaction.get('action_tag')
-            token_symbol = transaction.get('destination_token_symbol')
+            token_symbol = 'SRF'
 
             if action_tag == 'SENT' or action_tag == 'ULITUMA':
                 formatted_transactions += f'{action_tag} {value} {token_symbol} {recipient_phone_number} {timestamp}.\n'
@@ -222,6 +222,8 @@ def process_account_statement(user: User, display_key: str, ussd_session: dict):
     middle_transaction_set = []
     last_transaction_set = []
 
+    transactions = json.loads(transactions)
+
     if len(transactions) > 6:
         last_transaction_set += transactions[6:]
         middle_transaction_set += transactions[3:][:3]
@@ -233,10 +235,7 @@ def process_account_statement(user: User, display_key: str, ussd_session: dict):
     else:
         first_transaction_set += transactions[:3]
 
-    logg.debug(f'TRANSACTIONS: {transactions}')
-
     if display_key == 'ussd.kenya.first_transaction_set':
-        logg.debug(f'FIRST TRANSACTION SET: {first_transaction_set}')
         return translation_for(
             key=display_key,
             preferred_language=user.preferred_language,
