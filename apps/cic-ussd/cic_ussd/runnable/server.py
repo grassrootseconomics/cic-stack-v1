@@ -101,9 +101,9 @@ InMemoryUssdSession.redis_cache = InMemoryStore.cache
 UserMetadata.base_url = config.get('CIC_META_URL')
 
 # define signer values
-Signer.gpg_path = '/tmp/.gpg'
-Signer.gpg_passphrase = config.get('KEYS_PASSPHRASE')
-Signer.key_file_path = config.get('KEYS_PRIVATE')
+Signer.gpg_path = config.get('PGP_EXPORT_DIR')
+Signer.gpg_passphrase = config.get('PGP_PASSPHRASE')
+Signer.key_file_path = f"{config.get('PGP_KEYS_PATH')}{config.get('PGP_PRIVATE_KEYS')}"
 
 # initialize celery app
 celery.Celery(backend=config.get('CELERY_RESULT_URL'), broker=config.get('CELERY_BROKER_URL'))

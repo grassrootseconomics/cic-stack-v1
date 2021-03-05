@@ -165,7 +165,6 @@ def process_statement_callback(result, param: str, status_code: int):
             sender_blockchain_address = transaction.get('sender')
             recipient_address = transaction.get('recipient')
             source_token = transaction.get('source_token')
-            destination_token_symbol = transaction.get('destination_token_symbol')
 
             # filter out any transactions that are "gassy"
             if '0x0000000000000000000000000000000000000000' in source_token:
@@ -198,9 +197,8 @@ def process_statement_callback(result, param: str, status_code: int):
                     logg.warning(f'Tx with recipient not found in cic-ussd')
 
                 # add transaction values
-                processed_transaction['destination_value'] = from_wei(value=transaction.get('destination_value'))
-                processed_transaction['destination_token_symbol'] = destination_token_symbol
-                processed_transaction['source_value'] = from_wei(value=transaction.get('source_value'))
+                processed_transaction['to_value'] = from_wei(value=transaction.get('to_value'))
+                processed_transaction['from_value'] = from_wei(value=transaction.get('from_value'))
 
                 raw_timestamp = transaction.get('timestamp')
                 timestamp = datetime.utcfromtimestamp(raw_timestamp).strftime('%d/%m/%y, %H:%M')
