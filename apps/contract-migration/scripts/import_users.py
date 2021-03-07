@@ -38,7 +38,7 @@ argparser.add_argument('--redis-host-callback', dest='redis_host_callback', defa
 argparser.add_argument('--redis-port-callback', dest='redis_port_callback', default=6379, type=int, help='redis port to use for callback')
 argparser.add_argument('--batch-size', dest='batch_size', default=50, type=int, help='burst size of sending transactions to node')
 argparser.add_argument('--batch-delay', dest='batch_delay', default=2, type=int, help='seconds delay between batches')
-argparser.add_argument('--timeout', default=20.0, type=float, help='Callback timeout')
+argparser.add_argument('--timeout', default=60.0, type=float, help='Callback timeout')
 argparser.add_argument('-q', type=str, default='cic-eth', help='Task queue')
 argparser.add_argument('-v', action='store_true', help='Be verbose')
 argparser.add_argument('-vv', action='store_true', help='Be more verbose')
@@ -97,6 +97,7 @@ def register_eth(i, u):
         callback_queue=args.q,
         )
     t = api.create_account(register=True)
+    logg.debug('register {} -> {}'.format(u, t))
 
     while True:
         ps.get_message()
@@ -112,11 +113,11 @@ def register_eth(i, u):
             r = json.loads(m['data'])
             address = r['result']
             break
-        except TypeError as e:
+        except Exception as e:
             if m == None:
-                logg.critical('empty response from redis callback (did the service crash?)')
+                logg.critical('empty response from redis callback (did the service crash?) {}'.format(e))
             else:
-                logg.critical('unexpected response from redis callback: {}'.format(m))
+                logg.critical('unexpected response from redis callback: {} {}'.format(m, e))
             sys.exit(1)
         logg.debug('[{}] register eth {} {}'.format(i, u, address))
 
