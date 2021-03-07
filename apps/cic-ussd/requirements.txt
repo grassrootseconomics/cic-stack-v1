@@ -1,3 +1,4 @@
+cic-types==0.1.0a8
 alembic==1.4.2
 amqp==2.6.1
 attrs==20.2.0
