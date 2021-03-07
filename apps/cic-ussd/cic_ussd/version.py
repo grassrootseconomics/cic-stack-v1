@@ -1,7 +1,7 @@
 # standard imports
 import semver
 
-version = (0, 3, 0, 'alpha.1')
+version = (0, 3, 0, 'alpha.5')
 
 version_object = semver.VersionInfo(
         major=version[0],

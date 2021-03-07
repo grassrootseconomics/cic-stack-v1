@@ -14,6 +14,7 @@ from cic_eth.db import Otx, SessionBase
 from cic_eth.db.models.tx import TxCache
 from cic_eth.db.models.nonce import NonceReservation
 from cic_eth.db.models.lock import Lock
+from cic_eth.db.models.role import AccountRole
 from cic_eth.db.enum import (
         LockEnum,
         StatusBits,
@@ -38,6 +39,7 @@ from cic_eth.task import (
         CriticalWeb3Task,
         CriticalWeb3AndSignerTask,
         CriticalSQLAlchemyAndSignerTask,
+        CriticalSQLAlchemyAndWeb3Task,
         )
 
 celery_app = celery.current_app
@@ -47,7 +49,7 @@ MAX_NONCE_ATTEMPTS = 3
 
 
 # TODO this function is too long
-@celery_app.task(bind=True, throws=(OutOfGasError), base=CriticalSQLAlchemyTask)
+@celery_app.task(bind=True, throws=(OutOfGasError), base=CriticalSQLAlchemyAndWeb3Task)
 def check_gas(self, tx_hashes, chain_str, txs=[], address=None, gas_required=None):
     """Check the gas level of the sender address of a transaction.
 
@@ -75,6 +77,9 @@ def check_gas(self, tx_hashes, chain_str, txs=[], address=None, gas_required=Non
             if address == None:
                 address = o['address']
 
+    if not web3.Web3.isChecksumAddress(address):
+        raise ValueError('invalid address {}'.format(address))
+
     chain_spec = ChainSpec.from_chain_str(chain_str)
 
     queue = self.request.delivery_info['routing_key']
@@ -83,7 +88,12 @@ def check_gas(self, tx_hashes, chain_str, txs=[], address=None, gas_required=Non
     c = RpcClient(chain_spec)
 
     # TODO: it should not be necessary to pass address explicitly, if not passed should be derived from the tx
-    balance = c.w3.eth.getBalance(address) 
+    balance = 0
+    try:
+        balance = c.w3.eth.getBalance(address) 
+    except ValueError as e:
+        raise EthError('balance call for {}'.format())
+
     logg.debug('address {} has gas {} needs {}'.format(address, balance, gas_required))
 
     if gas_required > balance:
@@ -590,11 +600,23 @@ def resend_with_higher_gas(self, txold_hash_hex, chain_str, gas=None, default_fa
 
 
 @celery_app.task(bind=True, base=CriticalSQLAlchemyTask)
-def reserve_nonce(self, chained_input, address=None):
+def reserve_nonce(self, chained_input, signer=None):
     session = SessionBase.create_session()
 
-    if address == None:
+    address = None
+    if signer == None:
         address = chained_input
+        logg.debug('non-explicit address for reserve nonce, using arg head {}'.format(chained_input))
+    else:
+        if web3.Web3.isChecksumAddress(signer):
+            address = signer
+            logg.debug('explicit address for reserve nonce {}'.format(signer))
+        else:
+            address = AccountRole.get_address(signer, session=session)
+            logg.debug('role for reserve nonce {} -> {}'.format(signer, address))
+
+    if not web3.Web3.isChecksumAddress(address):
+        raise ValueError('invalid result when resolving address for nonce {}'.format(address))
 
     root_id = self.request.root_id
     nonce = NonceReservation.next(address, root_id)
