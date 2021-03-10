@@ -127,5 +127,6 @@ COPY contract-migration/from_env.sh from_env.sh
 COPY contract-migration/seed_cic_eth.sh seed_cic_eth.sh
 COPY contract-migration/sarafu_declaration.json sarafu_declaration.json
 COPY contract-migration/keystore keystore
+COPY contract-migration/envlist .
 
-ENTRYPOINT [ "/bin/bash" ]
+# ENTRYPOINT [ "/bin/bash" ]

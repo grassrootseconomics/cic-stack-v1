@@ -64,7 +64,7 @@ export CIC_TRUST_ADDRESS=$DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER
 
 EOF
 
-cat $CIC_DATA_DIR/envlist | bash from_env.sh > $CIC_DATA_DIR/.env_all
+cat ./envlist | bash from_env.sh > $CIC_DATA_DIR/.env_all
 # popd
 
 set +a
