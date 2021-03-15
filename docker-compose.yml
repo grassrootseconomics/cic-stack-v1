@@ -54,6 +54,7 @@ services:
     volumes:
       - ./scripts/initdb/create_db.sql:/docker-entrypoint-initdb.d/1-create_all_db.sql 
       - ./apps/cic-meta/scripts/initdb/postgresql.sh:/docker-entrypoint-initdb.d/2-init-cic-meta.sh
+      - ./apps/cic-cache/db/psycopg2/db.sql:/docker-entrypoint-initdb.d/3-init-cic-meta.sql
       - postgres-db:/var/lib/postgresql/data
 
   redis:
