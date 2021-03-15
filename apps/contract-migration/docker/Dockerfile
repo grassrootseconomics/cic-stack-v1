@@ -104,31 +104,32 @@ FROM python:3.8.6-slim-buster as runtime-image
 COPY --from=compile-image /usr/local/bin/ /usr/local/bin/
 COPY --from=compile-image /usr/local/etc/cic/ /usr/local/etc/cic/
 
-RUN mkdir -p /tmp/cic/config
-RUN chmod a+rw /tmp/cic/config
 
 ENV HOME /home/grassroots
 RUN useradd --create-home grassroots
 WORKDIR $HOME
 # COPY python dependencies to user dir
 COPY --from=compile-image /root/.local .local
-RUN chown -R grassroots:grassroots $HOME/.local/
 ENV PATH=$HOME/.local/bin:$PATH
-
-USER grassroots
+# RUN chown grassroots:grassroots $HOME/.local/
 
 COPY contract-migration/testdata/pgp testdata/pgp
 COPY contract-migration/wait-for-it.sh .
-# RUN chmod +x ./wait-for-it.sh
-
-# COPY contract-migration/.env_config_template .env_config_template
-# COPY contract-migration/.env_dockercompose_template .env_dockercompose_template
-
 COPY contract-migration/reset.sh reset.sh
 COPY contract-migration/from_env.sh from_env.sh
 COPY contract-migration/seed_cic_eth.sh seed_cic_eth.sh
 COPY contract-migration/sarafu_declaration.json sarafu_declaration.json
 COPY contract-migration/keystore keystore
 COPY contract-migration/envlist .
+
+# critically, includes the .local folder from compile-image
+RUN chown -R grassroots:grassroots .
+
+RUN mkdir -p /tmp/cic/config
+RUN chown grassroots:grassroots /tmp/cic/config
+# A shared output dir for environment configs
+RUN chmod a+rwx /tmp/cic/config 
+
+USER grassroots
 
 ENTRYPOINT [ ]
