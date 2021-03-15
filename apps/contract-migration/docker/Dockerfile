@@ -58,7 +58,8 @@ ENV PATH      $NVM_DIR/versions/node//v$NODE_VERSION/bin:$PATH
 ARG pip_extra_index_url=https://pip.grassrootseconomics.net:8433
 ARG cic_base_version=0.1.1a23
 ARG cic_registry_version=0.5.3a24
-RUN pip install --user --extra-index-url $pip_extra_index_url  cic-registry==$cic_registry_version cic-base[full_graph]==$cic_base_version
+RUN pip install --user --extra-index-url $pip_extra_index_url  cic-base[full_graph]==$cic_base_version
+RUN pip install --user --extra-index-url $pip_extra_index_url  cic-registry==$cic_registry_version
 
 # ARG cic_bancor_url=https://gitlab.com/grassrootseconomics/cic-bancor.git/
 # ARG cic_bancor_contracts_url=https://github.com/bancorprotocol/contracts-solidity
