@@ -30,9 +30,6 @@ truncate $env_out_file -s 0
 set -e
 set -a
 
-# We need to not install these here...
-pip install --extra-index-url $DEV_PIP_EXTRA_INDEX_URL cic-eth==0.10.0a41 chainlib==0.0.1a21 cic-contracts==0.0.2a2
-
 >&2 echo "create account for gas gifter"
 old_gas_provider=$DEV_ETH_ACCOUNT_GAS_PROVIDER
 DEV_ETH_ACCOUNT_GAS_GIFTER=`cic-eth-create $debug --redis-host-callback=$REDIS_HOST --redis-port-callback=$REDIS_PORT --no-register`
