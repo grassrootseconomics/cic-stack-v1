@@ -1,3 +1,4 @@
+# syntax = docker/dockerfile:1.2
 FROM python:3.8.6-slim-buster as compile-image
 
 RUN apt-get update
@@ -46,8 +47,6 @@ RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | 
 	&& nvm install $NODE_VERSION \
 	&& nvm alias default $NODE_VERSION \
 	&& nvm use $NODE_VERSION
-# So many ridiculously stupid issues with node in docker that take oceans of absolutely wasted time to resolve
-# owner of these files is "1001" by default - wtf
 # && chown -R root:root "$NVM_DIR/versions/node/v$NODE_VERSION"
 
 ENV NODE_PATH $NVM_DIR/versions/node//v$NODE_VERSION/lib/node_modules
@@ -55,11 +54,21 @@ ENV PATH      $NVM_DIR/versions/node//v$NODE_VERSION/bin:$PATH
 
 # RUN pip install --user --extra-index-url $pip_extra_index_url cic-base[full_graph]==$cic_base_version
 
+RUN useradd --create-home grassroots
+WORKDIR /home/grassroots
+USER grassroots
+
 ARG pip_extra_index_url=https://pip.grassrootseconomics.net:8433
 ARG cic_base_version=0.1.1a23
 ARG cic_registry_version=0.5.3a24
-RUN pip install --user --extra-index-url $pip_extra_index_url  cic-base[full_graph]==$cic_base_version
-RUN pip install --user --extra-index-url $pip_extra_index_url  cic-registry==$cic_registry_version
+ARG cic_eth_version=0.10.0a41
+ARG chainlib_version=0.0.1a21
+ARG cic_contracts_version=0.0.2a2
+RUN pip install --user --extra-index-url $pip_extra_index_url cic-base[full_graph]==$cic_base_version \
+                                                              cic-registry==$cic_registry_version \
+                                                              cic-eth==$cic_eth_version \
+                                                              chainlib==$chainlib_version \
+															  cic-contracts==$cic_contracts_version
 
 # ARG cic_bancor_url=https://gitlab.com/grassrootseconomics/cic-bancor.git/
 # ARG cic_bancor_contracts_url=https://github.com/bancorprotocol/contracts-solidity
@@ -101,17 +110,17 @@ RUN pip install --user --extra-index-url $pip_extra_index_url  cic-registry==$ci
 
 FROM python:3.8.6-slim-buster as runtime-image
 
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends gnupg
+
 COPY --from=compile-image /usr/local/bin/ /usr/local/bin/
 COPY --from=compile-image /usr/local/etc/cic/ /usr/local/etc/cic/
 
-
-ENV HOME /home/grassroots
 RUN useradd --create-home grassroots
-WORKDIR $HOME
+WORKDIR /home/grassroots
 # COPY python dependencies to user dir
-COPY --from=compile-image /root/.local .local
-ENV PATH=$HOME/.local/bin:$PATH
-# RUN chown grassroots:grassroots $HOME/.local/
+COPY --from=compile-image /home/grassroots/.local .local
+ENV PATH=/home/grassroots/.local/bin:$PATH
 
 COPY contract-migration/testdata/pgp testdata/pgp
 COPY contract-migration/wait-for-it.sh .
@@ -122,8 +131,9 @@ COPY contract-migration/sarafu_declaration.json sarafu_declaration.json
 COPY contract-migration/keystore keystore
 COPY contract-migration/envlist .
 
-# critically, includes the .local folder from compile-image
-RUN chown -R grassroots:grassroots .
+# RUN chown grassroots:grassroots .local/
+RUN chown grassroots:grassroots ./
+RUN chmod gu+x *.sh
 
 RUN mkdir -p /tmp/cic/config
 RUN chown grassroots:grassroots /tmp/cic/config
