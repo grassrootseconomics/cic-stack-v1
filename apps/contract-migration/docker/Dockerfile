@@ -111,7 +111,7 @@ RUN pip install --user --extra-index-url $pip_extra_index_url cic-base[full_grap
 FROM python:3.8.6-slim-buster as runtime-image
 
 RUN apt-get update
-RUN apt-get install -y --no-install-recommends gnupg
+RUN apt-get install -y --no-install-recommends gnupg libpq-dev
 
 COPY --from=compile-image /usr/local/bin/ /usr/local/bin/
 COPY --from=compile-image /usr/local/etc/cic/ /usr/local/etc/cic/
