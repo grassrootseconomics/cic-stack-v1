@@ -88,24 +88,6 @@ services:
       ETH_PROVIDER_PORT: 8545
       CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-evm:bloxberg:8996}
       CIC_DATA_DIR: ${CIC_DATA_DIR:-/tmp/cic/config}
-    command: ["./reset.sh"]
-    depends_on:
-      - eth
-    volumes:
-      - contract-config:/tmp/cic/config
-
-  seed-cic-eth:
-    build:
-      context: apps/
-      dockerfile: contract-migration/docker/Dockerfile
-    environment:
-      # ETH_PROVIDER should be broken out into host/port but cic-eth expects this
-      ETH_PROVIDER: http://eth:8545
-      # And these two are for wait-for-it (could parse this)
-      ETH_PROVIDER_HOST: eth 
-      ETH_PROVIDER_PORT: 8545
-      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-evm:bloxberg:8996}
-      CIC_DATA_DIR: ${CIC_DATA_DIR:-/tmp/cic/config}
       DATABASE_HOST: ${DATABASE_HOST:-postgres}
       DATABASE_PORT: ${DATABASE_PORT:-5432}
       DATABASE_NAME: ${DEV_DATABASE_NAME_CIC_ETH:-cic_eth}
@@ -118,10 +100,8 @@ services:
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis:6379}
       DEV_PIP_EXTRA_INDEX_URL: ${DEV_PIP_EXTRA_INDEX_URL:-https://pip.grassrootseconomics.net:8433}
-    command: ["./seed_cic_eth.sh"]
-      #  deploy:
-      #restart_policy:
-      #  condition: on-failure
+      RUN_LEVEL: 2 #0: noop 1: contract migrations 2: seed data
+    command: ["./run_job.sh"]
     depends_on:
       - eth
       - postgres
@@ -129,7 +109,6 @@ services:
       - cic-eth-tasker
     volumes:
       - contract-config:/tmp/cic/config
-
 
   cic-cache-tracker:
     build:
