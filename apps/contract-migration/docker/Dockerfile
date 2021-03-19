@@ -52,8 +52,6 @@ RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | 
 ENV NODE_PATH $NVM_DIR/versions/node//v$NODE_VERSION/lib/node_modules
 ENV PATH      $NVM_DIR/versions/node//v$NODE_VERSION/bin:$PATH
 
-# RUN pip install --user --extra-index-url $pip_extra_index_url cic-base[full_graph]==$cic_base_version
-
 RUN useradd --create-home grassroots
 WORKDIR /home/grassroots
 USER grassroots
@@ -123,16 +121,13 @@ COPY --from=compile-image /home/grassroots/.local .local
 ENV PATH=/home/grassroots/.local/bin:$PATH
 
 COPY contract-migration/testdata/pgp testdata/pgp
-COPY contract-migration/wait-for-it.sh .
-COPY contract-migration/reset.sh reset.sh
-COPY contract-migration/from_env.sh from_env.sh
-COPY contract-migration/seed_cic_eth.sh seed_cic_eth.sh
 COPY contract-migration/sarafu_declaration.json sarafu_declaration.json
 COPY contract-migration/keystore keystore
 COPY contract-migration/envlist .
+COPY contract-migration/*.sh ./
 
 # RUN chown grassroots:grassroots .local/
-RUN chown grassroots:grassroots ./
+RUN chown grassroots:grassroots ./*
 RUN chmod gu+x *.sh
 
 RUN mkdir -p /tmp/cic/config
