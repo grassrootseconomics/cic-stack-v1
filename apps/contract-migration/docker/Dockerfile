@@ -128,6 +128,7 @@ COPY contract-migration/*.sh ./
 
 # RUN chown grassroots:grassroots .local/
 RUN chown grassroots:grassroots ./*
+RUN chown grassroots:grassroots ./.local
 RUN chmod gu+x *.sh
 
 RUN mkdir -p /tmp/cic/config

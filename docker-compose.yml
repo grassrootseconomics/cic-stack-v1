@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
     ports:
       - ${DEV_ETH_PORT_HTTP:-63545}:8545
-      - ${DEV_ETH_PORT_WS-63546}:8546
+      - ${DEV_ETH_PORT_WS:-63546}:8546
       - 30303
     volumes:
       - ./apps/bloxbergValidatorSetup/keys:/root/keys # stores the signing key locally
@@ -80,6 +80,7 @@ services:
     build:
       context: apps/
       dockerfile: contract-migration/docker/Dockerfile
+    # image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/contract-migration:latest
     environment:
       # ETH_PROVIDER should be broken out into host/port but cic-eth expects this
       ETH_PROVIDER: http://eth:8545
