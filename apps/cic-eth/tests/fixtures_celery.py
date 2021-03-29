@@ -1,18 +1,29 @@
-# third-party imports
+# external imports
 import pytest
 import tempfile
 import logging
 import shutil
 
-logg = logging.getLogger(__name__)
+# local impors
+from cic_eth.task import BaseTask
+
+#logg = logging.getLogger(__name__)
+logg = logging.getLogger()
+
+
+@pytest.fixture(scope='function')
+def init_celery_tasks(
+    contract_roles, 
+        ):
+    BaseTask.call_address = contract_roles['DEFAULT']
 
 
 # celery fixtures
 @pytest.fixture(scope='session')
 def celery_includes():
     return [
-        'cic_eth.eth.bancor',
-        'cic_eth.eth.token',
+#        'cic_eth.eth.bancor',
+        'cic_eth.eth.erc20',
         'cic_eth.eth.tx',
         'cic_eth.ext.tx',
         'cic_eth.queue.tx',
@@ -52,7 +63,7 @@ def celery_config():
 @pytest.fixture(scope='session')
 def celery_worker_parameters():
     return {
-#            'queues': ('cic-eth'),
+#            'queues': ('celery'),
             }
 
 @pytest.fixture(scope='session')

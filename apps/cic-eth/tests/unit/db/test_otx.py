@@ -18,48 +18,58 @@ from cic_eth.db.enum import (
 logg = logging.getLogger()
 
 
-@pytest.mark.skip()
-def test_get(
-        init_w3,
-        init_database,
-        ):
-
-        tx_def = {
-                'from': init_w3.eth.accounts[0],
-                'to': init_w3.eth.accounts[1],
-                'nonce': 0,
-                'value': 101,
-                'gasPrice': 2000000000,
-                'gas': 21000,
-                'data': '',
-                'chainId': 1,
-                }
-
-        session = init_database
-        txs = []
-        for i in range(10):
-            nonce = init_w3.eth.getTransactionCount(init_w3.eth.accounts[0], 'pending')
-            tx_def['nonce'] = nonce
-            tx = init_w3.eth.sign_transaction(tx_def)
-            tx_hash = init_w3.eth.send_raw_transaction(tx['raw'])
-            logg.debug('tx {}'.format(tx))
-
-            address = init_w3.eth.accounts[i%3]
-            otx = Otx(int((i/3)+1), address, '0x'+tx_hash.hex(), tx['raw'])
-            txs.append(otx)
-            session.add(otx)
-            session.flush()
-
-        logg.debug(txs)
-        session.commit()
-
-        txs[0].status = 0
-        session.add(txs[0])
-        session.commit()
-        session.close()
-        
-        get_txs = Otx.get()
-        logg.debug(get_txs)
+#def test_get(
+#        rpc_eth,
+#        rpc_signer,
+#        agent_roles,
+#        init_database,
+#        ):
+#
+#    rpc = RPCConnection.connect(default_chain_spec, 'default')
+#    nonce_oracle = RPCNonceOracle(agent_roles['ALICE'])
+#    gas_oracle = RPCGasOracle(eth_rpc)
+#    c = Gas(signer=eth_signer, nonce_oracle=nonce_oracle, gas_oracle=gas_oracle, chain_id=default_chain_spec.chain_id())
+#
+#    for i in range(10):
+#
+#        (tx_hash_hex, tx_rpc) = c.create(agent_roles['ALICE'], agent_roles['BOB'], 100 * (10 ** 6)),
+#
+#        tx_def = {
+#                'from': init_w3.eth.accounts[0],
+#                'to': init_w3.eth.accounts[1],
+#                'nonce': 0,
+#                'value': 101,
+#                'gasPrice': 2000000000,
+#                'gas': 21000,
+#                'data': '',
+#                'chainId': 1,
+#                }
+#
+#        session = init_database
+#        txs = []
+#        for i in range(10):
+#            nonce = init_w3.eth.getTransactionCount(init_w3.eth.accounts[0], 'pending')
+#            tx_def['nonce'] = nonce
+#            tx = init_w3.eth.sign_transaction(tx_def)
+#            tx_hash = init_w3.eth.send_raw_transaction(tx['raw'])
+#            logg.debug('tx {}'.format(tx))
+#
+#            address = init_w3.eth.accounts[i%3]
+#            otx = Otx(int((i/3)+1), address, '0x'+tx_hash.hex(), tx['raw'])
+#            txs.append(otx)
+#            session.add(otx)
+#            session.flush()
+#
+#        logg.debug(txs)
+#        session.commit()
+#
+#        txs[0].status = 0
+#        session.add(txs[0])
+#        session.commit()
+#        session.close()
+#        
+#        get_txs = Otx.get()
+#        logg.debug(get_txs)
 
 
 def test_state_log(

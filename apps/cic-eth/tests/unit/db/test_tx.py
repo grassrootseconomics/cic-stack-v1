@@ -1,97 +1,124 @@
 # standard imports
 import os
 
-# third-party imports
+# external imports
 import pytest
-from cic_registry import zero_address
+from chainlib.connection import RPCConnection
+from chainlib.eth.constant import ZERO_ADDRESS
+from chainlib.eth.gas import (
+        Gas,
+        RPCGasOracle,
+        )
+from chainlib.eth.tx import (
+        TxFormat,
+        unpack,
+        )
+from chainlib.eth.nonce import RPCNonceOracle
+from hexathon import (
+        add_0x,
+        strip_0x,
+        )
 
 # local imports
 from cic_eth.db.models.tx import TxCache
 from cic_eth.db.models.otx import Otx
-from cic_eth.eth.task import sign_tx
+
+# test imports
+from tests.util.gas import StaticGasOracle
 
 
 def test_set(
-        init_w3,
+        default_chain_spec,
         init_database,
+        eth_rpc,
+        eth_signer,
+        agent_roles,
         ):
 
-        tx_def = {
-                'from': init_w3.eth.accounts[0],
-                'to': init_w3.eth.accounts[1],
-                'nonce': 0,
-                'value': 500000000000000000000,
-                'gasPrice': 2000000000,
-                'gas': 21000,
-                'data': '',
-                'chainId': 1,
-                }
-        (tx_hash, tx_signed) = sign_tx(tx_def, 'foo:bar:1')
-        otx = Otx(
-            tx_def['nonce'],
-            tx_def['from'],
-            tx_hash,
-            tx_signed,
+    chain_id = default_chain_spec.chain_id()
+    rpc = RPCConnection.connect(default_chain_spec, 'default')
+    nonce_oracle = RPCNonceOracle(agent_roles['ALICE'], eth_rpc)
+    gas_oracle = RPCGasOracle(eth_rpc)
+    c = Gas(signer=eth_signer, nonce_oracle=nonce_oracle, gas_oracle=gas_oracle, chain_id=chain_id)
+
+    (tx_hash_hex, tx_signed_raw_hex) = c.create(agent_roles['ALICE'], agent_roles['BOB'], 100 * (10 ** 6), tx_format=TxFormat.RLP_SIGNED)
+    tx = unpack(bytes.fromhex(strip_0x(tx_signed_raw_hex)), chain_id)
+
+    otx = Otx(
+        tx['nonce'],
+        tx['from'],
+        tx_hash_hex,
+        tx_signed_raw_hex,
+        )
+    init_database.add(otx)
+    init_database.commit()
+
+    bogus_from_token = add_0x(os.urandom(20).hex())
+    to_value = int(tx['value'] / 2)
+
+    txc = TxCache(
+        tx_hash_hex,
+        tx['from'],
+        tx['to'],
+        bogus_from_token,
+        ZERO_ADDRESS,
+        tx['value'],
+        to_value,
+        666,
+        13,
             )
+    init_database.add(txc)
+    init_database.commit()
 
-        init_database.add(otx)
-        init_database.commit()
-
-        bogus_from_token = '0x' + os.urandom(20).hex()
-        to_value = int(tx_def['value'] / 2)
-
-        tx = TxCache(
-            tx_hash,
-            tx_def['from'],
-            tx_def['to'],
-            bogus_from_token,
-            zero_address,
-            tx_def['value'],
-            to_value,
-            666,
-            13,
-                )
-        init_database.add(tx)
-        init_database.commit()
-    
-        tx_stored = init_database.query(TxCache).first()
-        assert (tx_stored.sender == tx_def['from'])
-        assert (tx_stored.recipient == tx_def['to'])
-        assert (tx_stored.source_token_address == bogus_from_token)
-        assert (tx_stored.destination_token_address == zero_address)
-        assert (tx_stored.from_value == tx_def['value'])
-        assert (tx_stored.to_value == to_value)
-        assert (tx_stored.block_number == 666)
-        assert (tx_stored.tx_index == 13)
+    tx_stored = init_database.query(TxCache).first()
+    assert (tx_stored.sender == tx['from'])
+    assert (tx_stored.recipient == tx['to'])
+    assert (tx_stored.source_token_address == bogus_from_token)
+    assert (tx_stored.destination_token_address == ZERO_ADDRESS)
+    assert (tx_stored.from_value == tx['value'])
+    assert (tx_stored.to_value == to_value)
+    assert (tx_stored.block_number == 666)
+    assert (tx_stored.tx_index == 13)
 
 
 def test_clone(
+        default_chain_spec,
         init_database,
-        init_w3,
+        eth_rpc,
+        eth_signer,
+        agent_roles,
         ):
 
+    chain_id = default_chain_spec.chain_id()
+    rpc = RPCConnection.connect(default_chain_spec, 'default')
+    nonce_oracle = RPCNonceOracle(agent_roles['ALICE'], eth_rpc)
+    gas_oracle = StaticGasOracle(2 * (10 ** 9), 21000)
+    c = Gas(signer=eth_signer, nonce_oracle=nonce_oracle, gas_oracle=gas_oracle, chain_id=chain_id)
+
+    txs_rpc = [
+        c.create(agent_roles['ALICE'], agent_roles['BOB'], 100 * (10 ** 6), tx_format=TxFormat.RLP_SIGNED),
+        ]
+
+    gas_oracle = StaticGasOracle(4 * (10 ** 9), 21000)
+    c = Gas(signer=eth_signer, nonce_oracle=nonce_oracle, gas_oracle=gas_oracle, chain_id=chain_id)
+    txs_rpc += [
+        c.create(agent_roles['ALICE'], agent_roles['BOB'], 100 * (10 ** 6), tx_format=TxFormat.RLP_SIGNED),
+        ]
+
     txs = []
-    for i in range(2):
-        tx_def = {
-                'from': init_w3.eth.accounts[0],
-                'to': init_w3.eth.accounts[1],
-                'nonce': 0,
-                'value': 500000000000000000000,
-                'gasPrice': 2000000000 + i,
-                'gas': 21000,
-                'data': '',
-                'chainId': 1,
-                }
-        (tx_hash, tx_signed) = sign_tx(tx_def, 'foo:bar:1')
+    for tx_rpc in txs_rpc:
+        tx_hash_hex = tx_rpc[0]
+        tx_signed_raw_hex = tx_rpc[1]
+        tx_dict = unpack(bytes.fromhex(strip_0x(tx_signed_raw_hex)), chain_id)
         otx = Otx(
-            tx_def['nonce'],
-            tx_def['from'],
-            tx_hash,
-            tx_signed,
+            tx_dict['nonce'],
+            tx_dict['from'],
+            tx_hash_hex,
+            tx_signed_raw_hex,
             )
         init_database.add(otx)
-        tx_def['hash'] = tx_hash
-        txs.append(tx_def)
+        tx_dict['hash'] = tx_hash_hex
+        txs.append(tx_dict)
 
     init_database.commit()
 
@@ -99,8 +126,8 @@ def test_clone(
         txs[0]['hash'],
         txs[0]['from'],
         txs[0]['to'],
-        zero_address,
-        zero_address,
+        ZERO_ADDRESS,
+        ZERO_ADDRESS,
         txs[0]['value'],
         txs[0]['value'],
             )

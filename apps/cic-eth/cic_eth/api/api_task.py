@@ -8,12 +8,10 @@ import logging
 
 # external imports 
 import celery
-#from cic_registry.chain import ChainSpec
-from cic_registry import CICRegistry
+from cic_eth_registry import CICRegistry
 from chainlib.chain import ChainSpec
 
 # local imports
-from cic_eth.eth.factory import TxFactory
 from cic_eth.db.enum import LockEnum
 
 app = celery.current_app
@@ -87,7 +85,7 @@ class Api:
                 'cic_eth.admin.ctrl.check_lock',
                 [
                     [from_token_symbol, to_token_symbol],
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     LockEnum.QUEUE,
                     from_address,
                     ],
@@ -99,7 +97,7 @@ class Api:
                 queue=self.queue,
                 )
         s_tokens = celery.signature(
-                'cic_eth.eth.token.resolve_tokens_by_symbol',
+                'cic_eth.eth.erc20.resolve_tokens_by_symbol',
                 [
                     self.chain_str,
                     ],
@@ -112,7 +110,7 @@ class Api:
                     target_return,
                     minimum_return,
                     to_address,
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                 )
@@ -149,7 +147,7 @@ class Api:
                 'cic_eth.admin.ctrl.check_lock',
                 [
                     [from_token_symbol, to_token_symbol],
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     LockEnum.QUEUE,
                     from_address,
                     ],
@@ -161,9 +159,9 @@ class Api:
                 queue=self.queue,
                 )
         s_tokens = celery.signature(
-                'cic_eth.eth.token.resolve_tokens_by_symbol',
+                'cic_eth.eth.erc20.resolve_tokens_by_symbol',
                 [
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                 )
@@ -174,7 +172,7 @@ class Api:
                     target_return,
                     minimum_return,
                     from_address,
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                 )
@@ -208,7 +206,7 @@ class Api:
                 'cic_eth.admin.ctrl.check_lock',
                 [
                     [token_symbol],
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     LockEnum.QUEUE,
                     from_address,
                     ],
@@ -222,19 +220,19 @@ class Api:
                 queue=self.queue,
                 )
         s_tokens = celery.signature(
-                'cic_eth.eth.token.resolve_tokens_by_symbol',
+                'cic_eth.eth.erc20.resolve_tokens_by_symbol',
                 [
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                 )
         s_transfer = celery.signature(
-                'cic_eth.eth.token.transfer',
+                'cic_eth.eth.erc20.transfer',
                 [
                     from_address,
                     to_address,
                     value,
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                 )
@@ -266,18 +264,18 @@ class Api:
             logg.warning('balance pointlessly called with no callback url')
 
         s_tokens = celery.signature(
-                'cic_eth.eth.token.resolve_tokens_by_symbol',
+                'cic_eth.eth.erc20.resolve_tokens_by_symbol',
                 [
                     [token_symbol],
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                 )
         s_balance = celery.signature(
-                'cic_eth.eth.token.balance',
+                'cic_eth.eth.erc20.balance',
                 [
                     address,
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                 )
@@ -293,7 +291,7 @@ class Api:
                     'cic_eth.queue.balance.balance_incoming',
                     [
                         address,
-                        self.chain_str,
+                        self.chain_spec.asdict(),
                         ],
                     queue=self.queue,
                     )
@@ -301,7 +299,7 @@ class Api:
                     'cic_eth.queue.balance.balance_outgoing',
                     [
                         address,
-                        self.chain_str,
+                        self.chain_spec.asdict(),
                         ],
                     queue=self.queue,
                     )
@@ -309,16 +307,22 @@ class Api:
             s_balance_incoming.link(s_balance_outgoing)
             last_in_chain = s_balance_outgoing
 
-        one = celery.chain(s_tokens, s_balance)
-        two = celery.chain(s_tokens, s_balance_incoming)
-        three = celery.chain(s_tokens, s_balance_outgoing)
+            one = celery.chain(s_tokens, s_balance)
+            two = celery.chain(s_tokens, s_balance_incoming)
+            three = celery.chain(s_tokens, s_balance_outgoing)
 
-        t = None
-        if self.callback_param != None:
-            s_result.link(self.callback_success).on_error(self.callback_error)
-            t = celery.chord([one, two, three])(s_result)
+            t = None
+            if self.callback_param != None:
+                s_result.link(self.callback_success).on_error(self.callback_error)
+                t = celery.chord([one, two, three])(s_result)
+            else:
+                t = celery.chord([one, two, three])(s_result)
         else:
-            t = celery.chord([one, two, three])(s_result)
+            # TODO: Chord is inefficient with only one chain, but assemble_balances must be able to handle different structures in order to avoid chord
+            one = celery.chain(s_tokens, s_balance)
+            if self.callback_param != None:
+                s_result.link(self.callback_success).on_error(self.callback_error)
+            t = celery.chord([one])(s_result)
     
         return t
 
@@ -337,7 +341,7 @@ class Api:
                 'cic_eth.admin.ctrl.check_lock',
                 [
                     password,
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     LockEnum.CREATE,
                     ],
                 queue=self.queue,
@@ -345,7 +349,7 @@ class Api:
         s_account = celery.signature(
                 'cic_eth.eth.account.create',
                 [
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                 )
@@ -357,14 +361,14 @@ class Api:
             s_nonce = celery.signature(
                 'cic_eth.eth.tx.reserve_nonce',
                 [
-                    'ACCOUNTS_INDEX_WRITER',
+                    'ACCOUNT_REGISTRY_WRITER',
                     ],
                 queue=self.queue,
                 )
             s_register = celery.signature(
                 'cic_eth.eth.account.register', 
                 [
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                 )
@@ -387,7 +391,7 @@ class Api:
                 'cic_eth.admin.ctrl.check_lock',
                 [
                     address,
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     LockEnum.QUEUE,
                     ],
                 queue=self.queue,
@@ -402,7 +406,7 @@ class Api:
         s_refill = celery.signature(
                 'cic_eth.eth.tx.refill_gas',
                 [
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                 )
@@ -445,7 +449,7 @@ class Api:
         s_brief = celery.signature(
             'cic_eth.ext.tx.tx_collate',
             [
-                self.chain_str,
+                self.chain_spec.asdict(),
                 offset,
                 limit
                 ],
@@ -471,7 +475,7 @@ class Api:
                 'cic_eth.ext.tx.list_tx_by_bloom',
                 [
                     address,
-                    self.chain_str,
+                    self.chain_spec.asdict(),
                     ],
                 queue=self.queue,
                     )

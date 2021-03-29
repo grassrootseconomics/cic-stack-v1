@@ -1,24 +1,30 @@
-from cic_eth.eth.util import unpack_signed_raw_tx 
-from cic_eth.eth.task import sign_tx
+# external imports
+from chainlib.eth.gas import (
+        Gas,
+        RPCGasOracle,
+        )
+from chainlib.eth.tx import (
+        TxFormat,
+        unpack,
+        )
+from chainlib.eth.nonce import RPCNonceOracle
+from chainlib.connection import RPCConnection
+from hexathon import strip_0x
 
 def test_unpack(
-    init_rpc,
-    w3,
+        default_chain_spec,
+        eth_rpc,
+        eth_signer,
+        agent_roles,
         ):
 
-    tx = {
-        'from': w3.eth.accounts[1],
-        'to': w3.eth.accounts[0],
-        'nonce': 0,
-        'value': 1024,
-        'gas': 21000,
-        'gasPrice': 200000000,
-        'data': '0x',
-        'chainId': 42,
-            }
+    chain_id = default_chain_spec.chain_id()
+    rpc = RPCConnection.connect(default_chain_spec, 'default')
+    nonce_oracle = RPCNonceOracle(agent_roles['ALICE'], eth_rpc)
+    gas_oracle = RPCGasOracle(eth_rpc)
+    c = Gas(signer=eth_signer, nonce_oracle=nonce_oracle, gas_oracle=gas_oracle, chain_id=default_chain_spec.chain_id())
+    (tx_hash_hex, tx_signed_raw_hex) = c.create(agent_roles['ALICE'], agent_roles['BOB'], 100 * (10 ** 6), tx_format=TxFormat.RLP_SIGNED)
 
-    (tx_hash, tx_raw) = sign_tx(tx, 'foo:bar:42')
+    tx = unpack(bytes.fromhex(strip_0x(tx_signed_raw_hex)), chain_id=chain_id)
 
-    tx_recovered = unpack_signed_raw_tx(bytes.fromhex(tx_raw[2:]), 42)
-
-    assert tx_hash == tx_recovered['hash']
+    assert tx_hash_hex == tx['hash']

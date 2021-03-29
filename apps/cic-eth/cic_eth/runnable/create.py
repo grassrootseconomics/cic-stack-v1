@@ -1,17 +1,19 @@
 #!/usr/bin/python
-#import socket
 import sys
 import os
 import logging
 import uuid
 import json
+import argparse
+
+# external imports
+import celery
+import confini
+import redis
 from xdg.BaseDirectory import xdg_config_home
 
-import celery
+# local imports
 from cic_eth.api import Api
-import confini
-import argparse
-import redis
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger('create_account_script')
@@ -50,6 +52,7 @@ args_override = {
         'REDIS_DB': getattr(args, 'redis_db'),
         }
 config.dict_override(args_override, 'cli')
+
 celery_app = celery.Celery(broker=config.get('CELERY_BROKER_URL'), backend=config.get('CELERY_RESULT_URL'))
 
 

@@ -1,6 +1,12 @@
 # standard imports
 import logging
 
+# external imports
+from chainlib.connection import RPCConnection
+from chainlib.eth.gas import RPCGasOracle
+from chainlib.eth.nonce import RPCNonceOracle
+from chainlib.eth.gas import Gas
+
 # local imports
 from cic_eth.queue.tx import get_status_tx
 from cic_eth.db.enum import (
@@ -8,7 +14,8 @@ from cic_eth.db.enum import (
         StatusBits,
         )
 from cic_eth.queue.tx import create as queue_create
-from cic_eth.eth.tx import cache_gas_refill_data
+from cic_eth.eth.tx import cache_gas_data
+from cic_eth.queue.tx import register_tx
 from cic_eth.db.models.otx import Otx
 
 logg = logging.getLogger()
@@ -17,26 +24,24 @@ logg = logging.getLogger()
 def test_status_tx_list(
         default_chain_spec,
         init_database,
-        init_w3,
+        eth_rpc,
+        eth_signer,
+        agent_roles,
         ):
 
-    tx = {
-            'from': init_w3.eth.accounts[0],
-            'to': init_w3.eth.accounts[1],
-            'nonce': 42,
-            'gas': 21000,
-            'gasPrice': 1000000,
-            'value': 128,
-            'chainId': 666,
-            'data': '',
-            }
-    logg.debug('nonce {}'.format(tx['nonce']))
-    tx_signed = init_w3.eth.sign_transaction(tx)
-    #tx_hash = RpcClient.w3.keccak(hexstr=tx_signed['raw'])
-    tx_hash = init_w3.keccak(hexstr=tx_signed['raw'])
-    queue_create(tx['nonce'], tx['from'], tx_hash.hex(), tx_signed['raw'], str(default_chain_spec))
-    cache_gas_refill_data(tx_hash.hex(), tx)
-    tx_hash_hex = tx_hash.hex()
+    rpc = RPCConnection.connect(default_chain_spec, 'default')
+
+    nonce_oracle = RPCNonceOracle(agent_roles['ALICE'], eth_rpc)
+    gas_oracle = RPCGasOracle(eth_rpc)
+    c = Gas(signer=eth_signer, nonce_oracle=nonce_oracle, gas_oracle=gas_oracle, chain_id=default_chain_spec.chain_id())
+
+    (tx_hash_hex, o) = c.create(agent_roles['ALICE'], agent_roles['BOB'], 1024)
+    r = rpc.do(o)
+
+    tx_signed_raw_hex = o['params'][0]
+    #queue_create(tx['nonce'], tx['from'], tx_hash.hex(), tx_signed['raw'], str(default_chain_spec))
+    register_tx(tx_hash_hex, tx_signed_raw_hex, default_chain_spec, None, session=init_database)
+    cache_gas_data(tx_hash_hex, tx_signed_raw_hex, default_chain_spec.asdict())
 
     q = init_database.query(Otx)
     otx = q.get(1)
