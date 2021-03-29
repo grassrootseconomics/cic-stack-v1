@@ -2,14 +2,26 @@
 import logging
 import sys
 
-# third-party imports
+# external imports
 import celery
-import web3
-from cic_registry import zero_address
-from cic_registry import zero_content
-from cic_registry import CICRegistry
-from crypto_dev_signer.eth.web3ext import Web3 as Web3Ext
-from cic_registry.error import UnknownContractError
+from chainlib.eth.constant import (
+        ZERO_ADDRESS,
+        )
+from cic_eth_registry import CICRegistry
+from cic_eth_registry.error import UnknownContractError
+from chainlib.eth.address import to_checksum_address
+from chainlib.eth.contract import code
+from chainlib.eth.tx import (
+        transaction,
+        receipt,
+        unpack,
+        )
+from chainlib.hash import keccak256_hex_to_hex
+from hexathon import (
+        strip_0x,
+        add_0x,
+        )
+from chainlib.eth.gas import balance
 
 # local imports
 from cic_eth.db.models.base import SessionBase
@@ -23,9 +35,7 @@ from cic_eth.db.enum import (
     )
 from cic_eth.error import InitializationError
 from cic_eth.db.error import TxStateChangeError
-from cic_eth.eth.rpc import RpcClient
 from cic_eth.queue.tx import get_tx
-from cic_eth.eth.util import unpack_signed_raw_tx
 
 app = celery.current_app
 
@@ -41,19 +51,20 @@ class AdminApi:
     :param queue: Name of worker queue to submit tasks to
     :type queue: str
     """
-    def __init__(self, rpc_client, queue='cic-eth'):
-        self.rpc_client = rpc_client
-        self.w3 = rpc_client.w3
+    def __init__(self, rpc, queue='cic-eth', call_address=ZERO_ADDRESS):
+        self.rpc = rpc
         self.queue = queue
+        self.call_address = call_address
 
 
     def unlock(self, chain_spec, address, flags=None):
         s_unlock = celery.signature(
             'cic_eth.admin.ctrl.unlock',
             [
-                str(chain_spec),
-                flags,
+                None,
+                chain_spec.asdict(),
                 address,
+                flags,
                 ],
             queue=self.queue,
             )
@@ -64,9 +75,10 @@ class AdminApi:
         s_lock = celery.signature(
             'cic_eth.admin.ctrl.lock',
             [
-                str(chain_spec),
-                flags,
+                None,
+                chain_spec.asdict(),
                 address,
+                flags,
                 ],
             queue=self.queue,
             )
@@ -79,10 +91,10 @@ class AdminApi:
             [],
             queue=self.queue,
             )
-        return s_lock.apply_async().get()
+        return s_lock.apply_async()
 
 
-    def tag_account(self, tag, address_hex):
+    def tag_account(self, tag, address_hex, chain_spec):
         """Persistently associate an address with a plaintext tag.
 
         Some tags are known by the system and is used to resolve addresses to use for certain transactions. 
@@ -93,26 +105,28 @@ class AdminApi:
         :type address_hex: str, 0x-hex
         :raises ValueError: Invalid checksum address
         """
-        if not web3.Web3.isChecksumAddress(address_hex):
-            raise ValueError('invalid address')
-        session = SessionBase.create_session()
-        role = AccountRole.set(tag, address_hex) 
-        session.add(role)
-        session.commit()
-        session.close()
+        s_tag = celery.signature(
+            'cic_eth.eth.account.set_role',
+            [
+                tag,
+                address_hex,
+                chain_spec.asdict(),
+                ],
+            queue=self.queue,
+            )
+        return s_tag.apply_async()
 
 
-    def have_account(self, address_hex, chain_str):
+    def have_account(self, address_hex, chain_spec):
         s_have = celery.signature(
             'cic_eth.eth.account.have',
             [
                 address_hex,
-                chain_str,
+                chain_spec.asdict(),
                 ],
             queue=self.queue,
             )
-        t = s_have.apply_async()
-        return t.get()
+        return s_have.apply_async()
 
 
     def resend(self, tx_hash_hex, chain_str, in_place=True, unlock=False):
@@ -197,12 +211,12 @@ class AdminApi:
                 blocking_nonce = tx['nonce']
             nonce_otx = tx['nonce']
 
-        #nonce_cache = Nonce.get(address)
-        nonce_w3 = self.w3.eth.getTransactionCount(address, 'pending') 
+        nonce_cache = Nonce.get(address)
+        #nonce_w3 = self.w3.eth.getTransactionCount(address, 'pending') 
         
         return {
             'nonce': {
-                'network': nonce_w3,
+                'network': nonce_cache,
                 'queue': nonce_otx,
                 #'cache': nonce_cache,
                 'blocking': blocking_nonce,
@@ -213,7 +227,7 @@ class AdminApi:
             }
 
 
-    def fix_nonce(self, address, nonce):
+    def fix_nonce(self, address, nonce, chain_spec):
         s = celery.signature(
                 'cic_eth.queue.tx.get_account_tx',
                 [
@@ -234,7 +248,7 @@ class AdminApi:
         s_nonce = celery.signature(
                 'cic_eth.admin.nonce.shift_nonce',
                 [
-                    str(self.rpc_client.chain_spec),
+                    self.rpc.chain_spec.asdict(),
                     tx_hash_hex, 
                 ],
                 queue=self.queue
@@ -242,18 +256,18 @@ class AdminApi:
         return s_nonce.apply_async()
 
 
-    # TODO: this is a stub, complete all checks
-    def ready(self):
-        """Checks whether all required initializations have been performed.
-
-        :raises cic_eth.error.InitializationError: At least one setting pre-requisite has not been met.
-        :raises KeyError: An address provided for initialization is not known by the keystore.
-        """
-        addr = AccountRole.get_address('ETH_GAS_PROVIDER_ADDRESS')
-        if addr == zero_address:
-            raise InitializationError('missing account ETH_GAS_PROVIDER_ADDRESS')
-
-        self.w3.eth.sign(addr, text='666f6f')
+#    # TODO: this is a stub, complete all checks
+#    def ready(self):
+#        """Checks whether all required initializations have been performed.
+#
+#        :raises cic_eth.error.InitializationError: At least one setting pre-requisite has not been met.
+#        :raises KeyError: An address provided for initialization is not known by the keystore.
+#        """
+#        addr = AccountRole.get_address('ETH_GAS_PROVIDER_ADDRESS')
+#        if addr == ZERO_ADDRESS:
+#            raise InitializationError('missing account ETH_GAS_PROVIDER_ADDRESS')
+#
+#        self.w3.eth.sign(addr, text='666f6f')
 
 
     def account(self, chain_spec, address, cols=['tx_hash', 'sender', 'recipient', 'nonce', 'block', 'tx_index', 'status', 'network_status', 'date_created'], include_sender=True, include_recipient=True):
@@ -303,7 +317,7 @@ class AdminApi:
 
 
     # TODO: Add exception upon non-existent tx aswell as invalid tx data to docstring 
-    def tx(self, chain_spec, tx_hash=None, tx_raw=None):
+    def tx(self, chain_spec, tx_hash=None, tx_raw=None, registry=None):
         """Output local and network details about a given transaction with local origin.
 
         If the transaction hash is given, the raw trasnaction data will be retrieved from the local transaction queue backend. Otherwise the raw transaction data must be provided directly. Only one of transaction hash and transaction data can be passed.
@@ -324,7 +338,8 @@ class AdminApi:
             ValueError('Specify only one of hash or raw tx')
 
         if tx_raw != None:
-            tx_hash = self.w3.keccak(hexstr=tx_raw).hex()
+            tx_hash = add_0x(keccak256_hex_to_hex(tx_raw))
+            #tx_hash = self.w3.keccak(hexstr=tx_raw).hex()
 
         s = celery.signature(
             'cic_eth.queue.tx.get_tx_cache',
@@ -335,31 +350,35 @@ class AdminApi:
         tx = s.apply_async().get()
   
         source_token = None
-        if tx['source_token'] != zero_address:
+        if tx['source_token'] != ZERO_ADDRESS:
             try:
-                source_token = CICRegistry.get_address(chain_spec, tx['source_token']).contract
+                source_token = registry.by_address(tx['source_token'])
+                #source_token = CICRegistry.get_address(chain_spec, tx['source_token']).contract
             except UnknownContractError:
-                source_token_contract = self.w3.eth.contract(abi=CICRegistry.abi('ERC20'), address=tx['source_token'])
-                source_token = CICRegistry.add_token(chain_spec, source_token_contract)
+                #source_token_contract = self.w3.eth.contract(abi=CICRegistry.abi('ERC20'), address=tx['source_token'])
+                #source_token = CICRegistry.add_token(chain_spec, source_token_contract)
                 logg.warning('unknown source token contract {}'.format(tx['source_token']))
 
         destination_token = None
-        if tx['source_token'] != zero_address:
+        if tx['source_token'] != ZERO_ADDRESS:
             try:
-                destination_token = CICRegistry.get_address(chain_spec, tx['destination_token'])
+                #destination_token = CICRegistry.get_address(chain_spec, tx['destination_token'])
+                destination_token = registry.by_address(tx['destination_token'])
             except UnknownContractError:
-                destination_token_contract = self.w3.eth.contract(abi=CICRegistry.abi('ERC20'), address=tx['source_token'])
-                destination_token = CICRegistry.add_token(chain_spec, destination_token_contract)
+                #destination_token_contract = self.w3.eth.contract(abi=CICRegistry.abi('ERC20'), address=tx['source_token'])
+                #destination_token = CICRegistry.add_token(chain_spec, destination_token_contract)
                 logg.warning('unknown destination token contract {}'.format(tx['destination_token']))
 
         tx['sender_description'] = 'Custodial account'
         tx['recipient_description'] = 'Custodial account'
 
-        c = RpcClient(chain_spec)
-        if len(c.w3.eth.getCode(tx['sender'])) > 0:
+        o = code(tx['sender'])
+        r = self.rpc.do(o)
+        if len(strip_0x(r, allow_empty=True)) > 0:
             try:
-                sender_contract = CICRegistry.get_address(chain_spec, tx['sender'])
-                tx['sender_description'] = 'Contract {}'.format(sender_contract.identifier())
+                #sender_contract = CICRegistry.get_address(chain_spec, tx['sender'])
+                sender_contract = registry.by_address(tx['sender'], sender_address=self.call_address)
+                tx['sender_description'] = 'Contract at {}'.format(tx['sender']) #sender_contract)
             except UnknownContractError:
                 tx['sender_description'] = 'Unknown contract'
             except KeyError as e:
@@ -369,7 +388,7 @@ class AdminApi:
                     'cic_eth.eth.account.have',
                     [
                         tx['sender'],
-                        str(chain_spec),
+                        chain_spec.asdict(),
                         ],
                     queue=self.queue,
                     )
@@ -382,7 +401,7 @@ class AdminApi:
                     'cic_eth.eth.account.role',
                     [
                         tx['sender'],
-                        str(chain_spec),
+                        chain_spec.asdict(),
                         ],
                     queue=self.queue,
                     )
@@ -391,11 +410,13 @@ class AdminApi:
                 if role != None:
                     tx['sender_description'] = role
 
-
-        if len(c.w3.eth.getCode(tx['recipient'])) > 0:
+        o = code(tx['recipient'])
+        r = self.rpc.do(o)
+        if len(strip_0x(r, allow_empty=True)) > 0:
             try:
-                recipient_contract = CICRegistry.get_address(chain_spec, tx['recipient'])
-                tx['recipient_description'] = 'Contract {}'.format(recipient_contract.identifier())
+                #recipient_contract = CICRegistry.by_address(tx['recipient'])
+                recipient_contract = registry.by_address(tx['recipient'])
+                tx['recipient_description'] = 'Contract at {}'.format(tx['recipient']) #recipient_contract)
             except UnknownContractError as e:
                 tx['recipient_description'] = 'Unknown contract'
             except KeyError as e:
@@ -405,7 +426,7 @@ class AdminApi:
                     'cic_eth.eth.account.have',
                     [
                         tx['recipient'],
-                        str(chain_spec),
+                        chain_spec.asdict(),
                         ],
                     queue=self.queue,
                     )
@@ -418,7 +439,7 @@ class AdminApi:
                     'cic_eth.eth.account.role',
                     [
                         tx['recipient'],
-                        str(chain_spec),
+                        chain_spec.asdict(),
                         ],
                     queue=self.queue,
                     )
@@ -437,29 +458,40 @@ class AdminApi:
 
         tx['network_status'] = 'Not submitted'
 
+        r = None
         try:
-            c.w3.eth.getTransaction(tx_hash)
+            o = transaction(tx_hash)
+            r = self.rpc.do(o)
+        except Exception as e:
+            logg.warning('(too permissive exception handler, please fix!) {}'.format(e))
             tx['network_status'] = 'Mempool'
-        except web3.exceptions.TransactionNotFound:
-            pass
 
-        try:
-            r = c.w3.eth.getTransactionReceipt(tx_hash)
-            if r.status == 1:
-                tx['network_status'] = 'Confirmed'
-            else:
-                tx['network_status'] = 'Reverted'
-            tx['network_block_number'] = r.blockNumber
-            tx['network_tx_index'] = r.transactionIndex
-            if tx['block_number'] == None:
-                problems.append('Queue is missing block number {} for mined tx'.format(r.blockNumber))
-        except web3.exceptions.TransactionNotFound:
-            pass
+        if r != None:
+            try:
+                o = receipt(tx_hash)
+                r = self.rpc.do(o)
+                logg.debug('h {} o {}'.format(tx_hash, o))
+                if int(strip_0x(r['status'])) == 1:
+                    tx['network_status'] = 'Confirmed'
+                else:
+                    tx['network_status'] = 'Reverted'
+                tx['network_block_number'] = r.blockNumber
+                tx['network_tx_index'] = r.transactionIndex
+                if tx['block_number'] == None:
+                    problems.append('Queue is missing block number {} for mined tx'.format(r.blockNumber))
+            except Exception as e:
+                logg.warning('too permissive exception handler, please fix!')
+                pass
 
-        tx['sender_gas_balance'] = c.w3.eth.getBalance(tx['sender'])
-        tx['recipient_gas_balance'] = c.w3.eth.getBalance(tx['recipient'])
+        o = balance(tx['sender'])
+        r = self.rpc.do(o)
+        tx['sender_gas_balance'] = r
 
-        tx_unpacked = unpack_signed_raw_tx(bytes.fromhex(tx['signed_tx'][2:]), chain_spec.chain_id())
+        o = balance(tx['recipient'])
+        r = self.rpc.do(o)
+        tx['recipient_gas_balance'] = r
+
+        tx_unpacked = unpack(bytes.fromhex(tx['signed_tx'][2:]), chain_spec.chain_id())
         tx['gas_price'] = tx_unpacked['gasPrice']
         tx['gas_limit'] = tx_unpacked['gas']
         tx['data'] = tx_unpacked['data']

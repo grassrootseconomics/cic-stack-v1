@@ -3,17 +3,16 @@ import logging
 import time
 import datetime
 
-# third-party imports
+# external imports
 import celery
 from hexathon import strip_0x
 from sqlalchemy import or_
 from sqlalchemy import not_
 from sqlalchemy import tuple_
 from sqlalchemy import func
+from chainlib.eth.tx import unpack
 
 # local imports
-from cic_registry import CICRegistry
-from cic_registry.chain import ChainSpec
 from cic_eth.db.models.otx import Otx
 from cic_eth.db.models.otx import OtxStateLog
 from cic_eth.db.models.tx import TxCache
@@ -27,7 +26,6 @@ from cic_eth.db.enum import (
         dead,
         )
 from cic_eth.task import CriticalSQLAlchemyTask
-from cic_eth.eth.util import unpack_signed_raw_tx # TODO: should not be in same sub-path as package that imports queue.tx
 from cic_eth.error import NotLocalTxError
 from cic_eth.error import LockedError
 from cic_eth.db.enum import status_str
@@ -37,7 +35,7 @@ celery_app = celery.current_app
 logg = logging.getLogger()
 
 
-def create(nonce, holder_address, tx_hash, signed_tx, chain_str, obsolete_predecessors=True, session=None):
+def create(nonce, holder_address, tx_hash, signed_tx, chain_spec, obsolete_predecessors=True, session=None):
     """Create a new transaction queue record.
 
     :param nonce: Transaction nonce
@@ -48,13 +46,13 @@ def create(nonce, holder_address, tx_hash, signed_tx, chain_str, obsolete_predec
     :type tx_hash: str, 0x-hex
     :param signed_tx: Signed raw transaction
     :type signed_tx: str, 0x-hex
-    :param chain_str: Chain spec string representation to create transaction for
-    :type chain_str: str
+    :param chain_spec: Chain spec to create transaction for
+    :type chain_spec: ChainSpec
     :returns: transaction hash
     :rtype: str, 0x-hash
     """
     session = SessionBase.bind_session(session)
-    lock = Lock.check_aggregate(chain_str, LockEnum.QUEUE, holder_address, session=session) 
+    lock = Lock.check_aggregate(str(chain_spec), LockEnum.QUEUE, holder_address, session=session) 
     if lock > 0:
         SessionBase.release_session(session)
         raise LockedError(lock)
@@ -69,22 +67,75 @@ def create(nonce, holder_address, tx_hash, signed_tx, chain_str, obsolete_predec
     session.flush()
 
     if obsolete_predecessors:
-        # TODO: obsolete previous txs from same holder with same nonce
         q = session.query(Otx)
         q = q.join(TxCache)
         q = q.filter(Otx.nonce==nonce)
         q = q.filter(TxCache.sender==holder_address)
         q = q.filter(Otx.tx_hash!=tx_hash)
-        q = q.filter(Otx.status<=StatusEnum.SENT)
+        q = q.filter(Otx.status.op('&')(StatusBits.FINAL)==0)
 
         for otx in q.all():
             logg.info('otx {} obsoleted by {}'.format(otx.tx_hash, tx_hash))
-            otx.cancel(confirmed=False, session=session)
+            try:
+                otx.cancel(confirmed=False, session=session)
+            except TxStateChangeError as e:
+                logg.exception('obsolete fail: {}'.format(e))
+                session.close()
+                raise(e)
+            except Exception as e:
+                logg.exception('obsolete UNEXPECTED fail: {}'.format(e))
+                session.close()
+                raise(e)
+
 
     session.commit()
     SessionBase.release_session(session)
     logg.debug('queue created nonce {} from {} hash {}'.format(nonce, holder_address, tx_hash))
     return tx_hash
+
+
+def register_tx(tx_hash_hex, tx_signed_raw_hex, chain_spec, queue, cache_task=None, session=None):
+    """Signs the provided transaction, and adds it to the transaction queue cache (with status PENDING).
+
+    :param tx: Standard ethereum transaction data
+    :type tx: dict
+    :param chain_spec: Chain spec of transaction to add to queue
+    :type chain_spec: chainlib.chain.ChainSpec
+    :param queue: Task queue
+    :type queue: str
+    :param cache_task: Cache task to call with signed transaction. If None, no task will be called.
+    :type cache_task: str
+    :raises: sqlalchemy.exc.DatabaseError
+    :returns: Tuple; Transaction hash, signed raw transaction data
+    :rtype: tuple
+    """
+    logg.debug('adding queue tx {}:{} -> {}'.format(chain_spec, tx_hash_hex, tx_signed_raw_hex))
+    tx_signed_raw = bytes.fromhex(strip_0x(tx_signed_raw_hex))
+    tx = unpack(tx_signed_raw, chain_id=chain_spec.chain_id())
+
+    create(
+        tx['nonce'],
+        tx['from'],
+        tx_hash_hex,
+        tx_signed_raw_hex,
+        chain_spec,
+        session=session,
+    )        
+
+    if cache_task != None:
+        logg.debug('adding cache task {} tx {}'.format(cache_task, tx_hash_hex))
+        s_cache = celery.signature(
+                cache_task,
+                [
+                    tx_hash_hex,
+                    tx_signed_raw_hex,
+                    chain_spec.asdict(),
+                    ],
+                queue=queue,
+                )
+        s_cache.apply_async()
+
+    return (tx_hash_hex, tx_signed_raw_hex,)
 
 
 # TODO: Replace set_* with single task for set status
@@ -109,10 +160,20 @@ def set_sent_status(tx_hash, fail=False):
         session.close()
         return False
 
-    if fail:
-        o.sendfail(session=session)
-    else:
-        o.sent(session=session)
+    try:
+        if fail:
+            o.sendfail(session=session)
+        else:
+            o.sent(session=session)
+    except TxStateChangeError as e:
+        logg.exception('set sent fail: {}'.format(e))
+        session.close()
+        raise(e)
+    except Exception as e:
+        logg.exception('set sent UNEXPECED fail: {}'.format(e))
+        session.close()
+        raise(e)
+
 
     session.commit()
     session.close()
@@ -156,10 +217,20 @@ def set_final_status(tx_hash, block=None, fail=False):
     q = q.filter(Otx.tx_hash==tx_hash)
     o = q.first()
 
-    if fail:
-        o.minefail(block, session=session)
-    else:
-        o.success(block, session=session)
+    try:
+        if fail:
+            o.minefail(block, session=session)
+        else:
+            o.success(block, session=session)
+        session.commit()
+    except TxStateChangeError as e:
+        logg.exception('set final fail: {}'.format(e))
+        session.close()
+        raise(e)
+    except Exception as e:
+        logg.exception('set final UNEXPECED fail: {}'.format(e))
+        session.close()
+        raise(e)
 
     q = session.query(Otx)
     q = q.join(TxCache)
@@ -168,8 +239,16 @@ def set_final_status(tx_hash, block=None, fail=False):
     q = q.filter(Otx.tx_hash!=tx_hash)
 
     for otwo in q.all():
-        otwo.cancel(True, session=session)
-
+        try:
+            otwo.cancel(True, session=session)
+        except TxStateChangeError as e:
+            logg.exception('cancel non-final fail: {}'.format(e))
+            session.close()
+            raise(e)
+        except Exception as e:
+            logg.exception('cancel non-final UNEXPECTED fail: {}'.format(e))
+            session.close()
+            raise(e)
     session.commit()
     session.close()
 
@@ -197,12 +276,16 @@ def set_cancel(tx_hash, manual=False):
 
     session.flush()
 
-    if manual:
-        o.override(session=session)
-    else:
-        o.cancel(session=session)
-
-    session.commit()
+    try:
+        if manual:
+            o.override(session=session)
+        else:
+            o.cancel(session=session)
+        session.commit()
+    except TxStateChangeError as e:
+        logg.exception('set cancel fail: {}'.format(e))
+    except Exception as e:
+        logg.exception('set cancel UNEXPECTED fail: {}'.format(e))
     session.close()
 
     return tx_hash
@@ -513,7 +596,7 @@ def get_nonce_tx(nonce, sender, chain_id):
     txs = {}
     for r in q.all():
         tx_signed_bytes = bytes.fromhex(r.signed_tx[2:])
-        tx = unpack_signed_raw_tx(tx_signed_bytes, chain_id)
+        tx = unpack(tx_signed_bytes, chain_id)
         if sender == None or tx['from'] == sender:
             txs[r.tx_hash] = r.signed_tx
 
@@ -558,7 +641,7 @@ def get_paused_txs(status=None, sender=None, chain_id=0, session=None):
 
     for r in q.all():
         tx_signed_bytes = bytes.fromhex(r.signed_tx[2:])
-        tx = unpack_signed_raw_tx(tx_signed_bytes, chain_id)
+        tx = unpack(tx_signed_bytes, chain_id)
         if sender == None or tx['from'] == sender:
             #gas += tx['gas'] * tx['gasPrice']
             txs[r.tx_hash] = r.signed_tx
@@ -664,7 +747,7 @@ def get_upcoming_tx(status=StatusEnum.READYSEND, recipient=None, before=None, ch
             continue
 
         tx_signed_bytes = bytes.fromhex(o.signed_tx[2:])
-        tx = unpack_signed_raw_tx(tx_signed_bytes, chain_id)
+        tx = unpack(tx_signed_bytes, chain_id)
         txs[o.tx_hash] = o.signed_tx
         
         q = session.query(TxCache)

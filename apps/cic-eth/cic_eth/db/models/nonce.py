@@ -56,6 +56,20 @@ class Nonce(SessionBase):
 
 
     @staticmethod
+    def __inc(conn, address):
+        #conn.execute("UPDATE nonce set nonce = nonce + 1 WHERE address_hex = '{}'".format(address))
+        q = conn.query(Nonce)
+        q = q.filter(Nonce.address_hex==address)
+        q = q.with_for_update()
+        o = q.first()
+        nonce =  o.nonce
+        o.nonce += 1
+        conn.add(o)
+        conn.flush()
+        return nonce
+
+
+    @staticmethod
     def __init(conn, address, nonce):
         conn.execute("INSERT INTO nonce (nonce, address_hex) VALUES ({}, '{}')".format(nonce, address))
 
@@ -78,7 +92,7 @@ class Nonce(SessionBase):
 
     # TODO: Incrementing nonce MUST be done by separate tasks.
     @staticmethod
-    def next(address, initial_if_not_exists=0):
+    def next(address, initial_if_not_exists=0, session=None):
         """Generate next nonce for the given address.
 
         If there is no previous nonce record for the address, the nonce may be initialized to a specified value, or 0 if no value has been given.
@@ -90,28 +104,31 @@ class Nonce(SessionBase):
         :returns: Nonce
         :rtype: number
         """
-        #session = SessionBase.bind_session(session)
+        session = SessionBase.bind_session(session)
         
         #session.begin_nested()
-        conn = Nonce.engine.connect()
-        if Nonce.transactional:
-            conn.execute('BEGIN')
-            conn.execute('LOCK TABLE nonce IN SHARE ROW EXCLUSIVE MODE')
-            logg.debug('locking nonce table for address {}'.format(address))
-        nonce = Nonce.__get(conn, address)
+        #conn = Nonce.engine.connect()
+        #if Nonce.transactional:
+        #    conn.execute('BEGIN')
+        #    conn.execute('LOCK TABLE nonce IN SHARE ROW EXCLUSIVE MODE')
+        #    logg.debug('locking nonce table for address {}'.format(address))
+        #nonce = Nonce.__get(conn, address)
+        nonce = Nonce.__get(session, address)
         logg.debug('get nonce {} for address {}'.format(nonce, address))
         if nonce == None:
             nonce = initial_if_not_exists
             logg.debug('setting default nonce to {} for address {}'.format(nonce, address))
-            Nonce.__init(conn, address, nonce)
-        Nonce.__set(conn, address, nonce+1)
-        if Nonce.transactional:
-            conn.execute('COMMIT')
-            logg.debug('unlocking nonce table for address {}'.format(address))
-        conn.close()
+            #Nonce.__init(conn, address, nonce)
+            Nonce.__init(session, address, nonce)
+        #Nonce.__set(conn, address, nonce+1)
+        nonce = Nonce.__inc(session, address)
+        #if Nonce.transactional:
+            #conn.execute('COMMIT')
+        #    logg.debug('unlocking nonce table for address {}'.format(address))
+        #conn.close()
         #session.commit()
 
-        #SessionBase.release_session(session)
+        SessionBase.release_session(session)
         return nonce
 
 
@@ -119,67 +136,74 @@ class NonceReservation(SessionBase):
 
     __tablename__ = 'nonce_task_reservation'
 
+    address_hex = Column(String(42))
     nonce = Column(Integer)
     key = Column(String)
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
 
 
     @staticmethod
-    def peek(key, session=None):
+    def peek(address, key, session=None):
         session = SessionBase.bind_session(session)
 
         q = session.query(NonceReservation)
         q = q.filter(NonceReservation.key==key)
+        q = q.filter(NonceReservation.address_hex==address)
         o = q.first()
 
-        nonce = None
+        r = None
         if o != None:
-            nonce = o.nonce
+            r = (o.key, o.nonce)
 
         session.flush()
 
         SessionBase.release_session(session)
 
-        return nonce
+        return r
 
 
     @staticmethod
-    def release(key, session=None):
+    def release(address, key, session=None):
 
         session = SessionBase.bind_session(session)
 
-        nonce = NonceReservation.peek(key, session=session)
+        o = NonceReservation.peek(address, key, session=session)
+
+        if o == None:
+            SessionBase.release_session(session)
+            raise IntegrityError('"release" called on key {} address {} which does not exists'.format(key, address))
 
         q = session.query(NonceReservation)
         q = q.filter(NonceReservation.key==key)
+        q = q.filter(NonceReservation.address_hex==address)
         o = q.first()
-
-        if o == None:
-            raise IntegrityError('nonce for key {}'.format(nonce))
-            SessionBase.release_session(session)
+        r = (o.key, o.nonce)
 
         session.delete(o)
         session.flush()
 
         SessionBase.release_session(session)
 
-        return nonce
+        return r
 
 
     @staticmethod
     def next(address, key, session=None):
         session = SessionBase.bind_session(session)
 
-        if NonceReservation.peek(key, session) != None:
-            raise IntegrityError('nonce for key {}'.format(key))
+        o = NonceReservation.peek(address, key, session)
+        if o != None:
+            raise IntegrityError('"next" called on nonce for key {} address {} during active key {}'.format(key, address, o[0]))
 
-        nonce = Nonce.next(address)
+        nonce = Nonce.next(address, session=session)
 
         o = NonceReservation()
         o.nonce = nonce
         o.key = key
+        o.address_hex = address
         session.add(o)
+        r = (key, nonce)
        
         SessionBase.release_session(session)
 
-        return nonce
+        return r

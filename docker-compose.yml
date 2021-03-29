@@ -101,8 +101,9 @@ services:
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis:6379}
       DEV_PIP_EXTRA_INDEX_URL: ${DEV_PIP_EXTRA_INDEX_URL:-https://pip.grassrootseconomics.net:8433}
-      RUN_LEVEL: 2 #0: noop 1: contract migrations 2: seed data
+      RUN_MASK: ${RUN_MASK:-0} # bit flags; 1: contract migrations 2: seed data
     command: ["./run_job.sh"]
+        #command: ["./reset.sh"]
     depends_on:
       - eth
       - postgres
@@ -236,7 +237,7 @@ services:
       BANCOR_DIR: ${BANCOR_DIR:-/usr/local/share/cic/bancor}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
-      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-/tmp/cic/signer/jsonrpc.ipc}
+      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-ipc:///run/crypto-dev-signer/jsonrpc.ipc}
       SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
       ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
       TASKS_TRACE_QUEUE_STATUS: ${TASKS_TRACE_QUEUE_STATUS:-1}
@@ -292,7 +293,7 @@ services:
       - -c
       - |
         if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
-        ./start_tracker.sh -v -c /usr/local/etc/cic-eth
+        ./start_tracker.sh -vv -c /usr/local/etc/cic-eth
     # command: "/root/start_manager.sh head -vv"
 
 
@@ -315,7 +316,8 @@ services:
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
       TASKS_TRANSFER_CALLBACKS: $TASKS_TRANSFER_CALLBACKS
-      DATABASE_DEBUG: ${DATABASE_DEBUG:-false}
+        #DATABASE_DEBUG: ${DATABASE_DEBUG:-false}
+      DATABASE_DEBUG: 1
 
     depends_on:
       - eth

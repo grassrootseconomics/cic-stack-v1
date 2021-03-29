@@ -15,7 +15,6 @@ from cic_eth.db.enum import (
         is_error_status,
         )
 from cic_eth.db.error import TxStateChangeError
-#from cic_eth.eth.util import address_hex_from_signed_tx
 
 logg = logging.getLogger()
 
@@ -95,19 +94,16 @@ class Otx(SessionBase):
         :type block: number
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
-        localsession = session
-        if localsession == None:
-            localsession = SessionBase.create_session()
+        session = SessionBase.bind_session(session)
 
         if self.block != None:
+            SessionBase.release_session(session)
             raise TxStateChangeError('Attempted set block {} when block was already {}'.format(block, self.block))
         self.block = block
-        localsession.add(self)
-        localsession.flush()
+        session.add(self)
+        session.flush()
 
-        if session==None:
-            localsession.commit()
-            localsession.close()
+        SessionBase.release_session(session)
 
 
     def waitforgas(self, session=None):
@@ -123,8 +119,10 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('GAS_ISSUES cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if self.status & StatusBits.IN_NETWORK:
+            SessionBase.release_session(session)
             raise TxStateChangeError('GAS_ISSUES cannot be set on an entry with IN_NETWORK state set ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.GAS_ISSUES, session)
@@ -147,8 +145,10 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('FUBAR cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if is_error_status(self.status):
+            SessionBase.release_session(session)
             raise TxStateChangeError('FUBAR cannot be set on an entry with an error state already set ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.UNKNOWN_ERROR | StatusBits.FINAL, session)
@@ -170,10 +170,13 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('REJECTED cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if self.status & StatusBits.IN_NETWORK:
+            SessionBase.release_session(session)
             raise TxStateChangeError('REJECTED cannot be set on an entry already IN_NETWORK ({})'.format(status_str(self.status)))
         if is_error_status(self.status):
+            SessionBase.release_session(session)
             raise TxStateChangeError('REJECTED cannot be set on an entry with an error state already set ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.NODE_ERROR | StatusBits.FINAL, session)
@@ -193,10 +196,13 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('OVERRIDDEN/OBSOLETED cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if self.status & StatusBits.IN_NETWORK:
+            SessionBase.release_session(session)
             raise TxStateChangeError('OVERRIDDEN/OBSOLETED cannot be set on an entry already IN_NETWORK ({})'.format(status_str(self.status)))
         if self.status & StatusBits.OBSOLETE:
+            SessionBase.release_session(session)
             raise TxStateChangeError('OVERRIDDEN/OBSOLETED cannot be set on an entry already OBSOLETE ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.OBSOLETE, session)
@@ -216,6 +222,7 @@ class Otx(SessionBase):
 
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('OVERRIDDEN/OBSOLETED cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.MANUAL, session)
@@ -238,8 +245,10 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('RETRY cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if not is_error_status(self.status) and not StatusBits.IN_NETWORK & self.status > 0:
+            SessionBase.release_session(session)
             raise TxStateChangeError('RETRY cannot be set on an entry that has no error ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.QUEUED, session)
@@ -264,8 +273,10 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('READYSEND cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if is_error_status(self.status):
+            SessionBase.release_session(session)
             raise TxStateChangeError('READYSEND cannot be set on an errored state ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.QUEUED, session)
@@ -290,6 +301,7 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('SENT cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.IN_NETWORK, session)
@@ -314,8 +326,10 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('SENDFAIL cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if self.status & StatusBits.IN_NETWORK:
+            SessionBase.release_session(session)
             raise TxStateChangeError('SENDFAIL cannot be set on an entry with IN_NETWORK state set ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.LOCAL_ERROR | StatusBits.DEFERRED, session)
@@ -340,9 +354,11 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
-            raise TxStateChangeError('SENDFAIL cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
+            SessionBase.release_session(session)
+            raise TxStateChangeError('QUEUED cannot be unset on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if self.status & StatusBits.IN_NETWORK:
-            raise TxStateChangeError('SENDFAIL cannot be set on an entry with IN_NETWORK state set ({})'.format(status_str(self.status)))
+            SessionBase.release_session(session)
+            raise TxStateChangeError('QUEUED cannot be unset on an entry with IN_NETWORK state set ({})'.format(status_str(self.status)))
 
         self.__reset_status(StatusBits.QUEUED, session)
 
@@ -368,8 +384,10 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('REVERTED cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if not self.status & StatusBits.IN_NETWORK:
+            SessionBase.release_session(session)
             raise TxStateChangeError('REVERTED cannot be set on an entry without IN_NETWORK state set ({})'.format(status_str(self.status)))
 
         if block != None:
@@ -397,10 +415,12 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('CANCEL cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
 
         if confirmed:
             if self.status > 0 and not self.status & StatusBits.OBSOLETE:
+                SessionBase.release_session(session)
                 raise TxStateChangeError('CANCEL can only be set on an entry marked OBSOLETE ({})'.format(status_str(self.status)))
             self.__set_status(StatusEnum.CANCELLED, session)
         else:
@@ -425,10 +445,13 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
 
         if self.status & StatusBits.FINAL:
+            SessionBase.release_session(session)
             raise TxStateChangeError('SUCCESS cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if not self.status & StatusBits.IN_NETWORK:
+            SessionBase.release_session(session)
             raise TxStateChangeError('SUCCESS cannot be set on an entry without IN_NETWORK state set ({})'.format(status_str(self.status)))
         if is_error_status(self.status):
+            SessionBase.release_session(session)
             raise TxStateChangeError('SUCCESS cannot be set on an entry with error state set ({})'.format(status_str(self.status)))
 
         if block != None:
@@ -509,22 +532,23 @@ class Otx(SessionBase):
         session.add(l)
 
 
+    # TODO: it is not safe to return otx here unless session has been passed in
     @staticmethod
     def add(nonce, address, tx_hash, signed_tx, session=None):
-        localsession = session
-        if localsession == None:
-            localsession = SessionBase.create_session()
+        external_session = session != None
+
+        session = SessionBase.bind_session(session)
 
         otx = Otx(nonce, address, tx_hash, signed_tx)
-        localsession.add(otx)
-        localsession.flush()
+        session.add(otx)
+        session.flush()
         if otx.tracing:
-            otx.__state_log(session=localsession)
-        localsession.flush()
+            otx.__state_log(session=session)
+        session.flush()
 
-        if session==None:
-            localsession.commit()
-            localsession.close()
+        SessionBase.release_session(session)
+        
+        if not external_session:
             return None
 
         return otx

@@ -5,7 +5,7 @@ set -a
 DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER=0xEb3907eCad74a0013c259D5874AE7f22DcBcC95C
 DEV_ETH_ACCOUNT_RESERVE_MINTER=${DEV_ETH_ACCOUNT_RESERVE_MINTER:-$DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER}
 DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER=${DEV_ETH_ACCOUNT_RESERVE_MINTER:-$DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER}
-DEV_ETH_RESERVE_AMOUNT=${DEV_ETH_RESERVE_AMOUNT:-""10000000000000000000000000000000000}
+DEV_RESERVE_AMOUNT=${DEV_ETH_RESERVE_AMOUNT:-""10000000000000000000000000000000000}
 keystore_file=$(realpath ./keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c)
 
 echo "environment:"
@@ -35,22 +35,43 @@ if [[ -n "${ETH_PROVIDER}" ]]; then
 	echo "waiting for ${ETH_PROVIDER}..."
   	./wait-for-it.sh "${ETH_PROVIDER_HOST}:${ETH_PROVIDER_PORT}"
 
-	DEV_ETH_RESERVE_ADDRESS=`giftable-token-deploy -p $ETH_PROVIDER -y $keystore_file -i $CIC_CHAIN_SPEC --account $DEV_ETH_ACCOUNT_RESERVE_MINTER --minter $DEV_ETH_ACCOUNT_RESERVE_MINTER --minter $DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER -v -w --name "Sarafu" --symbol "SRF" --decimals 6 $DEV_ETH_RESERVE_AMOUNT`
+	DEV_RESERVE_ADDRESS=`giftable-token-deploy -p $ETH_PROVIDER -y $keystore_file -i $CIC_CHAIN_SPEC -v -w --name "Sarafu" --symbol "SRF" --decimals 6`
+	giftable-token-gift -p $ETH_PROVIDER -y $keystore_file -i $CIC_CHAIN_SPEC -v -w -a $DEV_RESERVE_ADDRESS $DEV_RESERVE_AMOUNT
 
 	#BANCOR_REGISTRY_ADDRESS=`cic-bancor-deploy --bancor-dir /usr/local/share/cic/bancor -z $DEV_ETH_RESERVE_ADDRESS -p $ETH_PROVIDER -o $DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER`
 
-	CIC_ACCOUNTS_INDEX_ADDRESS=`eth-accounts-index-deploy -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -y $keystore_file --writer $DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER -vv -w`
+	DEV_ACCOUNT_INDEX_ADDRESS=`eth-accounts-index-deploy -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -y $keystore_file -vv -w`
 
-	CIC_REGISTRY_ADDRESS=`cic-registry-deploy -i $CIC_CHAIN_SPEC -y $keystore_file -k CICRegistry -k BancorRegistry -k AccountRegistry -k TokenRegistry -k AddressDeclarator -k Faucet -k TransferAuthorization -p $ETH_PROVIDER -vv -w`
-	cic-registry-set -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -k CICRegistry  -p $ETH_PROVIDER $CIC_REGISTRY_ADDRESS -vv
+	CIC_REGISTRY_ADDRESS=`eth-contract-registry-deploy -i $CIC_CHAIN_SPEC -y $keystore_file --identifier BancorRegistry --identifier AccountRegistry --identifier TokenRegistry --identifier AddressDeclarator --identifier Faucet --identifier TransferAuthorization -p $ETH_PROVIDER -vv -w`
+	eth-contract-registry-set -w -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC  -p $ETH_PROVIDER -vv ContractRegistry $CIC_REGISTRY_ADDRESS
 	#cic-registry-set -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -k BancorRegistry -p $ETH_PROVIDER $BANCOR_REGISTRY_ADDRESS -vv
-	cic-registry-set -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -k AccountRegistry -p $ETH_PROVIDER $CIC_ACCOUNTS_INDEX_ADDRESS  -vv
+	eth-contract-registry-set -w -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -vv AccountRegistry $DEV_ACCOUNT_INDEX_ADDRESS
 
 	# Deploy address declarator registry
 	>&2 echo "deploy address declarator contract"
 	declarator_description=0x546869732069732074686520434943206e6574776f726b000000000000000000
-	CIC_DECLARATOR_ADDRESS=`eth-address-declarator-deploy -y $keystore_file -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -w -v $declarator_description`
-	cic-registry-set -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -k AddressDeclarator -p $ETH_PROVIDER $CIC_DECLARATOR_ADDRESS  -vv
+	DEV_DECLARATOR_ADDRESS=`eth-address-declarator-deploy -y $keystore_file -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -w -v $declarator_description`
+	eth-contract-registry-set -w -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -vv AddressDeclarator $DEV_DECLARATOR_ADDRESS
+
+	# Deploy transfer authorization contact
+	>&2 echo "deploy address declarator contract"
+	DEV_TRANSFER_AUTHORIZATION_ADDRESS=`erc20-transfer-auth-deploy -y $keystore_file -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -w -v`
+	eth-contract-registry-set -w -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC  -p $ETH_PROVIDER -vv TransferAuthorization $DEV_TRANSFER_AUTHORIZATION_ADDRESS
+
+	# Deploy token index contract
+	>&2 echo "deploy token index contract"
+	DEV_TOKEN_INDEX_ADDRESS=`eth-token-index-deploy -y $keystore_file -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -w -v`
+	eth-contract-registry-set -w -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -vv TokenRegistry $DEV_TOKEN_INDEX_ADDRESS 
+	>&2 echo "add reserve token to token index"
+	eth-token-index-add -w -y $keystore_file  -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -vv -a $DEV_TOKEN_INDEX_ADDRESS $DEV_RESERVE_ADDRESS
+
+	# Sarafu faucet contract
+	>&2 echo "deploy token faucet contract"
+	DEV_FAUCET_ADDRESS=`sarafu-faucet-deploy -y $keystore_file -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -w -v --account-index-address $DEV_ACCOUNT_INDEX_ADDRESS $DEV_RESERVE_ADDRESS`
+	eth-contract-registry-set -w -y $keystore_file -r $CIC_REGISTRY_ADDRESS -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -vv Faucet $DEV_FAUCET_ADDRESS
+	>&2 echo "set faucet as token minter"
+	giftable-token-minter -w -y $keystore_file -a $DEV_RESERVE_ADDRESS -i $CIC_CHAIN_SPEC -p $ETH_PROVIDER -vv $DEV_FAUCET_ADDRESS
+
 
 else
 	echo "\$ETH_PROVIDER not set!"
@@ -61,10 +82,6 @@ mkdir -p $CIC_DATA_DIR
 
 # this is consumed in downstream services to set environment variables
 cat << EOF > $CIC_DATA_DIR/.env
-export DEV_ETH_RESERVE_ADDRESS=$DEV_ETH_RESERVE_ADDRESS
-export DEV_ETH_RESERVE_AMOUNT=$DEV_ETH_RESERVE_AMOUNT
-export DEV_ETH_ACCOUNTS_INDEX_ADDRESS=$CIC_ACCOUNTS_INDEX_ADDRESS
-export BANCOR_REGISTRY_ADDRESS=$BANCOR_REGISTRY_ADDRESS
 export CIC_REGISTRY_ADDRESS=$CIC_REGISTRY_ADDRESS
 export CIC_TRUST_ADDRESS=$DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER
 export CIC_DECLARATOR_ADDRESS=$CIC_DECLARATOR_ADDRESS

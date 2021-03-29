@@ -2,7 +2,6 @@
 import logging
 
 # external imports
-from cic_registry.chain import ChainSpec
 from hexathon import add_0x
 
 # local imports
@@ -11,10 +10,10 @@ from cic_eth.db.models.base import SessionBase
 from cic_eth.db.models.tx import TxCache
 from cic_eth.db.models.otx import Otx
 from cic_eth.queue.tx import get_paused_txs
-from cic_eth.eth.task import create_check_gas_and_send_task
+from cic_eth.eth.gas import create_check_gas_task
 from .base import SyncFilter
 
-logg = logging.getLogger(__name__)
+logg = logging.getLogger().getChild(__name__)
 
 
 class GasFilter(SyncFilter):
@@ -45,9 +44,9 @@ class GasFilter(SyncFilter):
 
             logg.info('resuming gas-in-waiting txs for {}'.format(r[0]))
             if len(txs) > 0:
-                s = create_check_gas_and_send_task(
+                s = create_check_gas_task(
                         list(txs.values()),
-                        str(self.chain_spec),
+                        self.chain_spec,
                         r[0],
                         0,
                         tx_hashes_hex=list(txs.keys()),
