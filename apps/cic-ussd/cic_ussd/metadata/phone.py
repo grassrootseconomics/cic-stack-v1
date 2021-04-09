@@ -3,29 +3,27 @@ import json
 import logging
 import os
 
-# third-party imports
+# external imports
 import requests
-from cic_types.models.person import generate_metadata_pointer, Person
-
-# local imports
-from cic_ussd.chain import Chain
+from cic_types.models.person import generate_metadata_pointer
 from cic_ussd.metadata import make_request
 from cic_ussd.metadata.signer import Signer
-from cic_ussd.redis import cache_data
+
+# local imports
 from cic_ussd.error import MetadataStoreError
 from .base import Metadata
 
-logg = logging.getLogger()
+logg = logging.getLogger().getChild(__name__)
 
 
-class UserMetadata(Metadata):
-    
+class PhonePointerMetadata(Metadata):
 
-    def __init__(self, identifier: bytes):
+    def __init__(self, identifier: bytes, engine: str):
         """
         :param identifier:
         :type identifier:
         """
+    
         self.headers = {
             'X-CIC-AUTOMERGE': 'server',
             'Content-Type': 'application/json'
@@ -33,21 +31,25 @@ class UserMetadata(Metadata):
         self.identifier = identifier
         self.metadata_pointer = generate_metadata_pointer(
                 identifier=self.identifier,
-                cic_type=':cic.person'
+                cic_type=':cic.phone'
         )
         if self.base_url:
             self.url = os.path.join(self.base_url, self.metadata_pointer)
 
-    def create(self, data: dict):
+        self.engine = engine
+
+
+    def create(self, data: str):
         try:
             data = json.dumps(data).encode('utf-8')
             result = make_request(method='POST', url=self.url, data=data, headers=self.headers)
             metadata = result.content
-            self.edit(data=metadata, engine='pgp')
-            logg.info(f'Get sign material response status: {result.status_code}')
+            logg.debug('data {} meta {} resp {} stats {}'.format(data, metadata, result.reason, result.status_code))
+            self.edit(data=metadata, engine=self.engine)
             result.raise_for_status()
         except requests.exceptions.HTTPError as error:
             raise MetadataStoreError(error)
+
 
     def edit(self, data: bytes, engine: str):
         """
@@ -61,8 +63,9 @@ class UserMetadata(Metadata):
         cic_meta_signer = Signer()
         signature = cic_meta_signer.sign_digest(data=data)
         algorithm = cic_meta_signer.get_operational_key().get('algo')
+        decoded_data = data.decode('utf-8')
         formatted_data = {
-            'm': data.decode('utf-8'),
+            'm': decoded_data,
             's': {
                 'engine': engine,
                 'algo': algorithm,
@@ -74,27 +77,9 @@ class UserMetadata(Metadata):
 
         try:
             result = make_request(method='PUT', url=self.url, data=formatted_data, headers=self.headers)
-            logg.debug(f'signed user metadata submission status: {result.status_code}.')
+            logg.debug(f'signed phone pointer metadata submission status: {result.status_code}.')
             result.raise_for_status()
+            logg.info('phone {} metadata pointer {} set to {}'.format(self.identifier.decode('utf-8'), self.metadata_pointer, decoded_data))
         except requests.exceptions.HTTPError as error:
             raise MetadataStoreError(error)
 
-    def query(self):
-        result = make_request(method='GET', url=self.url)
-        status = result.status_code
-        logg.info(f'Get latest data status: {status}')
-        try:
-            if status == 200:
-                response_data = result.content
-                data = json.loads(response_data.decode())
-
-                # validate data
-                person = Person()
-                deserialized_person = person.deserialize(person_data=json.loads(data))
-
-                cache_data(key=self.metadata_pointer, data=json.dumps(deserialized_person.serialize()))
-            elif status == 404:
-                logg.info('The data is not available and might need to be added.')
-            result.raise_for_status()
-        except requests.exceptions.HTTPError as error:
-            raise MetadataNotFoundError(error)

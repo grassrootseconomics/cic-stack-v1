@@ -1,4 +1,4 @@
-FROM python:3.8.6
+FROM python:3.8.6-slim-buster
 
 RUN apt-get update && \
 	apt install -y gcc gnupg libpq-dev wget make g++ gnupg bash procps

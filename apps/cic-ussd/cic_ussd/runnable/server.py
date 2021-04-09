@@ -23,10 +23,11 @@ from cic_ussd.encoder import PasswordEncoder
 from cic_ussd.files.local_files import create_local_file_data_stores, json_file_parser
 from cic_ussd.menu.ussd_menu import UssdMenu
 from cic_ussd.metadata.signer import Signer
-from cic_ussd.metadata.user import UserMetadata
+from cic_ussd.metadata.base import Metadata
 from cic_ussd.operations import (define_response_with_content,
                                  process_menu_interaction_requests,
                                  define_multilingual_responses)
+from cic_ussd.phone_number import process_phone_number
 from cic_ussd.redis import InMemoryStore
 from cic_ussd.requests import (get_request_endpoint,
                                get_request_method,
@@ -64,7 +65,6 @@ config.censor('PASSWORD', 'DATABASE')
 # define log levels
 if args.vv:
     logging.getLogger().setLevel(logging.DEBUG)
-    logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 elif args.v:
     logging.getLogger().setLevel(logging.INFO)
 
@@ -86,7 +86,7 @@ UssdMenu.ussd_menu_db = ussd_menu_db
 
 # set up db
 data_source_name = dsn_from_config(config)
-SessionBase.connect(data_source_name=data_source_name)
+SessionBase.connect(data_source_name, pool_size=int(config.get('DATABASE_POOL_SIZE')), debug=config.true('DATABASE_DEBUG'))
 # create session for the life time of http request
 SessionBase.session = SessionBase.create_session()
 
@@ -99,7 +99,7 @@ InMemoryStore.cache = redis.StrictRedis(host=config.get('REDIS_HOSTNAME'),
 InMemoryUssdSession.redis_cache = InMemoryStore.cache
 
 # define metadata URL
-UserMetadata.base_url = config.get('CIC_META_URL')
+Metadata.base_url = config.get('CIC_META_URL')
 
 # define signer values
 export_dir = config.get('PGP_EXPORT_DIR')
@@ -151,6 +151,10 @@ def application(env, start_response):
         external_session_id = post_data.get('sessionId')
         user_input = post_data.get('text')
 
+        # add validation for phone number
+        if phone_number:
+            phone_number = process_phone_number(phone_number=phone_number, region=config.get('PHONE_NUMBER_REGION'))
+
         # validate ip address
         if not check_ip(config=config, env=env):
             start_response('403 Sneaky, sneaky', errors_headers)
@@ -174,8 +178,10 @@ def application(env, start_response):
 
         # validate phone number
         if not validate_phone_number(phone_number):
+            logg.error('invalid phone number {}'.format(phone_number))
             start_response('400 Invalid phone number format', errors_headers)
             return []
+        logg.debug('session {} started for {}'.format(external_session_id, phone_number))
 
         # handle menu interaction requests
         chain_str = chain_spec.__str__()
