@@ -10,7 +10,7 @@ import hashlib
 import csv
 import json
 
-# third-party impotts
+# external imports
 import eth_abi
 import confini
 from hexathon import (
@@ -42,7 +42,7 @@ from cic_types.models.person import Person
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
 
-config_dir = '/usr/local/etc/cic-syncer'
+config_dir = './config'
 
 argparser = argparse.ArgumentParser(description='daemon that monitors transactions in new blocks')
 argparser.add_argument('-p', '--provider', dest='p', type=str, help='chain rpc provider address')
@@ -162,6 +162,15 @@ class Handler:
             (tx_hash_hex, o) = self.tx_factory.transfer(self.token_address, signer_address, recipient, balance_full)
             logg.info('submitting erc20 transfer tx {} for recipient {}'.format(tx_hash_hex, recipient))
             r = conn.do(o)
+
+            tx_path = os.path.join(
+                    user_dir,
+                    'txs',
+                    strip_0x(tx_hash_hex),
+                    )
+            f = open(tx_path, 'w')
+            f.write(strip_0x(o['params'][0]))
+            f.close()
 #        except TypeError as e:
 #            logg.warning('typerror {}'.format(e))
 #            pass

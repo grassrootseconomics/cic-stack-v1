@@ -7,6 +7,7 @@ import argparse
 import uuid
 import datetime
 import time
+import phonenumbers
 from glob import glob
 
 # external imports
@@ -67,8 +68,14 @@ os.makedirs(user_new_dir)
 meta_dir = os.path.join(args.user_dir, 'meta')
 os.makedirs(meta_dir)
 
+phone_dir = os.path.join(args.user_dir, 'phone')
+os.makedirs(os.path.join(phone_dir, 'meta'))
+
 user_old_dir = os.path.join(args.user_dir, 'old')
 os.stat(user_old_dir)
+
+txs_dir = os.path.join(args.user_dir, 'txs')
+os.makedirs(txs_dir)
 
 chain_spec = ChainSpec.from_chain_str(config.get('CIC_CHAIN_SPEC'))
 chain_str = str(chain_spec)
@@ -88,7 +95,7 @@ signer = EIP155Signer(keystore)
 
 nonce_oracle = RPCNonceOracle(signer_address, rpc)
 
-registry = Registry()
+registry = Registry(chain_spec)
 o = registry.address_of(config.get('CIC_REGISTRY_ADDRESS'), 'AccountRegistry')
 r = rpc.do(o)
 account_registry_address = registry.parse_address_of(r)
@@ -109,7 +116,7 @@ def register_eth(i, u):
     rpc.do(o)
 
     pk = keystore.get(address)
-    keyfile_content = to_keyfile_dict(pk, '')
+    keyfile_content = to_keyfile_dict(pk, 'foo')
     keyfile_path = os.path.join(keyfile_dir, '{}.json'.format(address))
     f = open(keyfile_path, 'w')
     json.dump(keyfile_content, f)
@@ -166,9 +173,30 @@ if __name__ == '__main__':
             f.write(json.dumps(o))
             f.close()
 
-            meta_key = generate_metadata_pointer(bytes.fromhex(new_address_clean), 'cic.person')
+            meta_key = generate_metadata_pointer(bytes.fromhex(new_address_clean), ':cic.person')
             meta_filepath = os.path.join(meta_dir, '{}.json'.format(new_address_clean.upper()))
             os.symlink(os.path.realpath(filepath), meta_filepath)
+
+            phone_object = phonenumbers.parse(u.tel)
+            phone = phonenumbers.format_number(phone_object, phonenumbers.PhoneNumberFormat.E164)
+            logg.debug('>>>>> Using phone {}'.format(phone))
+            meta_phone_key = generate_metadata_pointer(phone.encode('utf-8'), ':cic.phone')
+            meta_phone_filepath = os.path.join(phone_dir, 'meta', meta_phone_key)
+
+            filepath = os.path.join(
+                    phone_dir,
+                    'new',
+                    meta_phone_key[:2].upper(),
+                    meta_phone_key[2:4].upper(),
+                    meta_phone_key.upper(),
+                    )
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            
+            f = open(filepath, 'w')
+            f.write(to_checksum_address(new_address_clean))
+            f.close()
+
+            os.symlink(os.path.realpath(filepath), meta_phone_filepath)
 
             i += 1
             sys.stdout.write('imported {} {}'.format(i, u).ljust(200) + "\r")
