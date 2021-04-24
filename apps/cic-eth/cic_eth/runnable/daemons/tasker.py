@@ -30,6 +30,7 @@ from cic_eth.eth import (
 from cic_eth.admin import (
         debug,
         ctrl,
+        token,
         )
 from cic_eth.queue import (
         query,
@@ -54,6 +55,7 @@ from cic_eth.registry import (
         connect_declarator,
         connect_token_registry,
         )
+from cic_eth.task import BaseTask
 
 
 logging.basicConfig(level=logging.WARNING)
@@ -66,6 +68,7 @@ argparser.add_argument('-p', '--provider', dest='p', type=str, help='rpc provide
 argparser.add_argument('-c', type=str, default=config_dir, help='config file')
 argparser.add_argument('-q', type=str, default='cic-eth', help='queue name for worker tasks')
 argparser.add_argument('-r', type=str, help='CIC registry address')
+argparser.add_argument('--default-token-symbol', dest='default_token_symbol', type=str, help='Symbol of default token to use')
 argparser.add_argument('--abi-dir', dest='abi_dir', type=str, help='Directory containing bytecode and abi')
 argparser.add_argument('--trace-queue-status', default=None, dest='trace_queue_status', action='store_true', help='set to perist all queue entry status changes to storage')
 argparser.add_argument('-i', '--chain-spec', dest='i', type=str, help='chain spec')
@@ -85,6 +88,7 @@ config.process()
 args_override = {
         'CIC_CHAIN_SPEC': getattr(args, 'i'),
         'CIC_REGISTRY_ADDRESS': getattr(args, 'r'),
+        'CIC_DEFAULT_TOKEN_SYMBOL': getattr(args, 'default_token_symbol'),
         'ETH_PROVIDER': getattr(args, 'p'),
         'TASKS_TRACE_QUEUE_STATUS': getattr(args, 'trace_queue_status'),
         }
@@ -173,7 +177,7 @@ def main():
     rpc = RPCConnection.connect(chain_spec, 'default')
 
     try:
-        connect_registry(rpc, chain_spec, config.get('CIC_REGISTRY_ADDRESS'))
+        registry = connect_registry(rpc, chain_spec, config.get('CIC_REGISTRY_ADDRESS'))
     except UnknownContractError as e:
         logg.exception('Registry contract connection failed for {}: {}'.format(config.get('CIC_REGISTRY_ADDRESS'), e))
         sys.exit(1)
@@ -188,6 +192,10 @@ def main():
 
     connect_declarator(rpc, chain_spec, trusted_addresses)
     connect_token_registry(rpc, chain_spec)
+
+    BaseTask.default_token_symbol = config.get('CIC_DEFAULT_TOKEN_SYMBOL')
+    BaseTask.default_token_address = registry.by_name(BaseTask.default_token_symbol)
+    logg.info('default token set to {} {}'.format(BaseTask.default_token_symbol, BaseTask.default_token_address))
    
     liveness.linux.set()
     current_app.worker_main(argv)
