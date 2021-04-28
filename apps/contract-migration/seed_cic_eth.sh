@@ -13,11 +13,10 @@ DEV_PIP_EXTRA_INDEX_URL=${DEV_PIP_EXTRA_INDEX_URL:-https://pip.grassrootseconomi
 DEV_DATABASE_NAME_CIC_ETH=${DEV_DATABASE_NAME_CIC_ETH:-"cic-eth"}
 CIC_DATA_DIR=${CIC_DATA_DIR:-/tmp/cic} 
 ETH_PASSPHRASE=''
-DEV_TOKEN_TYPE=${DEV_TOKEN_TYPE:-giftable}
-if [ $DEV_TOKEN_TYPE = 'giftable' ]; then
-	token_symbol='GFT'
-else
-	token_symbol='SRF'
+CIC_DEFAULT_TOKEN_SYMBOL=${CIC_DEFAULT_TOKEN_SYMBOL:-GFT}
+if [[ $CIC_DEFAULT_TOKEN_SYMBOL != 'GFT' && $CIC_DEFAULT_TOKEN_SYMBOL != 'SRF' ]]; then
+	>&2 echo CIC_DEFAULT_TOKEN_SYMBOL must be one of [GFT,SRF], but was $CIC_DEFAULT_TOKEN_SYMBOL
+	exit 1
 fi
 
 # Debug flag
