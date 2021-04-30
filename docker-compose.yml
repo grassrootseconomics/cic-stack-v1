@@ -53,8 +53,6 @@ services:
     command: [ "-c", "max_connections=200" ]
     volumes:
       - ./scripts/initdb/create_db.sql:/docker-entrypoint-initdb.d/1-create_all_db.sql 
-      - ./apps/cic-meta/scripts/initdb/postgresql.sh:/docker-entrypoint-initdb.d/2-init-cic-meta.sh
-      - ./apps/cic-cache/db/psycopg2/db.sql:/docker-entrypoint-initdb.d/3-init-cic-meta.sql
       - postgres-db:/var/lib/postgresql/data
 
   redis:
@@ -477,6 +475,7 @@ services:
       PGP_PUBLICKEY_TRUSTED_FILE: publickeys.asc
       PGP_PUBLICKEY_ACTIVE_FILE: publickeys.asc
       PGP_PUBLICKEY_ENCRYPT_FILE: publickeys.asc
+      SCHEMA_SQL_PATH: scripts/initdb/server.postgres.sql
     ports:
       - ${HTTP_PORT_CIC_META:-63380}:8000
     depends_on:
