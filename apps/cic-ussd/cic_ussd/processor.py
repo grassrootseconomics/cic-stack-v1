@@ -73,7 +73,7 @@ def process_exit_insufficient_balance(display_key: str, user: Account, ussd_sess
     # compile response data
     user_input = ussd_session.get('user_input').split('*')[-1]
     transaction_amount = to_wei(value=int(user_input))
-    token_symbol = 'SRF'
+    token_symbol = 'GFT'
 
     recipient_phone_number = ussd_session.get('session_data').get('recipient_phone_number')
     recipient = get_user_by_phone_number(phone_number=recipient_phone_number)
@@ -102,7 +102,7 @@ def process_exit_successful_transaction(display_key: str, user: Account, ussd_se
     :rtype: str
     """
     transaction_amount = to_wei(int(ussd_session.get('session_data').get('transaction_amount')))
-    token_symbol = 'SRF'
+    token_symbol = 'GFT'
     recipient_phone_number = ussd_session.get('session_data').get('recipient_phone_number')
     recipient = get_user_by_phone_number(phone_number=recipient_phone_number)
     tx_recipient_information = define_account_tx_metadata(user=recipient)
@@ -137,7 +137,7 @@ def process_transaction_pin_authorization(user: Account, display_key: str, ussd_
     tx_recipient_information = define_account_tx_metadata(user=recipient)
     tx_sender_information = define_account_tx_metadata(user=user)
 
-    token_symbol = 'SRF'
+    token_symbol = 'GFT'
     user_input = ussd_session.get('session_data').get('transaction_amount')
     transaction_amount = to_wei(value=int(user_input))
     logg.debug('Requires integration to determine user tokens.')
@@ -175,7 +175,7 @@ def process_account_balances(user: Account, display_key: str, ussd_session: dict
         operational_balance=operational_balance,
         tax=tax,
         bonus=bonus,
-        token_symbol='SRF'
+        token_symbol='GFT'
     )
 
 
@@ -190,7 +190,7 @@ def format_transactions(transactions: list, preferred_language: str):
             timestamp = transaction.get('timestamp')
             action_tag = transaction.get('action_tag')
             direction = transaction.get('direction')
-            token_symbol = 'SRF'
+            token_symbol = 'GFT'
 
             if action_tag == 'SENT' or action_tag == 'ULITUMA':
                 formatted_transactions += f'{action_tag} {value} {token_symbol} {direction} {recipient_phone_number} {timestamp}.\n'
@@ -316,7 +316,7 @@ def process_start_menu(display_key: str, user: Account):
     blockchain_address = user.blockchain_address
     balance_manager = BalanceManager(address=blockchain_address,
                                      chain_str=chain_str,
-                                     token_symbol='SRF')
+                                     token_symbol='GFT')
 
     # get balances synchronously for display on start menu
     balances_data = balance_manager.get_balances()
@@ -341,7 +341,7 @@ def process_start_menu(display_key: str, user: Account):
     retrieve_account_statement(blockchain_address=blockchain_address)
 
     # TODO [Philip]: figure out how to get token symbol from a metadata layer of sorts.
-    token_symbol = 'SRF'
+    token_symbol = 'GFT'
 
     return translation_for(
         key=display_key,
@@ -382,18 +382,29 @@ def process_request(user_input: str, user: Account, ussd_session: Optional[dict]
             successive_state = next_state(ussd_session=ussd_session, user=user, user_input=user_input)
             return UssdMenu.find_by_name(name=successive_state)
     else:
+
+        key = generate_metadata_pointer(
+            identifier=blockchain_address_to_metadata_pointer(blockchain_address=user.blockchain_address),
+            cic_type='cic.person'
+        )
+
+        # retrieve and cache account's metadata
+        s_query_person_metadata = celery.signature(
+            'cic_ussd.tasks.metadata.query_person_metadata',
+            [user.blockchain_address]
+        )
+        s_query_person_metadata.apply_async(queue='cic-ussd')
+
         if user.has_valid_pin():
             last_ussd_session = retrieve_most_recent_ussd_session(phone_number=user.phone_number)
 
-            key = generate_metadata_pointer(
-                identifier=blockchain_address_to_metadata_pointer(blockchain_address=user.blockchain_address),
-                cic_type='cic.person'
-            )
-            person_metadata = get_cached_data(key=key)
-
             if last_ussd_session:
+                # get metadata
+                person_metadata = get_cached_data(key=key)
+
                 # get last state
                 last_state = last_ussd_session.state
+
                 # if last state is account_creation_prompt and metadata exists, show start menu
                 if last_state in [
                     'account_creation_prompt',

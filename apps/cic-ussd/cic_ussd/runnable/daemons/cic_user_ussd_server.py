@@ -1,19 +1,16 @@
-"""Functions defining WSGI interaction with external http requests
-Defines an application function essential for the uWSGI python loader to run th python application code.
+"""This module handles requests originating from the ussd service provider.
 """
+
 # standard imports
-import argparse
-import celery
-import i18n
 import json
 import logging
-import os
-import redis
 
 # third-party imports
-from confini import Config
+import celery
+import i18n
+import redis
 from chainlib.chain import ChainSpec
-from urllib.parse import quote_plus
+from confini import Config
 
 # local imports
 from cic_ussd.chain import Chain
@@ -30,32 +27,14 @@ from cic_ussd.operations import (define_response_with_content,
 from cic_ussd.phone_number import process_phone_number
 from cic_ussd.redis import InMemoryStore
 from cic_ussd.requests import (get_request_endpoint,
-                               get_request_method,
-                               get_query_parameters,
-                               process_locked_accounts_requests,
-                               process_pin_reset_requests)
+                               get_request_method)
+from cic_ussd.runnable.server_base import exportable_parser, logg
 from cic_ussd.session.ussd_session import UssdSession as InMemoryUssdSession
 from cic_ussd.state_machine import UssdStateMachine
 from cic_ussd.validator import check_ip, check_request_content_length, check_service_code, validate_phone_number, \
     validate_presence
 
-logging.basicConfig(level=logging.WARNING)
-logg = logging.getLogger()
-
-config_directory = '/usr/local/etc/cic-ussd/'
-
-# define arguments
-arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument('-c', type=str, default=config_directory, help='config directory.')
-arg_parser.add_argument('-q', type=str, default='cic-ussd', help='queue name for worker tasks')
-arg_parser.add_argument('-v', action='store_true', help='be verbose')
-arg_parser.add_argument('-vv', action='store_true', help='be more verbose')
-arg_parser.add_argument('--env-prefix',
-                        default=os.environ.get('CONFINI_ENV_PREFIX'),
-                        dest='env_prefix',
-                        type=str,
-                        help='environment prefix for variables to overwrite configuration')
-args = arg_parser.parse_args()
+args = exportable_parser.parse_args()
 
 # define log levels
 if args.vv:
@@ -69,7 +48,14 @@ config.process()
 config.censor('PASSWORD', 'DATABASE')
 logg.debug('config loaded from {}:\n{}'.format(args.c, config))
 
-# initialize elements
+# set up db
+data_source_name = dsn_from_config(config)
+SessionBase.connect(data_source_name,
+                    pool_size=int(config.get('DATABASE_POOL_SIZE')),
+                    debug=config.true('DATABASE_DEBUG'))
+# create session for the life time of http request
+SessionBase.session = SessionBase.create_session()
+
 # set up translations
 i18n.load_path.append(config.get('APP_LOCALE_PATH'))
 i18n.set('fallback', config.get('APP_LOCALE_FALLBACK'))
@@ -81,12 +67,6 @@ PasswordEncoder.set_key(config.get('APP_PASSWORD_PEPPER'))
 ussd_menu_db = create_local_file_data_stores(file_location=config.get('USSD_MENU_FILE'),
                                              table_name='ussd_menu')
 UssdMenu.ussd_menu_db = ussd_menu_db
-
-# set up db
-data_source_name = dsn_from_config(config)
-SessionBase.connect(data_source_name, pool_size=int(config.get('DATABASE_POOL_SIZE')), debug=config.true('DATABASE_DEBUG'))
-# create session for the life time of http request
-SessionBase.session = SessionBase.create_session()
 
 # define universal redis cache access
 InMemoryStore.cache = redis.StrictRedis(host=config.get('REDIS_HOSTNAME'),
@@ -134,6 +114,8 @@ def application(env, start_response):
     :type env: dict
     :param start_response: Callable to define responses.
     :type start_response: any
+    :return: a list containing a bytes representation of the response object
+    :rtype: list
     """
     # define headers
     errors_headers = [('Content-Type', 'text/plain'), ('Content-Length', '0')]
@@ -194,20 +176,3 @@ def application(env, start_response):
         start_response('200 OK,', headers)
         SessionBase.session.close()
         return [response_bytes]
-
-    # handle pin requests
-    if get_request_endpoint(env) == '/pin':
-        phone_number = get_query_parameters(env=env, query_name='phoneNumber')
-        phone_number = quote_plus(phone_number)
-        response, message = process_pin_reset_requests(env=env, phone_number=phone_number)
-        response_bytes, headers = define_response_with_content(headers=errors_headers, response=response)
-        SessionBase.session.close()
-        start_response(message, headers)
-        return [response_bytes]
-
-    # handle requests for locked accounts
-    response, message = process_locked_accounts_requests(env=env)
-    response_bytes, headers = define_response_with_content(headers=headers, response=response)
-    start_response(message, headers)
-    SessionBase.session.close()
-    return [response_bytes]
