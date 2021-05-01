@@ -219,7 +219,6 @@ def format_transactions(transactions: list, preferred_language: str, token_symbo
     formatted_transactions = ''
     if len(transactions) > 0:
         for transaction in transactions:
-
             recipient_phone_number = transaction.get('recipient_phone_number')
             sender_phone_number = transaction.get('sender_phone_number')
             value = transaction.get('to_value')
@@ -250,7 +249,7 @@ def process_display_user_metadata(user: Account, display_key: str):
     """
     key = generate_metadata_pointer(
         identifier=blockchain_address_to_metadata_pointer(blockchain_address=user.blockchain_address),
-        cic_type='cic.person'
+        cic_type=':cic.person'
     )
     user_metadata = get_cached_data(key)
     if user_metadata:
@@ -287,7 +286,7 @@ def process_account_statement(user: Account, display_key: str, ussd_session: dic
     """
     # retrieve cached statement
     identifier = blockchain_address_to_metadata_pointer(blockchain_address=user.blockchain_address)
-    key = create_cached_data_key(identifier=identifier, salt='cic.statement')
+    key = create_cached_data_key(identifier=identifier, salt=':cic.statement')
     transactions = get_cached_data(key=key)
 
     token_symbol = retrieve_token_symbol()
@@ -365,7 +364,7 @@ def process_start_menu(display_key: str, user: Account):
 
     key = create_cached_data_key(
         identifier=bytes.fromhex(blockchain_address[2:]),
-        salt='cic.balances_data'
+        salt=':cic.balances_data'
     )
     cache_data(key=key, data=json.dumps(balances_data))
 
@@ -417,7 +416,7 @@ def process_request(user_input: str, user: Account, ussd_session: Optional[dict]
     # retrieve metadata before any transition
     key = generate_metadata_pointer(
         identifier=blockchain_address_to_metadata_pointer(blockchain_address=user.blockchain_address),
-        cic_type='cic.person'
+        cic_type=':cic.person'
     )
     person_metadata = get_cached_data(key=key)
 
