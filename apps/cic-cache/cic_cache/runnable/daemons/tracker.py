@@ -41,6 +41,7 @@ from cic_cache.db import (
         )
 from cic_cache.runnable.daemons.filters import (
         ERC20TransferFilter,
+        FaucetFilter,
         )
 
 script_dir = os.path.realpath(os.path.dirname(__file__))
@@ -71,6 +72,7 @@ def register_filter_tags(filters, session):
             session.commit()
             logg.info('added tag name "{}" domain "{}"'.format(tag[0], tag[1]))
         except sqlalchemy.exc.IntegrityError:
+            session.rollback()
             logg.debug('already have tag name "{}" domain "{}"'.format(tag[0], tag[1]))
 
 
@@ -112,9 +114,11 @@ def main():
         logg.info('using trusted address {}'.format(address))
 
     erc20_transfer_filter = ERC20TransferFilter(chain_spec)
+    faucet_filter = FaucetFilter(chain_spec)
 
     filters = [
         erc20_transfer_filter,
+        faucet_filter,
             ]
 
     session = SessionBase.create_session()
