@@ -3,7 +3,10 @@ import logging
 
 # external imports
 import celery
-from cic_eth_registry.error import UnknownContractError
+from cic_eth_registry.error import (
+    UnknownContractError,
+    NotAContractError,
+    )
 from chainlib.status import Status as TxStatus
 from chainlib.eth.address import to_checksum_address
 from chainlib.eth.error import RequestMismatchException
@@ -124,8 +127,7 @@ class CallbackFilter(SyncFilter):
                     (transfer_type, transfer_data) = parser(tx, conn)
                     if transfer_type == None:
                         continue
-                else:
-                    pass
+                break
             except RequestMismatchException:
                 continue
 
@@ -168,7 +170,9 @@ class CallbackFilter(SyncFilter):
                 t = self.call_back(transfer_type, result)
                 logg.info('callback success task id {} tx {} queue {}'.format(t, tx.hash, t.queue))
             except UnknownContractError:
-                logg.debug('callback filter {}:{} skipping "transfer" method on unknown contract {} tx {}'.format(tx.queue, tx.method, transfer_data['to'], tx.hash))
+                logg.debug('callback filter {}:{} skipping "transfer" method on unknown contract {} tx {}'.format(self.queue, self.method, transfer_data['to'], tx.hash))
+            except NotAContractError:
+                logg.debug('callback filter {}:{} skipping "transfer" on non-contract address {} tx {}'.format(self.queue, self.method, transfer_data['to'], tx.hash))
 
 
     def __str__(self):
