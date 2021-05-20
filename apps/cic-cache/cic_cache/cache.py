@@ -125,6 +125,7 @@ class DataCache(Cache):
                 'to_value': int(r['to_value']),
                 'source_token': r['source_token'],
                 'destination_token': r['destination_token'],
+                'success': r['success'],
                 'tx_type': tx_type,
             }
 
