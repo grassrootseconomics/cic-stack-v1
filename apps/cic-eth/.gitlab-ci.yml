@@ -5,18 +5,31 @@
 
 .cic_eth_changes_target:
     rules:
-        - changes:
-            - $CONTEXT/$APP_NAME/*
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      #changes:
+          #- $CONTEXT/$APP_NAME/**/*
+      when: always
 
 build-mr-cic-eth:
     extends:
-        - .cic_eth_changes_target
-        - .py_build_merge_request
         - .cic_eth_variables
+        - .cic_eth_changes_target
+        - .py_build_target_test
+
+test-mr-cic-eth:
+    extends:
+        - .cic_eth_variables
+        - .cic_eth_changes_target
+    stage: test
+    image: $CI_REGISTRY_IMAGE/$APP_NAME-test:latest
+    script:
+        - cd apps/$APP_NAME/
+        - pytest tests/unit/ 
+        - pytest tests/task/
+        - pytest tests/filters/ 
+    needs: ["build-mr-cic-eth"]
 
 build-push-cic-eth:
     extends:
         - .py_build_push
         - .cic_eth_variables
-        
-
