@@ -89,12 +89,7 @@ After this step is run, you can find top-level ethereum addresses (like the cic 
 
 
 #### Custodial provisions
-response_data = send_ussd_request(address, self.data_dir)
-        state = response_data[:3]
-        out = response_data[4:]
-        m = '{} {}'.format(state, out[:7])
-        if m != 'CON Welcome':
-            raise VerifierError(response_data, 'ussd')
+
 This step is _only_ needed if you are importing using `cic_eth` or `cic_ussd`
 
 `RUN_MASK=2 docker-compose up contract-migration`
@@ -128,12 +123,16 @@ The keystore file used for transferring external opening balances tracker is rel
 
 All external balance transactions are saved in raw wire format in `<datadir>/txs`, with transaction hash as file name.
 
+If the contract migrations have been executed with the default "giftable" token contract, then the `token_symbol` in the `import_balance` scripts should be set to `GFT`.
+
 
 
 #### Alternative 1 - Sovereign wallet import - `eth` 
 
 
-First, make a note of the **block height** before running anything.
+First, make a note of the **block height** before running anything:
+
+`eth-info -p http://localhost:63545`
 
 To import, run to _completion_:
 
@@ -143,7 +142,7 @@ After the script completes, keystore files for all generated accouts will be fou
 
 Then run:
 
-`python eth/import_balance.py -v -c config -r <cic_registry_address> -p <eth_provider> --offset <block_height_at_start> -y ../keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c <datadir>` 
+`python eth/import_balance.py -v -c config -r <cic_registry_address> -p <eth_provider> --token-symbol <token_symbol> --offset <block_height_at_start> -y ../keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c <datadir>` 
 
 
 
@@ -151,7 +150,7 @@ Then run:
 
 Run in sequence, in first terminal:
 
-`python cic_eth/import_balance.py -v -c config -p <eth_provider> -r <cic_registry_address> -y ../keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c --head out`
+`python cic_eth/import_balance.py -v -c config -p <eth_provider> -r <cic_registry_address> --token-symbol <token_symbol> -y ../keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c --head out`
 
 In another terminal:
 
@@ -168,14 +167,40 @@ If you have previously run the `cic_ussd` import incompletely, it could be a goo
 
 Then, in sequence, run in first terminal:
 
-`python cic_eth/import_balance.py -v -c config -p <eth_provider> -r <cic_registry_address> -y ../keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c out`
+`python cic_eth/import_balance.py -v -c config -p <eth_provider> -r <cic_registry_address> --token-symbol <token_symbol> -y ../keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c out`
 
 In second terminal:
 
 `python cic_ussd/import_users.py -v -c config out`
 
 
+
+### Step 4 - Metadata import (optional)
+
+The metadata import scripts can be run at any time after step 1 has been completed.
+
+
+#### Importing user metadata
+
+To import the main user metadata structs, run:
+
+`node cic_meta/import_meta.js <datadir> <number_of_users>`
+
+Monitors a folder for output from the `import_users.py` script, adding the metadata found to the `cic-meta` service.
+
+If _number of users_ is omitted the script will run until manually interrupted.
+
+
+
+#### Importing phone pointer
+
+`node cic_meta/import_meta_phone.js <datadir> <number_of_users>`
+
+If you imported using `cic_ussd`, the phone pointer is _already added_ and this script will do nothing.
+
+
 ##### Importing pins and ussd data (optional)
+
 Once the user imports are complete the next step should be importing the user's pins and auxiliary ussd data. This can be done in 3 steps:
 
 In one terminal run:
@@ -197,29 +222,6 @@ Once the creation of the pins file is complete, proceed to import the pins and u
 The balance script is a celery task worker, and will not exit by itself in its current version. However, after it's done doing its job, you will find "reached nonce ... exiting" among the last lines of the log.
 
 The connection parameters for the `cic-ussd-server` is currently _hardcoded_ in the `import_users.py` script file.
-
-
-### Step 4 - Metadata import (optional)
-
-The metadata import scripts can be run at any time after step 1 has been completed.
-
-
-#### Importing user metadata
-
-To import the main user metadata structs, run:
-
-`node cic_meta/import_meta.js <datadir> <number_of_users>`
-
-Monitors a folder for output from the `import_users.py` script, adding the metadata found to the `cic-meta` service.
-
-If _number of users_ is omitted the script will run until manually interrupted.
-
-
-#### Importing phone pointer
-
-`node cic_meta/import_meta_phone.js <datadir> <number_of_users>`
-
-If you imported using `cic_ussd`, the phone pointer is _already added_ and this script will do nothing.
 
 
 ### Step 5 - Verify
