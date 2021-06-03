@@ -259,4 +259,6 @@ Should exit with code 0 if all input data is found in the respective services.
 
 - Running the balance script should be _optional_ in all cases, but is currently required in the case of `cic_ussd` because it is needed to generate the metadata. An improvement would be moving the task to `import_users.py`, for a different queue than the balance tx handler.
 
+- MacOS BigSur issue when installing psycopg2: ld: library not found for -lssl -> https://github.com/psycopg/psycopg2/issues/1115#issuecomment-831498953
+
 - `cic_ussd` imports is poorly implemented, and consumes a lot of resources. Therefore it takes a long time to complete. Reducing the amount of polls for the phone pointer would go a long way to improve it.
