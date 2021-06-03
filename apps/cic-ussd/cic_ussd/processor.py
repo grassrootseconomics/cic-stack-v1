@@ -251,9 +251,9 @@ def process_display_user_metadata(user: Account, display_key: str):
         identifier=blockchain_address_to_metadata_pointer(blockchain_address=user.blockchain_address),
         cic_type=':cic.person'
     )
-    user_metadata = get_cached_data(key)
-    if user_metadata:
-        user_metadata = json.loads(user_metadata)
+    cached_metadata = get_cached_data(key)
+    if cached_metadata:
+        user_metadata = json.loads(cached_metadata)
         contact_data = get_contact_data_from_vcard(vcard=user_metadata.get('vcard'))
         logg.debug(f'{contact_data}')
         full_name = f'{contact_data.get("given")} {contact_data.get("family")}'
@@ -433,7 +433,8 @@ def process_request(user_input: str, user: Account, ussd_session: Optional[dict]
                     'exit_invalid_pin',
                     'exit_invalid_new_pin',
                     'exit_pin_mismatch',
-                    'exit_invalid_request'
+                    'exit_invalid_request',
+                    'exit_successful_transaction'
                 ] and person_metadata is not None:
                     return UssdMenu.find_by_name(name='start')
                 else:
