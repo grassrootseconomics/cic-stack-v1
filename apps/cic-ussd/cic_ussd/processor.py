@@ -270,7 +270,24 @@ def process_display_user_metadata(user: Account, display_key: str):
             products=products
         )
     else:
-        raise MetadataNotFoundError(f'Expected person metadata but found none in cache for key: {key}')
+        # TODO [Philip]: All these translations could be moved to translation files.
+        logg.warning(f'Expected person metadata but found none in cache for key: {key}')
+
+        absent = ''
+        if user.preferred_language == 'en':
+            absent = 'Not provided'
+        elif user.preferred_language == 'sw':
+            absent = 'Haijawekwa'
+
+        return translation_for(
+            key=display_key,
+            preferred_language=user.preferred_language,
+            full_name=absent,
+            gender=absent,
+            location=absent,
+            products=absent
+        )
+
 
 
 def process_account_statement(user: Account, display_key: str, ussd_session: dict):
