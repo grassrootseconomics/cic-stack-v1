@@ -29,6 +29,16 @@ def change_preferred_language_to_en(state_machine_data: Tuple[str, dict, Account
     Account.session.add(user)
     Account.session.commit()
 
+    preferences_data = {
+        'preferred_language': 'en'
+    }
+
+    s = celery.signature(
+        'cic_ussd.tasks.metadata.add_preferences_metadata',
+        [user.blockchain_address, preferences_data]
+    )
+    s.apply_async(queue='cic-ussd')
+
 
 def change_preferred_language_to_sw(state_machine_data: Tuple[str, dict, Account]):
     """This function changes the user's preferred language to swahili.
@@ -39,6 +49,16 @@ def change_preferred_language_to_sw(state_machine_data: Tuple[str, dict, Account
     user.preferred_language = 'sw'
     Account.session.add(user)
     Account.session.commit()
+
+    preferences_data = {
+        'preferred_language': 'sw'
+    }
+
+    s = celery.signature(
+        'cic_ussd.tasks.metadata.add_preferences_metadata',
+        [user.blockchain_address, preferences_data]
+    )
+    s.apply_async(queue='cic-ussd')
 
 
 def update_account_status_to_active(state_machine_data: Tuple[str, dict, Account]):
