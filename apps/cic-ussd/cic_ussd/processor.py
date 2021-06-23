@@ -1,4 +1,5 @@
 # standard imports
+import datetime
 import logging
 import json
 import re
@@ -257,6 +258,10 @@ def process_display_user_metadata(user: Account, display_key: str):
         contact_data = get_contact_data_from_vcard(vcard=user_metadata.get('vcard'))
         logg.debug(f'{contact_data}')
         full_name = f'{contact_data.get("given")} {contact_data.get("family")}'
+        date_of_birth = user_metadata.get('date_of_birth')
+        year_of_birth = date_of_birth.get('year')
+        present_year = datetime.datetime.now().year
+        age = present_year - year_of_birth
         gender = user_metadata.get('gender')
         products = ', '.join(user_metadata.get('products'))
         location = user_metadata.get('location').get('area_name')
@@ -265,6 +270,7 @@ def process_display_user_metadata(user: Account, display_key: str):
             key=display_key,
             preferred_language=user.preferred_language,
             full_name=full_name,
+            age=age,
             gender=gender,
             location=location,
             products=products
@@ -287,7 +293,6 @@ def process_display_user_metadata(user: Account, display_key: str):
             location=absent,
             products=absent
         )
-
 
 
 def process_account_statement(user: Account, display_key: str, ussd_session: dict):

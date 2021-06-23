@@ -56,3 +56,15 @@ def is_valid_gender_selection(state_machine_data: Tuple[str, dict, Account]):
         return True
     else:
         return False
+
+
+def is_valid_date(state_machine_data: Tuple[str, dict, Account]):
+    """
+    :param state_machine_data:
+    :type state_machine_data:
+    :return:
+    :rtype:
+    """
+    user_input, ussd_session, user = state_machine_data
+    # For MVP this value is defaulting to year
+    return len(user_input) == 4 and int(user_input) >= 1900
