@@ -93,6 +93,9 @@ def save_metadata_attribute_to_session_data(state_machine_data: Tuple[str, dict,
     if 'given_name' in current_state:
         key = 'given_name'
 
+    if 'date_of_birth' in current_state:
+        key = 'date_of_birth'
+
     if 'family_name' in current_state:
         key = 'family_name'
 
@@ -130,6 +133,13 @@ def format_user_metadata(metadata: dict, user: Account):
     given_name = metadata.get('given_name')
     family_name = metadata.get('family_name')
 
+    if isinstance(metadata.get('date_of_birth'), dict):
+        date_of_birth = metadata.get('date_of_birth')
+    else:
+        date_of_birth = {
+            "year": int(metadata.get('date_of_birth')[:4])
+        }
+
     # check whether there's existing location data
     if isinstance(metadata.get('location'), dict):
         location = metadata.get('location')
@@ -154,6 +164,7 @@ def format_user_metadata(metadata: dict, user: Account):
     )
     return {
         "date_registered": date_registered,
+        "date_of_birth": date_of_birth,
         "gender": gender,
         "identities": identities,
         "location": location,
@@ -201,12 +212,12 @@ def edit_user_metadata_attribute(state_machine_data: Tuple[str, dict, Account]):
 
     given_name = ussd_session.get('session_data').get('given_name')
     family_name = ussd_session.get('session_data').get('family_name')
+    date_of_birth = ussd_session.get('session_data').get('date_of_birth')
     gender = ussd_session.get('session_data').get('gender')
     location = ussd_session.get('session_data').get('location')
     products = ussd_session.get('session_data').get('products')
 
     # validate user metadata
-    person = Person()
     user_metadata = json.loads(user_metadata)
 
     # edit specific metadata attribute
@@ -214,6 +225,11 @@ def edit_user_metadata_attribute(state_machine_data: Tuple[str, dict, Account]):
         user_metadata['given_name'] = given_name
     if family_name:
         user_metadata['family_name'] = family_name
+    if date_of_birth and len(date_of_birth) == 4:
+        year = int(date_of_birth[:4])
+        user_metadata['date_of_birth'] = {
+            'year': year
+        }
     if gender:
         user_metadata['gender'] = gender
     if location:
