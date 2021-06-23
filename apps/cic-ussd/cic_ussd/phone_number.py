@@ -8,6 +8,10 @@ import phonenumbers
 from cic_ussd.db.models.account import Account
 
 
+class E164Format:
+    region = None
+
+
 def process_phone_number(phone_number: str, region: str):
     """This function parses any phone number for the provided region
     :param phone_number: A string with a phone number.

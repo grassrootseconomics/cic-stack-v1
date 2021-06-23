@@ -11,7 +11,7 @@ from cic_ussd.balance import BalanceManager, compute_operational_balance
 from cic_ussd.chain import Chain
 from cic_ussd.db.models.account import AccountStatus, Account
 from cic_ussd.operations import save_to_in_memory_ussd_session_data
-from cic_ussd.phone_number import get_user_by_phone_number, process_phone_number
+from cic_ussd.phone_number import get_user_by_phone_number, process_phone_number, E164Format
 from cic_ussd.processor import retrieve_token_symbol
 from cic_ussd.redis import create_cached_data_key, get_cached_data
 from cic_ussd.transactions import OutgoingTransactionProcessor
@@ -29,8 +29,9 @@ def is_valid_recipient(state_machine_data: Tuple[str, dict, Account]) -> bool:
     :rtype: bool
     """
     user_input, ussd_session, user = state_machine_data
+    phone_number = process_phone_number(user_input, E164Format.region)
     recipient = get_user_by_phone_number(phone_number=user_input)
-    is_not_initiator = process_phone_number(user_input, 'KE') != user.phone_number
+    is_not_initiator = phone_number != user.phone_number
     has_active_account_status = user.get_account_status() == AccountStatus.ACTIVE.name
     return is_not_initiator and has_active_account_status and recipient is not None
 
