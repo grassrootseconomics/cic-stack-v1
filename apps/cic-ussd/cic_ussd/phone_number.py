@@ -38,7 +38,7 @@ def get_user_by_phone_number(phone_number: str) -> Optional[Account]:
     :rtype: Account|None
     """
     # consider adding region to user's metadata
-    phone_number = process_phone_number(phone_number=phone_number, region='KE')
+    phone_number = process_phone_number(phone_number=phone_number, region=E164Format.region)
     user = Account.session.query(Account).filter_by(phone_number=phone_number).first()
     return user
 
