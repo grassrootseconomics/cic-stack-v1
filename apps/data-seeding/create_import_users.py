@@ -228,7 +228,6 @@ def prepareLocalFilePath(datadir, address):
 if __name__ == '__main__':
 
     base_dir = os.path.join(user_dir, 'old')
-    ussd_dir = os.path.join(user_dir, 'ussd')
     os.makedirs(base_dir, exist_ok=True)
 
     fa = open(os.path.join(user_dir, 'balances.csv'), 'w')
@@ -248,22 +247,10 @@ if __name__ == '__main__':
 
         print(o)
 
-        ussd_data = {
-            'phone': phone,
-            'is_activated': 1,
-            'preferred_language': random.sample(['en', 'sw'], 1)[0],
-            'is_disabled': False
-        }
-
         d = prepareLocalFilePath(base_dir, uid)
         f = open('{}/{}'.format(d, uid + '.json'), 'w')
         json.dump(o.serialize(), f)
         f.close()
-
-        d = prepareLocalFilePath(ussd_dir, uid)
-        x = open('{}/{}'.format(d, uid + '_ussd_data.json'), 'w')
-        json.dump(ussd_data, x)
-        x.close()
 
         pidx = genPhoneIndex(phone)
         d = prepareLocalFilePath(os.path.join(user_dir, 'phone'), pidx)
