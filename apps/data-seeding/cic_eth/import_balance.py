@@ -76,6 +76,7 @@ args_override = {
         'CIC_CHAIN_SPEC': getattr(args, 'i'),
         'ETH_PROVIDER': getattr(args, 'p'),
         'CIC_REGISTRY_ADDRESS': getattr(args, 'r'),
+        'KEYSTORE_FILE_PATH': getattr(args, 'key-file')
         }
 config.dict_override(args_override, 'cli flag')
 config.censor('PASSWORD', 'DATABASE')
