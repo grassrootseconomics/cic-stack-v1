@@ -117,7 +117,13 @@ def register_ussd(i, u):
     phone_object = phonenumbers.parse(u.tel)
     phone = phonenumbers.format_number(phone_object, phonenumbers.PhoneNumberFormat.E164)
     logg.debug('tel {} {}'.format(u.tel, phone))
-    req = build_ussd_request(phone, 'localhost', 63315, '*483*46#', '', '') 
+    req = build_ussd_request(
+        phone,
+        'localhost',
+        config.get('CIC_USER_USSD_SVC_SERVICE_PORT'),
+        config.get('APP_SERVICE_CODE'),
+        '',
+        '')
     response = urllib.request.urlopen(req)
     response_data = response.read().decode('utf-8')
     state = response_data[:3]
