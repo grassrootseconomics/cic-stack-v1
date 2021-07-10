@@ -1,5 +1,6 @@
-# syntax = docker/dockerfile:1.2
 FROM registry.gitlab.com/grassrootseconomics/cic-base-images:python-3.8.6-dev-55da5f4e as dev
+
+WORKDIR /usr/src/cic-eth
 
 # Copy just the requirements and install....this _might_ give docker a hint on caching but we 
 # do load these all into setup.py later
@@ -15,11 +16,8 @@ ARG GITLAB_PYTHON_REGISTRY="https://gitlab.com/api/v4/projects/27624814/packages
 #    -r requirements.txt 
 
 COPY . .
-RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
-    pip install --index-url https://pypi.org/simple  \
+RUN pip install --index-url https://pypi.org/simple  \
 	  --extra-index-url $GITLAB_PYTHON_REGISTRY --extra-index-url $EXTRA_INDEX_URL .
-
-ENV PYTHONPATH .
 
 COPY docker/entrypoints/* ./ 
 RUN chmod 755 *.sh
