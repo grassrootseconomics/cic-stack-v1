@@ -14,10 +14,16 @@ ARG GITLAB_PYTHON_REGISTRY="https://gitlab.com/api/v4/projects/27624814/packages
 #    --force-reinstall \
 #	--extra-index-url $GITLAB_PYTHON_REGISTRY --extra-index-url $EXTRA_INDEX_URL \
 #    -r requirements.txt 
-
-COPY . .
+COPY *requirements.txt . 
 RUN pip install --index-url https://pypi.org/simple  \
-	  --extra-index-url $GITLAB_PYTHON_REGISTRY --extra-index-url $EXTRA_INDEX_URL .
+	  --extra-index-url $GITLAB_PYTHON_REGISTRY \
+    --extra-index-url $EXTRA_INDEX_URL \
+    -r requirements.txt \
+    -r services_requirements.txt \
+    -r admin_requirements.txt
+    
+COPY . .
+RUN python setup.py install
 
 COPY docker/entrypoints/* ./ 
 RUN chmod 755 *.sh
