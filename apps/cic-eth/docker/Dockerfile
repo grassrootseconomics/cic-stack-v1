@@ -35,7 +35,7 @@ COPY crypto_dev_signer_config/ /usr/local/etc/crypto-dev-signer/
 #COPY util/liveness/health.sh /usr/local/bin/health.sh
 ENTRYPOINT []
 
-# --- RUNTIME ---
+# ------------------ PRODUCTION CONTAINER ----------------------
 FROM python:3.8.6-slim-buster as prod 
 
 RUN apt-get update && \
@@ -56,7 +56,7 @@ RUN chmod 755 *.sh
 COPY config/ /usr/local/etc/cic-eth/
 COPY cic_eth/db/migrations/ /usr/local/share/cic-eth/alembic/
 COPY crypto_dev_signer_config/ /usr/local/etc/crypto-dev-signer/
-COPY scripts/ . 
+COPY scripts/ scripts/ 
 
 # TODO this kind of code sharing across projects should be discouraged...can we make util a library?
 #COPY util/liveness/health.sh /usr/local/bin/health.sh
