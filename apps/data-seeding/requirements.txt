@@ -10,3 +10,4 @@ eth-contract-registry~=0.5.6a1
 eth-accounts-index~=0.0.12a1
 eth-erc20~=0.0.10a3
 erc20-faucet~=0.2.2a1
+psycopg2==2.8.6

@@ -45,7 +45,7 @@ elif args.v:
     logging.getLogger().setLevel(logging.INFO)
 
 # parse config
-config = Config(config_dir=args.c, env_prefix=args.env_prefix)
+config = Config(args.c, env_prefix=args.env_prefix)
 config.process()
 config.censor('PASSWORD', 'DATABASE')
 logg.debug('config loaded from {}:\n{}'.format(args.c, config))
