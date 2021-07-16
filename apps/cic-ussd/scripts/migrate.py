@@ -30,7 +30,7 @@ arg_parser.add_argument('-vv', action='store_true', help='be more verbose')
 args = arg_parser.parse_args()
 
 
-config = Config(config_dir=args.c, env_prefix=args.env_prefix)
+config = Config(args.c, env_prefix=args.env_prefix)
 config.process()
 config.censor('PASSWORD', 'DATABASE')
 logg.debug(f'config:\n{config}')
