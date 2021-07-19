@@ -158,6 +158,7 @@ export CIC_DECLARATOR_ADDRESS=$CIC_DECLARATOR_ADDRESS
 EOF
 
 cat ./envlist | bash from_env.sh > $CIC_DATA_DIR/.env_all
+cat ./envlist
 # popd
 
 set +a
