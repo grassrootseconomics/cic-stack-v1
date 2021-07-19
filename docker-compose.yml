@@ -71,6 +71,8 @@ services:
       - bee-data:/tmp/cic/bee
 
   contract-migration:
+    profiles:
+      - migrations 
     build:
       context: apps/contract-migration
       dockerfile: docker/Dockerfile
@@ -79,6 +81,7 @@ services:
         pip_extra_args: $PIP_EXTRA_ARGS
     # image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/contract-migration:latest
     environment:
+      CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
       # ETH_PROVIDER should be broken out into host/port but cic-eth expects this
       ETH_PROVIDER: http://eth:8545
       # And these two are for wait-for-it (could parse this)
@@ -123,6 +126,8 @@ services:
       - contract-config:/tmp/cic/config
 
   cic-cache-tracker:
+    profiles:
+      - cache 
     build:
       context: apps/cic-cache
       dockerfile: docker/Dockerfile
@@ -159,6 +164,8 @@ services:
       - contract-config:/tmp/cic/config/:ro
 
   cic-cache-tasker:
+    profiles:
+      - cache 
     build:
       context: apps/cic-cache
       dockerfile: docker/Dockerfile
@@ -196,6 +203,8 @@ services:
       - contract-config:/tmp/cic/config/:ro
 
   cic-cache-server:
+    profiles:
+      - cache 
     build:
       context: apps/cic-cache
       dockerfile: docker/Dockerfile
@@ -227,7 +236,6 @@ services:
 
 
   cic-eth-tasker:
-    # image: grassrootseconomics:cic-eth-service
     build: 
         context: apps/cic-eth
         dockerfile: docker/Dockerfile
@@ -338,7 +346,6 @@ services:
       TASKS_TRANSFER_CALLBACKS: $TASKS_TRANSFER_CALLBACKS
       DATABASE_DEBUG: ${DATABASE_DEBUG:-false}
         #DATABASE_DEBUG: 1
-
     depends_on:
       - eth
       - postgres
@@ -429,6 +436,8 @@ services:
 
 
   cic-meta-server:
+    profiles:
+      - custodial-meta
     hostname: meta
     build:
       context: apps/cic-meta
@@ -462,6 +471,8 @@ services:
     # command: "/root/start_server.sh -vv"
 
   cic-user-ussd-server:
+    profiles:
+      - custodial-ussd
     build:
       context: apps/cic-ussd
       dockerfile: docker/Dockerfile
@@ -491,6 +502,8 @@ services:
     command: "/root/start_cic_user_ussd_server.sh -vv"
 
   cic-user-server:
+    profiles:
+      - custodial-ussd
     build:
       context: apps/cic-ussd
       dockerfile: docker/Dockerfile
@@ -513,6 +526,8 @@ services:
     command: "/root/start_cic_user_server.sh -vv"
 
   cic-user-tasker:
+    profiles:
+      - custodial-ussd
     build:
       context: apps/cic-ussd/
       dockerfile: docker/Dockerfile
