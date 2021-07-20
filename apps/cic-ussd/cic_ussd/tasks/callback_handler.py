@@ -7,14 +7,14 @@ from datetime import datetime, timedelta
 import celery
 
 # local imports
+from cic_ussd.balance import compute_operational_balance, get_balances
+from cic_ussd.chain import Chain
 from cic_ussd.conversions import from_wei
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.db.models.account import Account
-from cic_ussd.account import define_account_tx_metadata
 from cic_ussd.error import ActionDataNotFoundError
-from cic_ussd.redis import InMemoryStore, cache_data, create_cached_data_key
+from cic_ussd.redis import InMemoryStore, cache_data, create_cached_data_key, get_cached_data
 from cic_ussd.tasks.base import CriticalSQLAlchemyTask
-from cic_ussd.transactions import IncomingTransactionProcessor
 
 logg = logging.getLogger(__file__)
 celery_app = celery.current_app
@@ -58,9 +58,9 @@ def process_account_creation_callback(self, result: str, url: str, status_code: 
 
             # add phone number metadata lookup
             s_phone_pointer = celery.signature(
-                    'cic_ussd.tasks.metadata.add_phone_pointer',
-                    [result, phone_number]
-                    )
+                'cic_ussd.tasks.metadata.add_phone_pointer',
+                [result, phone_number]
+            )
             s_phone_pointer.apply_async(queue=queue)
 
             # add custom metadata tags
@@ -87,59 +87,106 @@ def process_account_creation_callback(self, result: str, url: str, status_code: 
     session.close()
 
 
-@celery_app.task
-def process_incoming_transfer_callback(result: dict, param: str, status_code: int):
-    session = SessionBase.create_session()
+@celery_app.task(bind=True)
+def process_transaction_callback(self, result: dict, param: str, status_code: int):
     if status_code == 0:
+        chain_str = Chain.spec.__str__()
 
-        # collect result data
+        # collect transaction metadata
+        destination_token_symbol = result.get('destination_token_symbol')
+        destination_token_value = result.get('destination_token_value')
         recipient_blockchain_address = result.get('recipient')
         sender_blockchain_address = result.get('sender')
-        token_symbol = result.get('destination_token_symbol')
-        value = result.get('destination_token_value')
+        source_token_symbol = result.get('source_token_symbol')
+        source_token_value = result.get('source_token_value')
 
-        # try to find users in system
-        recipient_user = session.query(Account).filter_by(blockchain_address=recipient_blockchain_address).first()
-        sender_user = session.query(Account).filter_by(blockchain_address=sender_blockchain_address).first()
+        # build stakeholder callback params
+        recipient_metadata = {
+            "token_symbol": destination_token_symbol,
+            "token_value": destination_token_value,
+            "blockchain_address": recipient_blockchain_address,
+            "tag": "recipient",
+            "tx_param": param
+        }
 
-        # check whether recipient is in the system
-        if not recipient_user:
-            session.close()
-            raise ValueError(
-                f'Tx for recipient: {recipient_blockchain_address} was received but has no matching user in the system.'
-            )
+        # retrieve account balances
+        get_balances(
+            address=recipient_blockchain_address,
+            callback_param=recipient_metadata,
+            chain_str=chain_str,
+            callback_task='cic_ussd.tasks.callback_handler.process_transaction_balances_callback',
+            token_symbol=destination_token_symbol,
+            asynchronous=True)
 
-        # process incoming transactions
-        incoming_tx_processor = IncomingTransactionProcessor(phone_number=recipient_user.phone_number,
-                                                             preferred_language=recipient_user.preferred_language,
-                                                             token_symbol=token_symbol,
-                                                             value=value)
+        # only retrieve sender if transaction is a transfer
+        if param == 'transfer':
+            sender_metadata = {
+                "blockchain_address": sender_blockchain_address,
+                "token_symbol": source_token_symbol,
+                "token_value": source_token_value,
+                "tag": "sender",
+                "tx_param": param
+            }
 
-        if param == 'tokengift':
-            incoming_tx_processor.process_token_gift_incoming_transactions()
-        elif param == 'transfer':
-            if sender_user:
-                sender_information = define_account_tx_metadata(user=sender_user)
-                incoming_tx_processor.process_transfer_incoming_transaction(
-                    sender_information=sender_information,
-                    recipient_blockchain_address=recipient_blockchain_address
-                )
-            else:
-                logg.warning(
-                    f'Tx with sender: {sender_blockchain_address} was received but has no matching user in the system.'
-                )
-                incoming_tx_processor.process_transfer_incoming_transaction(
-                    sender_information='GRASSROOTS ECONOMICS',
-                    recipient_blockchain_address=recipient_blockchain_address
-                )
-        else:
-            session.close()
-            raise ValueError(f'Unexpected transaction param: {param}.')
+            get_balances(
+                address=sender_blockchain_address,
+                callback_param=sender_metadata,
+                chain_str=chain_str,
+                callback_task='cic_ussd.tasks.callback_handler.process_transaction_balances_callback',
+                token_symbol=source_token_symbol,
+                asynchronous=True)
     else:
-        session.close()
         raise ValueError(f'Unexpected status code: {status_code}.')
 
-    session.close()
+
+@celery_app.task(bind=True)
+def process_transaction_balances_callback(self, result: list, param: dict, status_code: int):
+    queue = self.request.delivery_info.get('routing_key')
+    if status_code == 0:
+        # retrieve balance data
+        balances_data = result[0]
+        operational_balance = compute_operational_balance(balances=balances_data)
+
+        # retrieve account's address
+        blockchain_address = param.get('blockchain_address')
+
+        # append balance to transaction metadata
+        transaction_metadata = param
+        transaction_metadata['operational_balance'] = operational_balance
+
+        # retrieve account's preferences
+        s_preferences_metadata = celery.signature(
+            'cic_ussd.tasks.metadata.query_preferences_metadata',
+            [blockchain_address],
+            queue=queue
+        )
+
+        # parse metadata and run validations
+        s_process_account_metadata = celery.signature(
+            'cic_ussd.tasks.processor.process_tx_metadata_for_notification',
+            [transaction_metadata],
+            queue=queue
+        )
+
+        # issue notification of transaction
+        s_notify_account = celery.signature(
+            'cic_ussd.tasks.notifications.notify_account_of_transaction',
+            queue=queue
+        )
+
+        if param.get('tx_param') == 'transfer':
+            celery.chain(s_preferences_metadata, s_process_account_metadata, s_notify_account).apply_async()
+
+        if param.get('tx_param') == 'tokengift':
+            s_process_account_metadata = celery.signature(
+                'cic_ussd.tasks.processor.process_tx_metadata_for_notification',
+                [{}, transaction_metadata],
+                queue=queue
+            )
+            celery.chain(s_process_account_metadata, s_notify_account).apply_async()
+    else:
+        raise ValueError(f'Unexpected status code: {status_code}.')
+
 
 @celery_app.task
 def process_balances_callback(result: list, param: str, status_code: int):
@@ -151,6 +198,7 @@ def process_balances_callback(result: list, param: str, status_code: int):
             salt=':cic.balances_data'
         )
         cache_data(key=key, data=json.dumps(balances_data))
+        logg.debug(f'caching: {balances_data} with key: {key}')
     else:
         raise ValueError(f'Unexpected status code: {status_code}.')
 

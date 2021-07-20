@@ -8,13 +8,16 @@ import tempfile
 import celery
 import i18n
 import redis
+from chainlib.chain import ChainSpec
 from confini import Config
 
 # local imports
+from cic_ussd.chain import Chain
 from cic_ussd.db import dsn_from_config
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.metadata.signer import Signer
 from cic_ussd.metadata.base import Metadata
+from cic_ussd.phone_number import Support
 from cic_ussd.redis import InMemoryStore
 from cic_ussd.session.ussd_session import UssdSession as InMemoryUssdSession
 from cic_ussd.validator import validate_presence
@@ -81,6 +84,15 @@ Signer.key_file_path = key_file_path
 # set up translations
 i18n.load_path.append(config.get('APP_LOCALE_PATH'))
 i18n.set('fallback', config.get('APP_LOCALE_FALLBACK'))
+
+chain_spec = ChainSpec(
+    common_name=config.get('CIC_COMMON_NAME'),
+    engine=config.get('CIC_ENGINE'),
+    network_id=config.get('CIC_NETWORK_ID')
+)
+
+Chain.spec = chain_spec
+Support.phone_number = config.get('APP_SUPPORT_PHONE_NUMBER')
 
 # set up celery
 current_app = celery.Celery(__name__)

@@ -48,3 +48,6 @@ class InitializationError(Exception):
     pass
 
 
+class UnknownUssdRecipient(Exception):
+    """Raised when a recipient of a transaction is not known to the ussd application."""
+
