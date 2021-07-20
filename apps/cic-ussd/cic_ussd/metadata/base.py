@@ -127,14 +127,19 @@ class MetadataRequestsHandler(Metadata):
         if not isinstance(result_data, dict):
             raise ValueError(f'Invalid result data object: {result_data}.')
 
-        if result.status_code == 200 and self.cic_type == ':cic.person':
-            # validate person metadata
-            person = Person()
-            person_data = person.deserialize(person_data=result_data)
+        if result.status_code == 200:
+            if self.cic_type == ':cic.person':
+                # validate person metadata
+                person = Person()
+                person_data = person.deserialize(person_data=result_data)
 
-            # format new person data for caching
-            data = json.dumps(person_data.serialize())
+                # format new person data for caching
+                serialized_person_data = person_data.serialize()
+                data = json.dumps(serialized_person_data)
+            else:
+                data = json.dumps(result_data)
 
             # cache metadata
             cache_data(key=self.metadata_pointer, data=data)
             logg.debug(f'caching: {data} with key: {self.metadata_pointer}')
+        return result_data

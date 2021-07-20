@@ -15,45 +15,47 @@ from cic_ussd.conversions import from_wei
 logg = logging.getLogger()
 
 
-class BalanceManager:
-
-    def __init__(self, address: str, chain_str: str, token_symbol: str):
-        """
-        :param address: Ethereum address of account whose balance is being queried
-        :type address: str, 0x-hex
-        :param chain_str: The chain name and network id.
-        :type chain_str: str
-        :param token_symbol: ERC20 token symbol of whose balance is being queried
-        :type token_symbol: str
-        """
-        self.address = address
-        self.chain_str = chain_str
-        self.token_symbol = token_symbol
-
-    def get_balances(self, asynchronous: bool = False) -> Union[celery.Task, dict]:
-        """
-        This function queries cic-eth for an account's balances, It provides a means to receive the balance either
-        asynchronously or synchronously depending on the provided value for teh asynchronous parameter. It returns a
-        dictionary containing network, outgoing and incoming balances.
-        :param asynchronous: Boolean value checking whether to return balances asynchronously
-        :type asynchronous: bool
-        :return:
-        :rtype:
-        """
-        if asynchronous:
-            cic_eth_api = Api(
-                chain_str=self.chain_str,
-                callback_queue='cic-ussd',
-                callback_task='cic_ussd.tasks.callback_handler.process_balances_callback',
-                callback_param=''
-            )
-            cic_eth_api.balance(address=self.address, token_symbol=self.token_symbol)
-        else:
-            cic_eth_api = Api(chain_str=self.chain_str)
-            balance_request_task = cic_eth_api.balance(
-                address=self.address,
-                token_symbol=self.token_symbol)
-            return balance_request_task.get()[0]
+def get_balances(
+        address: str,
+        chain_str: str,
+        token_symbol: str,
+        asynchronous: bool = False,
+        callback_param: any = None,
+        callback_task='cic_ussd.tasks.callback_handler.process_balances_callback') -> Union[celery.Task, dict]:
+    """
+    This function queries cic-eth for an account's balances, It provides a means to receive the balance either
+    asynchronously or synchronously depending on the provided value for teh asynchronous parameter. It returns a
+    dictionary containing network, outgoing and incoming balances.
+    :param address: Ethereum address of the recipient
+    :type address: str, 0x-hex
+    :param chain_str: The chain name and network id.
+    :type chain_str: str
+    :param callback_param:
+    :type callback_param:
+    :param callback_task:
+    :type callback_task:
+    :param token_symbol: ERC20 token symbol of the account whose balance is being queried.
+    :type token_symbol: str
+    :param asynchronous: Boolean value checking whether to return balances asynchronously.
+    :type asynchronous: bool
+    :return:
+    :rtype:
+    """
+    logg.debug(f'Retrieving balance for address: {address}')
+    if asynchronous:
+        cic_eth_api = Api(
+            chain_str=chain_str,
+            callback_queue='cic-ussd',
+            callback_task=callback_task,
+            callback_param=callback_param
+        )
+        cic_eth_api.balance(address=address, token_symbol=token_symbol)
+    else:
+        cic_eth_api = Api(chain_str=chain_str)
+        balance_request_task = cic_eth_api.balance(
+            address=address,
+            token_symbol=token_symbol)
+        return balance_request_task.get()[0]
 
 
 def compute_operational_balance(balances: dict) -> float:

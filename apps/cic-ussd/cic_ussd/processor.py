@@ -12,7 +12,7 @@ from tinydb.table import Document
 
 # local imports
 from cic_ussd.account import define_account_tx_metadata, retrieve_account_statement
-from cic_ussd.balance import BalanceManager, compute_operational_balance, get_cached_operational_balance
+from cic_ussd.balance import compute_operational_balance, get_balances, get_cached_operational_balance
 from cic_ussd.chain import Chain
 from cic_ussd.db.models.account import Account
 from cic_ussd.db.models.base import SessionBase
@@ -182,7 +182,6 @@ def process_transaction_pin_authorization(account: Account, display_key: str, se
     token_symbol = retrieve_token_symbol()
     user_input = ussd_session.get('session_data').get('transaction_amount')
     transaction_amount = to_wei(value=int(user_input))
-    logg.debug('Requires integration to determine user tokens.')
     return process_pin_authorization(
         account=account,
         display_key=display_key,
@@ -380,12 +379,9 @@ def process_start_menu(display_key: str, user: Account):
     token_symbol = retrieve_token_symbol()
     chain_str = Chain.spec.__str__()
     blockchain_address = user.blockchain_address
-    balance_manager = BalanceManager(address=blockchain_address,
-                                     chain_str=chain_str,
-                                     token_symbol=token_symbol)
 
     # get balances synchronously for display on start menu
-    balances_data = balance_manager.get_balances()
+    balances_data = get_balances(address=blockchain_address, chain_str=chain_str, token_symbol=token_symbol)
 
     key = create_cached_data_key(
         identifier=bytes.fromhex(blockchain_address[2:]),
