@@ -15,8 +15,8 @@ RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
 COPY . .
 RUN python setup.py install
 
-COPY docker/start_tasker.sh .
-RUN chmod +x start_tasker.sh
+COPY docker/*.sh .
+RUN chmod +x *.sh 
 
 # ini files in config directory defines the configurable parameters for the application
 # they can all be overridden by environment variables
