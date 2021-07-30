@@ -24,4 +24,5 @@ RUN chmod +x *.sh
 COPY .config/ /usr/local/etc/cic-notify/
 COPY cic_notify/db/migrations/ /usr/local/share/cic-notify/alembic/
 
+
 ENTRYPOINT []
