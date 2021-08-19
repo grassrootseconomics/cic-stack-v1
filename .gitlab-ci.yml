@@ -1,14 +1,99 @@
 include:
-  - local: 'ci_templates/.cic-template.yml'
-  - local: 'apps/contract-migration/.gitlab-ci.yml'
+#  - local: 'ci_templates/.cic-template.yml'
+#  - local: 'apps/contract-migration/.gitlab-ci.yml'
   - local: 'apps/cic-eth/.gitlab-ci.yml'
   - local: 'apps/cic-ussd/.gitlab-ci.yml'
   - local: 'apps/cic-notify/.gitlab-ci.yml'
   - local: 'apps/cic-meta/.gitlab-ci.yml'
   - local: 'apps/cic-cache/.gitlab-ci.yml'
-  - local: 'apps/data-seeding/.gitlab-ci.yml'
+#  - local: 'apps/data-seeding/.gitlab-ci.yml'
+
+image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/docker-with-compose:latest  
+
 
 stages:
   - build
   - test
-  - release
+  - deploy
+
+variables:
+  DOCKER_BUILDKIT: "1"
+  COMPOSE_DOCKER_CLI_BUILD: "1" 
+  MR_IMAGE_TAG: mr-$CI_COMMIT_SHORT_SHA
+
+# todo you can probably just build the single image w/o docker-compose
+build-merge-request:
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  stage: build
+  tags:
+    - integration
+  variables:
+    CI_DEBUG_TRACE: "true"
+  script:
+    - TAG=$MR_IMAGE_TAG FRONTEND_ENV=dev sh ./scripts/build-push.sh
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    when: always
+
+build-staging:
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  tags:
+    - integration
+       #- blocal
+  variables: 
+    CI_DEBUG_TRACE: "true"
+  stage: build
+  script:
+    - TAG=stag FRONTEND_ENV=staging sh ./scripts/build-push.sh
+  only:
+    - staging 
+
+deploy-staging:
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - pip install docker-auto-labels
+  tags:
+    - integration
+  stage: deploy
+  script: 
+        - >
+          DOMAIN=stag.grassrootseconomics.net
+          TRAEFIK_TAG=grassrootseconomics.net
+          STACK_NAME=stag-cic-net
+          TAG=stag
+          sh ./scripts/deploy.sh
+  environment:
+    name: staging
+    url: https://stag.grassrootseconomics.net
+  only:
+    - staging 
+
+      #build-prod:
+      #  stage: build
+      #  script:
+      #    - TAG=prod FRONTEND_ENV=production sh ./scripts/build-push.sh
+      #  only:
+      #    - production
+      #  tags:
+      #    - build
+      #    - test
+      #
+      #deploy-prod:
+      #  stage: deploy
+      #  script:
+      #    - >
+      #      DOMAIN=demo1.com
+      #      TRAEFIK_TAG=demo1.com
+      #      STACK_NAME=demo1-com
+      #      TAG=prod
+      #      sh ./scripts/deploy.sh
+      #  environment:
+      #    name: production
+      #    url: https://demo1.com
+      #  only:
+      #    - production
+      #  tags:
+      #    - swarm
+      #    - prod
