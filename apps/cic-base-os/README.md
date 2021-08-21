@@ -1,0 +1,1 @@
+## this is an example base image if we wanted one for all the other apps. Its just OS level things

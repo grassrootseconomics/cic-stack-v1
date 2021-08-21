@@ -14,5 +14,3 @@ build/
 **/.venv
 .idea
 **/.vim
-docker-stack.yml
-.npm/
