@@ -28,13 +28,16 @@ ARG GITLAB_PYTHON_REGISTRY="https://gitlab.com/api/v4/projects/27624814/packages
 ARG pip_trusted_host=pypi.org
 RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
     pip install --index-url https://pypi.org/simple \
+    --pre \
     --force-reinstall \
     --trusted-host $pip_trusted_host \
     --extra-index-url $GITLAB_PYTHON_REGISTRY --extra-index-url $EXTRA_INDEX_URL $EXTRA_PIP_ARGS \
     -r requirements.txt 
+
 RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
     pip install --index-url https://pypi.org/simple \
     --force-reinstall \
+    --pre \
     --trusted-host $pip_trusted_host \
     --extra-index-url $GITLAB_PYTHON_REGISTRY --extra-index-url $EXTRA_INDEX_URL $EXTRA_PIP_ARGS \
     -r override_requirements.txt 
