@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+set -e
+
 echo "Creating seed data..."
 python create_import_users.py -vv --dir "$IMPORT_DIR" "$ACCOUNT_COUNT"
 wait $!
@@ -15,9 +18,11 @@ else
   TARGET_TX_COUNT=$((ACCOUNT_COUNT*2))
   python cic_ussd/import_balance.py -vv -c "$CONFIG" -p "$ETH_PROVIDER" -r "$CIC_REGISTRY_ADDRESS" --include-balances --token-symbol "$TOKEN_SYMBOL" -y "$KEYSTORE_PATH" "$IMPORT_DIR" &
 fi
+
 until [ -f ./cic-import-ussd.pid ]
 do
   echo "Polling for celery worker pid file..."
+  sleep 1
 done
 IMPORT_BALANCE_JOB=$(<cic-import-ussd.pid)
 echo "Start import users job"
