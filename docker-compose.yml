@@ -260,8 +260,8 @@ services:
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
       CELERY_DEBUG: ${CELERY_DEBUG:-1}
-      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-ipc:///run/crypto-dev-signer/jsonrpc.ipc}
-      SIGNER_PROVIDER: ${SIGNER_SOCKET_PATH:-ipc:///run/crypto-dev-signer/jsonrpc.ipc}
+      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-http://cic-eth-signer:8000}
+      SIGNER_PROVIDER: ${SIGNER_SOCKET_PATH:-http://cic-eth-signer:8000}
       SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
       ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
       TASKS_TRACE_QUEUE_STATUS: ${TASKS_TRACE_QUEUE_STATUS:-1}
@@ -274,14 +274,70 @@ services:
       restart_policy:
         condition: on-failure
     volumes:
-      - signer-data:/tmp/cic/signer
+      - signer-data:/run/crypto-dev-signer
       - contract-config:/tmp/cic/config/:ro
+        #command: ["/usr/local/bin/cic-eth-taskerd"]
+        #command: ["sleep", "3600"]
     command:
       - /bin/bash
       - -c
       - |
         if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
         ./start_tasker.sh --aux-all -q cic-eth  -vv
+    
+  cic-eth-signer:
+    image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/cic-eth:${TAG:-latest}
+    build: 
+        context: apps/cic-eth
+        dockerfile: docker/Dockerfile
+        target: dev
+        args:
+          EXTRA_INDEX_URL: ${EXTRA_INDEX_URL:-https://pip.grassrootseconomics.net:8433}
+    environment:
+      CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
+      ETH_GAS_PROVIDER_ADDRESS: $DEV_ETH_ACCOUNT_GAS_PROVIDER
+      ETH_PROVIDER: ${ETH_PROVIDER:-http://eth:8545}
+      RPC_HTTP_PROVIDER: ${ETH_PROVIDER:-http://eth:8545}
+      DATABASE_USER: ${DATABASE_USER:-grassroots}
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-tralala}
+      DATABASE_NAME: ${DATABASE_NAME_CIC_ETH:-cic_eth}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_ENGINE: ${DATABASE_ENGINE:-postgres}
+      DATABASE_DRIVER: ${DATABASE_DRIVER:-psycopg2}
+      DATABASE_DEBUG: ${DATABASE_DEBUG:-0}
+      DATABASE_POOL_SIZE: 0
+      REDIS_PORT: 6379
+      REDIS_HOST: redis
+      PGPASSWORD: ${DATABASE_PASSWORD:-tralala}
+      CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-evm:bloxberg:8996}
+      CHAIN_SPEC: ${CIC_CHAIN_SPEC:-evm:bloxberg:8996}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
+      CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
+      CELERY_DEBUG: ${CELERY_DEBUG:-1}
+      SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-http://0.0.0.0:8000}
+      SIGNER_PROVIDER: ${SIGNER_SOCKET_PATH:-http://0.0.0.0:8000}
+      SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
+      ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
+      TASKS_TRACE_QUEUE_STATUS: ${TASKS_TRACE_QUEUE_STATUS:-1}
+      CIC_DEFAULT_TOKEN_SYMBOL: ${CIC_DEFAULT_TOKEN_SYMBOL:-GFT}
+    depends_on:
+      - eth
+      - postgres
+      - redis
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - signer-data:/run/crypto-dev-signer
+      - contract-config:/tmp/cic/config/:ro
+    command: ["python", "/usr/local/bin/crypto-dev-daemon", "-c", "/usr/local/etc/crypto-dev-signer", "-vv"]
+        #command:
+        #  - /bin/bash
+        #  - -c
+        #  - |
+        #    if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        #    ./start_tasker.sh --aux-all -q cic-eth  -vv
     # command: [/bin/sh, "./start_tasker.sh", -q, cic-eth, -vv ]
 
   cic-eth-tracker:
@@ -372,6 +428,7 @@ services:
         if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
         ./start_dispatcher.sh -q cic-eth -vv
     # command: "/root/start_dispatcher.sh -q cic-eth -vv"
+    
 
 
   cic-eth-retrier:

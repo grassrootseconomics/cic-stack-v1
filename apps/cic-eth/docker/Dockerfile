@@ -13,7 +13,16 @@ ARG EXTRA_PIP_ARGS=""
 #    pip install --index-url https://pypi.org/simple \
 #    --force-reinstall \
 #	--extra-index-url $GITLAB_PYTHON_REGISTRY --extra-index-url $EXTRA_INDEX_URL \
-#    -r requirements.txt 
+#    -r requirements.txt
+
+RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
+    pip install --index-url https://pypi.org/simple  \
+	  --extra-index-url $GITLAB_PYTHON_REGISTRY \
+    --extra-index-url $EXTRA_INDEX_URL \
+    $EXTRA_PIP_ARGS \
+    cic-eth-aux-erc20-demurrage-token~=0.0.2a6
+
+
 COPY *requirements.txt ./
 RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
     pip install --index-url https://pypi.org/simple  \
@@ -29,12 +38,6 @@ RUN python setup.py install
 
 ENV PYTHONPATH .
 
-RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
-    pip install --index-url https://pypi.org/simple  \
-	  --extra-index-url $GITLAB_PYTHON_REGISTRY \
-    --extra-index-url $EXTRA_INDEX_URL \
-    $EXTRA_PIP_ARGS \
-    cic-eth-aux-erc20-demurrage-token~=0.0.2a6
 
 COPY docker/entrypoints/* ./ 
 RUN chmod 755 *.sh
