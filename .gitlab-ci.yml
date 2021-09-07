@@ -32,12 +32,12 @@ build-push:
   #script:
   #  - TAG=$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA sh ./scripts/build-push.sh
   script:
-    - mkdir bin && echo "$(pwd)/bin" >> $PATH
+    - mkdir bin
     - curl -o bin/sbot -L https://github.com/restechnica/semverbot/releases/download/v$SEMVERBOT_VERSION/sbot-linux-amd64
     - chmod +x bin/sbot
-    - echo "RELEASE_VERSION=$(sbot predict version)"
-    - sbot release version
-    - sbot push version
+    - echo "RELEASE_VERSION=$(bin/sbot predict version)"
+    - bin/sbot release version
+    - bin/sbot push version
     - TAG=RELEASE_VERSION sh ./scripts/build-push.sh
   rules:
   - if: $CI_COMMIT_REF_PROTECTED == "true"
