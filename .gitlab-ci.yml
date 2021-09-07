@@ -35,8 +35,6 @@ build-push:
     - curl -o bin/sbot -L https://github.com/restechnica/semverbot/releases/download/v$SEMVERBOT_VERSION/sbot-linux-amd64
     - chmod +x bin/sbot
     - echo "RELEASE_VERSION=$(sbot predict version)"
-    - echo "current version: $(sbot get version)"
-    - echo "next version: $RELEASE_VERSION"
     - sbot release version
     - sbot push version
     - TAG=RELEASE_VERSION sh ./scripts/build-push.sh
