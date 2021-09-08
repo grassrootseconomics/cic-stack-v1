@@ -20,9 +20,10 @@ variables:
   DOCKER_BUILDKIT: "1"
   COMPOSE_DOCKER_CLI_BUILD: "1" 
   CI_DEBUG_TRACE: "true"
+  SEMVERBOT_VERSION: "0.2.0"
 
-before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  #before_script:
+  #  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 
 # runs on protected branches and pushes to repo
 build-push:
