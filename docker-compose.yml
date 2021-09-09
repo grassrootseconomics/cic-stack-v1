@@ -270,6 +270,7 @@ services:
       - eth
       - postgres
       - redis
+      - cic-eth-signer
     deploy:
       restart_policy:
         condition: on-failure
