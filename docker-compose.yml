@@ -73,6 +73,7 @@ services:
     # image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/contract-migration:latest
     environment:
       RPC_PROVIDER: ${RPC_PROVIDER:-http://eth:8545}
+      ETH_PROVIDER: ${RPC_PROVIDER:-http://eth:8545}
       DEV_USE_DOCKER_WAIT_SCRIPT: 1
       CHAIN_SPEC: ${CHAIN_SPEC:-evm:bloxberg:8996}
       CIC_CHAIN_SPEC: ${CHAIN_SPEC:-evm:bloxberg:8996}
