@@ -102,6 +102,7 @@ services:
       TOKEN_DEMURRAGE_LEVEL: $TOKEN_DEMURRAGE_LEVEL
       TOKEN_SINK_ADDRESS: $TOKEN_SINK_ADDRESS
       TOKEN_TYPE: $TOKEN_TYPE
+      SIGNER_PROVIDER: ${SIGNER_SOCKET_PATH:-http://cic-eth-signer:8000}
     command: ["./run_job.sh"]
         #command: ["./reset.sh"]
     depends_on:
@@ -149,7 +150,7 @@ services:
       - /bin/bash
       - -c
       - |
-        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        if [[ -f /tmp/cic/config/env_reset ]]; then source /tmp/cic/config/env_reset; fi 
         ./start_tracker.sh -c /usr/local/etc/cic-cache -vv
     volumes:
       - contract-config:/tmp/cic/config/:ro
@@ -190,7 +191,7 @@ services:
       - /bin/bash
       - -c
       - |
-        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        if [[ -f /tmp/cic/config/env_reset ]]; then source /tmp/cic/config/env_reset; fi 
         /usr/local/bin/cic-cache-taskerd -vv
     volumes:
       - contract-config:/tmp/cic/config/:ro
@@ -224,7 +225,7 @@ services:
       - /bin/bash
       - -c
       - |
-        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        if [[ -f /tmp/cic/config/env_reset ]]; then source /tmp/cic/config/env_reset; fi 
         "/usr/local/bin/uwsgi" \
         --wsgi-file /root/cic_cache/runnable/daemons/server.py \
         --http :8000 \
@@ -284,7 +285,7 @@ services:
       - /bin/bash
       - -c
       - |
-        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        if [[ -f /tmp/cic/config/env_reset ]]; then source /tmp/cic/config/env_reset; fi 
         ./start_tasker.sh --aux-all -q cic-eth  -vv
     
   cic-eth-signer:
@@ -338,7 +339,7 @@ services:
         #  - /bin/bash
         #  - -c
         #  - |
-        #    if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        #    if [[ -f /tmp/cic/config/env_reset ]]; then source /tmp/cic/config/env_reset; fi 
         #    ./start_tasker.sh --aux-all -q cic-eth  -vv
     # command: [/bin/sh, "./start_tasker.sh", -q, cic-eth, -vv ]
 
@@ -381,7 +382,7 @@ services:
       - /bin/bash
       - -c
       - |
-        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        if [[ -f /tmp/cic/config/env_reset ]]; then source /tmp/cic/config/env_reset; fi 
         #./start_tracker.sh -vv -c /usr/local/etc/cic-eth
         ./start_tracker.sh -vv
     # command: "/root/start_manager.sh head -vv"
@@ -427,7 +428,7 @@ services:
       - /bin/bash
       - -c
       - |
-        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        if [[ -f /tmp/cic/config/env_reset ]]; then source /tmp/cic/config/env_reset; fi 
         ./start_dispatcher.sh -q cic-eth -vv
     # command: "/root/start_dispatcher.sh -q cic-eth -vv"
     
@@ -475,7 +476,7 @@ services:
       - /bin/bash
       - -c
       - |
-        if [[ -f /tmp/cic/config/.env ]]; then source /tmp/cic/config/.env; fi 
+        if [[ -f /tmp/cic/config/env_reset ]]; then source /tmp/cic/config/env_reset; fi 
         ./start_retry.sh -vv 
     # command: "/root/start_retry.sh -q cic-eth -vv"
 
