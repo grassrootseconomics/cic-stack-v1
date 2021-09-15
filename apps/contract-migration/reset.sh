@@ -3,6 +3,8 @@
 set -a
 
 . ${DEV_DATA_DIR}/env_reset
+WAIT_FOR_TIMEOUT=${WAIT_FOR_TIMEOUT:-60}
+
 
 set -e
 
@@ -24,7 +26,7 @@ if [ ! -z "$DEV_USE_DOCKER_WAIT_SCRIPT" ]; then
 	read -i "/" rpc_provider_port <<< "${p[2]}"
 	rpc_provider_host=${p[1]:2}
 	echo "waiting for provider host $rpc_provider_host port $rpc_provider_port..."
-	./wait-for-it.sh "$rpc_provider_host:$rpc_provider_port"
+	./wait-for-it.sh "$rpc_provider_host:$rpc_provider_port" -t $WAIT_FOR_TIMEOUT
 fi
 
 if [ "$TOKEN_TYPE" == "giftable_erc20_token" ]; then
