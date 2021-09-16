@@ -26,7 +26,7 @@ docker-compose down
 
 stop cluster and delete data
 ```
-docker-compose down -v
+docker-compose down -v --remove-orphans
 ```
 
 rebuild an images
