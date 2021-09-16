@@ -103,6 +103,7 @@ services:
       TOKEN_SINK_ADDRESS: $TOKEN_SINK_ADDRESS
       TOKEN_TYPE: $TOKEN_TYPE
       SIGNER_PROVIDER: ${SIGNER_SOCKET_PATH:-http://cic-eth-signer:8000}
+    restart: on-failure 
     command: ["./run_job.sh"]
         #command: ["./reset.sh"]
     depends_on:
@@ -139,9 +140,7 @@ services:
       CIC_CHAIN_SPEC: ${CHAIN_SPEC:-evm:bloxberg:8996}
       CELERY_BROKER_URL: redis://redis:6379
       CELERY_RESULT_URL: redis://redis:6379
-    deploy: 
-      restart_policy:
-        condition: on-failure
+    restart: on-failure 
     depends_on:
       - redis
       - postgres
@@ -180,9 +179,7 @@ services:
       CIC_CHAIN_SPEC: ${CIC_CHAIN_SPEC:-evm:bloxberg:8996}
       CELERY_BROKER_URL: redis://redis:6379
       CELERY_RESULT_URL: redis://redis:6379
-    deploy: 
-      restart_policy:
-        condition: on-failure
+    restart: unless-stopped 
     depends_on:
       - redis
       - postgres
@@ -214,13 +211,11 @@ services:
       DATABASE_DEBUG: 1
         #PGPASSWORD: $DATABASE_PASSWORD
       SERVER_PORT: 8000
+    restart: on-failure 
     ports:
       - ${HTTP_PORT_CIC_CACHE:-63313}:8000
     depends_on:
       - postgres
-    deploy:
-      restart_policy:
-        condition: on-failure
     command:
       - /bin/bash
       - -c
@@ -268,14 +263,12 @@ services:
       ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
       TASKS_TRACE_QUEUE_STATUS: ${TASKS_TRACE_QUEUE_STATUS:-1}
       CIC_DEFAULT_TOKEN_SYMBOL: ${CIC_DEFAULT_TOKEN_SYMBOL:-GFT}
+    restart: unless-stopped 
     depends_on:
       - eth
       - postgres
       - redis
       - cic-eth-signer
-    deploy:
-      restart_policy:
-        condition: on-failure
     volumes:
       - signer-data:/run/crypto-dev-signer
       - contract-config:/tmp/cic/config/:ro
@@ -324,13 +317,11 @@ services:
       ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
       TASKS_TRACE_QUEUE_STATUS: ${TASKS_TRACE_QUEUE_STATUS:-1}
       CIC_DEFAULT_TOKEN_SYMBOL: ${CIC_DEFAULT_TOKEN_SYMBOL:-GFT}
+    restart: on-failure 
     depends_on:
       - eth
       - postgres
       - redis
-    deploy:
-      restart_policy:
-        condition: on-failure
     volumes:
       - signer-data:/run/crypto-dev-signer
       - contract-config:/tmp/cic/config/:ro
@@ -369,13 +360,11 @@ services:
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
       TASKS_TRANSFER_CALLBACKS: $TASKS_TRANSFER_CALLBACKS
+    restart: on-failure 
     depends_on:
       - eth
       - postgres
       - redis
-    deploy:
-      restart_policy:
-        condition: on-failure
     volumes:
       - contract-config:/tmp/cic/config/:ro
     command:
@@ -415,13 +404,11 @@ services:
       TASKS_TRANSFER_CALLBACKS: $TASKS_TRANSFER_CALLBACKS
       DATABASE_DEBUG: ${DATABASE_DEBUG:-false}
         #DATABASE_DEBUG: 1
+    restart: on-failure 
     depends_on:
       - eth
       - postgres
       - redis
-    deploy:
-      restart_policy:
-        condition: on-failure
     volumes:
         - contract-config:/tmp/cic/config/:ro
     command:
@@ -463,13 +450,11 @@ services:
       CIC_TX_RETRY_DELAY: 60
       BATCH_SIZE: ${RETRIER_BATCH_SIZE:-50}
         #DATABASE_DEBUG: 1
+    restart: on-failure 
     depends_on:
       - eth
       - postgres
       - redis
-    deploy:
-      restart_policy:
-        condition: on-failure
     volumes:
         - contract-config:/tmp/cic/config/:ro
     command:
@@ -502,12 +487,10 @@ services:
       AFRICASTALKING_API_USERNAME: $AFRICASTALKING_API_USERNAME
       AFRICASTALKING_API_KEY: $AFRICASTALKING_API_KEY
       AFRICASTALKING_API_SENDER_ID: $AFRICASTALKING_API_SENDER_ID
+    restart: unless-stopped 
     depends_on:
       - postgres
       - redis
-    deploy:
-      restart_policy:
-        condition: on-failure
     command: "/root/start_tasker.sh -q cic-notify -vv"
 
 
@@ -536,13 +519,11 @@ services:
       PGP_PUBLICKEY_ACTIVE_FILE: publickeys.asc
       PGP_PUBLICKEY_ENCRYPT_FILE: publickeys.asc
       SCHEMA_SQL_PATH: scripts/initdb/server.postgres.sql
+    restart: on-failure 
     ports:
       - ${HTTP_PORT_CIC_META:-63380}:8000
     depends_on:
       - postgres
-    deploy:
-      restart_policy:
-        condition: on-failure
     volumes:
       - ./apps/contract-migration/testdata/pgp/:/tmp/cic/pgp
     # command: "/root/start_server.sh -vv"
@@ -568,6 +549,7 @@ services:
       PGP_PASSPHRASE: merman
       SERVER_PORT: 9000
       CIC_META_URL: ${CIC_META_URL:-http://meta:8000}
+    restart: on-failure 
     ports:
       - ${HTTP_PORT_CIC_USER_USSD_SERVER:-63315}:9000
     depends_on:
@@ -575,9 +557,6 @@ services:
       - redis
     volumes:
       - ./apps/contract-migration/testdata/pgp/:/usr/src/secrets/
-    deploy:
-      restart_policy:
-        condition: on-failure
     command: "/root/start_cic_user_ussd_server.sh -vv"
 
   cic-user-server:
@@ -597,13 +576,11 @@ services:
       DATABASE_ENGINE: postgresql
       DATABASE_DRIVER: psycopg2
       DATABASE_POOL_SIZE: 0
+    restart: on-failure 
     ports:
       - ${HTTP_PORT_CIC_USER_SERVER:-63415}:9500
     depends_on:
       - postgres
-    deploy:
-      restart_policy:
-        condition: on-failure
     command: "/root/start_cic_user_server.sh -vv"
 
   cic-user-tasker:
@@ -627,12 +604,10 @@ services:
       CELERY_RESULT_URL: ${CELERY_BROKER_URL:-redis://redis}
       PGP_PASSPHRASE: merman
       CIC_META_URL: ${CIC_META_URL:-http://meta:8000}
+    restart: unless-stopped 
     depends_on:
       - postgres
       - redis
     volumes:
       - ./apps/contract-migration/testdata/pgp/:/usr/src/secrets/
-    deploy:
-      restart_policy:
-        condition: on-failure
     command: "/root/start_cic_user_tasker.sh -q cic-ussd -vv"
