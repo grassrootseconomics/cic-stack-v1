@@ -69,7 +69,6 @@ from cic_eth.registry import (
         )
 from cic_eth.task import BaseTask
 
-
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
 
