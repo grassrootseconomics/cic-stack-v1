@@ -121,6 +121,7 @@ def test_statement_callback(activated_account, mocker, transactions_list):
 def test_transaction_balances_callback(activated_account,
                                        balances,
                                        cache_balances,
+                                       cache_default_token_data,
                                        cache_person_metadata,
                                        cache_preferences,
                                        load_chain_spec,
