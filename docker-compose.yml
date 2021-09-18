@@ -94,10 +94,11 @@ services:
       RUN_MASK: ${RUN_MASK:-0} # bit flags; 1: contract migrations 2: seed data
       DEV_FAUCET_AMOUNT: ${DEV_FAUCET_AMOUNT:-0}
       DEV_ETH_GAS_PRICE: $DEV_ETH_GAS_PRICE
-      TOKEN_NAME: ${TOKEN_NAME:-Sarafu Token}
-      TOKEN_SYMBOL: ${TOKEN_SYMBOL:-GFT}
+      TOKEN_NAME: ${TOKEN_NAME:-Demurrage Token}
+      TOKEN_SYMBOL: ${TOKEN_SYMBOL:-DET}
       TOKEN_DECIMALS: $TOKEN_DECIMALS
       TOKEN_REDISTRIBUTION_PERIOD: $TOKEN_DEMURRAGE_REDISTRIBUTION_PERIOD
+      TASKS_TRANSFER_CALLBACKS: ${TASKS_TRANSFER_CALLBACKS:-"cic-eth:cic_eth.callbacks.noop.noop,cic-ussd:cic_ussd.tasks.callback_handler.transaction_callback"}
       TOKEN_SUPPLY_LIMIT: $TOKEN_SUPPLY_LIMIT
       TOKEN_DEMURRAGE_LEVEL: $TOKEN_DEMURRAGE_LEVEL
       TOKEN_SINK_ADDRESS: $TOKEN_SINK_ADDRESS
@@ -259,7 +260,6 @@ services:
       CELERY_DEBUG: ${CELERY_DEBUG:-1}
       #SIGNER_SOCKET_PATH: ${SIGNER_SOCKET_PATH:-http://cic-eth-signer:8000}
       SIGNER_PROVIDER: ${SIGNER_PROVIDER:-http://cic-eth-signer:8000}
-      SIGNER_PROVIDER: http://cic-eth-signer:8000
       SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
       ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER: ${DEV_ETH_ACCOUNT_ACCOUNTS_INDEX_WRITER:-0xACB0BC74E1686D62dE7DC6414C999EA60C09F0eA}
       TASKS_TRACE_QUEUE_STATUS: ${TASKS_TRACE_QUEUE_STATUS:-1}
@@ -357,10 +357,9 @@ services:
       CIC_CHAIN_SPEC: ${CHAIN_SPEC:-evm:bloxberg:8996}
       CHAIN_SPEC: ${CHAIN_SPEC:-evm:bloxberg:8996}
       CIC_REGISTRY_ADDRESS: $CIC_REGISTRY_ADDRESS
-        #BANCOR_DIR: $BANCOR_DIR
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis}
       CELERY_RESULT_URL: ${CELERY_RESULT_URL:-redis://redis}
-      TASKS_TRANSFER_CALLBACKS: $TASKS_TRANSFER_CALLBACKS
+      TASKS_TRANSFER_CALLBACKS: ${TASKS_TRANSFER_CALLBACKS:-"cic-eth:cic_eth.callbacks.noop.noop,cic-ussd:cic_ussd.tasks.callback_handler.transaction_callback"}
     restart: on-failure 
     depends_on:
       - eth

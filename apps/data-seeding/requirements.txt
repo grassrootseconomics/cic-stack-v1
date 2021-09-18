@@ -1,6 +1,6 @@
 sarafu-faucet~=0.0.7a1
 cic-eth[tools]~=0.12.4a8
-cic-types~=0.1.0a14
+cic-types~=0.1.0a15
 crypto-dev-signer>=0.4.15a4,<=0.4.15
 faker==4.17.1
 chainsyncer~=0.0.6a3
