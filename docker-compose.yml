@@ -60,8 +60,6 @@ services:
 
   contract-migration:
     image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/contract-migration:${TAG:-latest}
-    profiles:
-      - migrations 
     build:
       context: apps/contract-migration
       dockerfile: docker/Dockerfile
@@ -160,8 +158,6 @@ services:
 
   cic-cache-tracker:
     image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/cic-cache:${TAG:-latest}
-    profiles:
-      - cache 
     build:
       context: apps/cic-cache
       dockerfile: docker/Dockerfile
@@ -200,8 +196,6 @@ services:
 
   cic-cache-tasker:
     image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/cic-cache:${TAG:-latest}
-    profiles:
-      - cache 
     build:
       context: apps/cic-cache
       dockerfile: docker/Dockerfile
@@ -239,8 +233,6 @@ services:
 
   cic-cache-server:
     image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/cic-cache:${TAG:-latest}
-    profiles:
-      - cache 
     build:
       context: apps/cic-cache
       dockerfile: docker/Dockerfile
@@ -541,8 +533,6 @@ services:
 
   cic-meta-server:
     image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/cic-meta:${TAG:-latest}
-    profiles:
-      - custodial-meta
     hostname: meta
     build:
       context: apps/cic-meta
@@ -575,8 +565,6 @@ services:
 
   cic-user-ussd-server:
     image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/cic-ussd:${TAG:-latest}
-    profiles:
-      - custodial-ussd
     build:
       context: apps/cic-ussd
       dockerfile: docker/Dockerfile
@@ -606,8 +594,6 @@ services:
 
   cic-user-server:
     image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/cic-ussd:${TAG:-latest}
-    profiles:
-      - custodial-ussd
     build:
       context: apps/cic-ussd
       dockerfile: docker/Dockerfile
@@ -630,8 +616,6 @@ services:
 
   cic-user-tasker:
     image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/cic-ussd:${TAG:-latest}
-    profiles:
-      - custodial-ussd
     build:
       context: apps/cic-ussd/
       dockerfile: docker/Dockerfile
