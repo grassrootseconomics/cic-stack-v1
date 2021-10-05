@@ -1,17 +1,16 @@
 [git]
 
 [git.config]
-email = "semverbot@github.com"
-name = "semverbot"
+email = "sohailsameja@gmail.com"
+name = "kamikazechaser"
 
 [git.tags]
 prefix = "v"
 
 [semver]
-mode = "auto"
+mode = "git-commit"
 
 [semver.detection]
-patch = ["fix:", "[fix]"]
-minor = ["feat:", "[feat]"]
-major = ["release:", "[release]", "BREAKING CHANGE:"]
-
+patch = ["fix", "[fix]", "patch", "[patch]"]
+minor = ["minor", "[minor]", "feat", "[feat]", "release", "[release]", "bump", "[bump]"]
+major = ["BREAKING CHANGE"]

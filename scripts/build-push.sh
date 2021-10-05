@@ -4,6 +4,6 @@
 set -e
 
 TAG=${TAG?Variable not set} \
-sh ./scripts/build.sh
+# sh ./scripts/build.sh
 
 docker-compose -f docker-compose.yml push
