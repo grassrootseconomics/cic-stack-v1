@@ -40,9 +40,7 @@ build-push:
     - chmod +x sbot
     - ./sbot predict version -m git-commit
     - export TAG=$(./sbot predict version)
-    - TAG=$TAG sh ./scripts/build.sh
     - TAG=$TAG sh ./scripts/build-push.sh
-    - TAG=latest sh ./scripts/build-push.sh
     - git tag -a v$TAG -m "ci tagged"
     - git push origin v$TAG
   rules:
