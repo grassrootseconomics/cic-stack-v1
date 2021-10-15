@@ -25,6 +25,27 @@ variables:
   #before_script:
   #  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 
+version:
+  image: python:3.7-stretch
+  stage: version
+  script:
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan gitlab.com >> ~/.ssh/known_hosts && chmod 644 ~/.ssh/known_hosts
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - curl -o sbot -L https://github.com/restechnica/semverbot/releases/download/v$SEMVERBOT_VERSION/sbot-linux-amd64
+    - chmod +x sbot
+    - ./sbot predict version -m git-commit
+    - export TAG=$(./sbot predict version)
+    - echo $TAG > version
+    - git tag -a v$TAG -m "ci tagged"
+    - git push origin v$TAG
+  artifacts:
+    paths:
+      - version
+  only:
+    - branches
+
 # runs on protected branches and pushes to repo
 build-push:
   stage: build
@@ -33,16 +54,7 @@ build-push:
   #script:
   #  - TAG=$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA sh ./scripts/build-push.sh
   script:
-    - apk update && apk add git
-    - git remote remove origin
-    - git remote add origin https://kamikazechaser:$CI_TOKEN@gitlab.com/$CI_PROJECT_PATH
-    - curl -o sbot -L https://github.com/restechnica/semverbot/releases/download/v$SEMVERBOT_VERSION/sbot-linux-amd64
-    - chmod +x sbot
-    - ./sbot predict version -m git-commit
-    - export TAG=$(./sbot predict version)
-    - TAG=$TAG sh ./scripts/build-push.sh
-    - git tag -a v$TAG -m "ci tagged"
-    - git push origin v$TAG
+    - TAG=$(cat ./version) ./scripts/build-push.sh
   rules:
   - if: $CI_COMMIT_REF_PROTECTED == "true"
     when: always
