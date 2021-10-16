@@ -44,6 +44,9 @@ version:
   artifacts:
     paths:
       - version
+  rules:
+  - if: $CI_COMMIT_REF_PROTECTED == "true"
+    when: always
   only:
     - branches
 
