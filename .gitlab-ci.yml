@@ -47,8 +47,6 @@ version:
   rules:
   - if: $CI_COMMIT_REF_PROTECTED == "true"
     when: always
-  only:
-    - branches
 
 # runs on protected branches and pushes to repo
 build-push:
