@@ -39,6 +39,7 @@ version:
     - ./sbot predict version -m git-commit
     - export TAG=$(./sbot predict version)
     - echo $TAG > version
+    - git remote set-url origin git@gitlab.com:grassrootseconomics/cic-internal-integration.git
     - git tag -a v$TAG -m "ci tagged"
     - git push origin v$TAG
   artifacts:
