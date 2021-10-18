@@ -60,7 +60,9 @@ build-push:
   tags:
     - integration
   #script:
-  #  - TAG=$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA sh ./scripts/build-push.sh
+  #  - TAG=$CI_Cbefore_script:
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRYOMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA sh ./scripts/build-push.sh
   script:
     - TAG=$(cat ./version) ./scripts/build-push.sh
   rules:
