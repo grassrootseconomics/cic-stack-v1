@@ -61,6 +61,7 @@ build-push:
     - integration
   #script:
   #  - TAG=$CI_Cbefore_script:
+  before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
     - TAG=$(cat ./version) ./scripts/build-push.sh
