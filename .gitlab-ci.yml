@@ -36,10 +36,15 @@ version:
     - ssh-add <(echo "$SSH_PRIVATE_KEY")
     - curl -o sbot -L https://github.com/restechnica/semverbot/releases/download/v$SEMVERBOT_VERSION/sbot-linux-amd64
     - chmod +x sbot
-    - ./sbot predict version -m git-commit
-    - export TAG=$(./sbot predict version)
-    - echo $TAG > version
     - git remote set-url origin git@gitlab.com:grassrootseconomics/cic-internal-integration.git
+    - export TAG=$(./sbot predict version -m auto)
+    - |
+      if [[ -z $TAG ]]
+      then
+        echo "tag could not be set $@"
+        exit 1
+      fi
+    - echo $TAG > version
     - git tag -a v$TAG -m "ci tagged"
     - git push origin v$TAG
   artifacts:
