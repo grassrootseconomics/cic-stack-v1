@@ -69,7 +69,6 @@ from cic_eth.registry import (
         )
 from cic_eth.task import BaseTask
 
-
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
 
@@ -207,10 +206,11 @@ def main():
 
     BaseTask.default_token_symbol = config.get('CIC_DEFAULT_TOKEN_SYMBOL')
     BaseTask.default_token_address = registry.by_name(BaseTask.default_token_symbol)
-    default_token = ERC20Token(chain_spec, conn, BaseTask.default_token_address)
+    default_token = ERC20Token(chain_spec, conn, add_0x(BaseTask.default_token_address))
     default_token.load(conn)
     BaseTask.default_token_decimals = default_token.decimals
     BaseTask.default_token_name = default_token.name
+    BaseTask.trusted_addresses = trusted_addresses
 
     BaseTask.run_dir = config.get('CIC_RUN_DIR')
     logg.info('default token set to {} {}'.format(BaseTask.default_token_symbol, BaseTask.default_token_address))

@@ -27,7 +27,7 @@ docker-compose down
 
 stop cluster and delete data
 ```
-docker-compose down -v
+docker-compose down -v --remove-orphans
 ```
 
 rebuild an images
@@ -35,4 +35,7 @@ rebuild an images
 docker-compose up --build <service_name>
 ```
 
-
+to delete the buildkit cache
+```
+docker builder prune --filter type=exec.cachemount
+```

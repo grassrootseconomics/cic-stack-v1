@@ -31,8 +31,16 @@ RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
     $EXTRA_PIP_ARGS \
     -r requirements.txt \
     -r services_requirements.txt \
-    -r admin_requirements.txt
-    
+    -r admin_requirements.txt 
+   
+# always install the latest signer 
+RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
+    pip install --index-url https://pypi.org/simple  \
+	  --extra-index-url $GITLAB_PYTHON_REGISTRY \
+    --extra-index-url $EXTRA_INDEX_URL \
+    $EXTRA_PIP_ARGS \
+    crypto-dev-signer
+
 COPY . .
 RUN python setup.py install
 

@@ -13,13 +13,13 @@ stages:
   - version
   - build
   - test
-  - deploy 
+  - deploy
 
-image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/docker-with-compose:latest  
+image: registry.gitlab.com/grassrootseconomics/cic-internal-integration/docker-with-compose:latest
 
 variables:
   DOCKER_BUILDKIT: "1"
-  COMPOSE_DOCKER_CLI_BUILD: "1" 
+  COMPOSE_DOCKER_CLI_BUILD: "1"
   CI_DEBUG_TRACE: "true"
   SEMVERBOT_VERSION: "0.2.0"
 
@@ -68,3 +68,8 @@ build-push:
   rules:
   - if: $CI_COMMIT_REF_PROTECTED == "true"
     when: always
+
+deploy-dev:
+  stage: deploy
+  trigger: grassrootseconomics/devops
+  when: manual
