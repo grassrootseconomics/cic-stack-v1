@@ -28,7 +28,7 @@ variables:
 
 version:
   #image: python:3.7-stretch
-  image: registry.gitlab.com/grassrootseconomics/cic-base-images/ci-version:8b5874c3
+  image: registry.gitlab.com/grassrootseconomics/cic-base-images/ci-version:b01318ae 
   stage: version
   script:
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
@@ -65,6 +65,7 @@ build-push:
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
+    - TAG=latest ./scripts/build-push.sh
     - TAG=$(cat ./version) ./scripts/build-push.sh
   rules:
   - if: $CI_COMMIT_REF_PROTECTED == "true"
