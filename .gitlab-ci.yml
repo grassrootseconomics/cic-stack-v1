@@ -27,15 +27,14 @@ variables:
   #  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 
 version:
-  image: python:3.7-stretch
+  #image: python:3.7-stretch
+  image: registry.gitlab.com/grassrootseconomics/cic-base-images/ci-version:8b5874c3
   stage: version
   script:
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - ssh-keyscan gitlab.com >> ~/.ssh/known_hosts && chmod 644 ~/.ssh/known_hosts
     - eval $(ssh-agent -s)
     - ssh-add <(echo "$SSH_PRIVATE_KEY")
-    - curl -o sbot -L https://github.com/restechnica/semverbot/releases/download/v$SEMVERBOT_VERSION/sbot-linux-amd64
-    - chmod +x sbot
     - git remote set-url origin git@gitlab.com:grassrootseconomics/cic-internal-integration.git
     - export TAG=$(./sbot predict version -m auto)
     - |
@@ -53,6 +52,8 @@ version:
   rules:
   - if: $CI_COMMIT_REF_PROTECTED == "true"
     when: always
+  - if: $CI_COMMIT_REF_NAME == "master"
+    when: always
 
 # runs on protected branches and pushes to repo
 build-push:
@@ -67,6 +68,8 @@ build-push:
     - TAG=$(cat ./version) ./scripts/build-push.sh
   rules:
   - if: $CI_COMMIT_REF_PROTECTED == "true"
+    when: always
+  - if: $CI_COMMIT_REF_NAME == "master"
     when: always
 
 deploy-dev:
