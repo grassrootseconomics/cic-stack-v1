@@ -36,7 +36,7 @@ version:
     - eval $(ssh-agent -s)
     - ssh-add <(echo "$SSH_PRIVATE_KEY")
     - git remote set-url origin git@gitlab.com:grassrootseconomics/cic-internal-integration.git
-    - export TAG=$(./sbot predict version -m auto)
+    - export TAG=$(sbot predict version -m auto)
     - |
       if [[ -z $TAG ]]
       then
