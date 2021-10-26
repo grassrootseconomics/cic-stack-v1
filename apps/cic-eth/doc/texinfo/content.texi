@@ -1,6 +1,5 @@
 @top cic-eth
 
-@include intro.texi
 @include dependencies.texi
 @include configuration.texi
 @include system.texi
@@ -9,6 +8,3 @@
 @include incoming.texi
 @include services.texi
 @include tools.texi
-@include admin.texi
-@include chains.texi
-@include transfertypes.texi
