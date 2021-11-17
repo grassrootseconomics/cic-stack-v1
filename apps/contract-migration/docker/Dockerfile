@@ -11,9 +11,10 @@ RUN cat /etc/apt/sources.list.d/ethereum.list
 RUN apt-key adv --keyserver keyserver.ubuntu.com  --recv-keys 2A518C819BE37D2C2031944D1C52189C923F6CA9
 
 RUN mkdir -vp /usr/local/etc/cic
+# create secrets directory
+RUN mkdir -vp pgp/keys
 
-COPY config_template/ /usr/local/etc/cic/
-COPY requirements.txt . 
+COPY requirements.txt .
 
 #RUN apt-get install libffi-dev
 
