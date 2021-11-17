@@ -78,14 +78,18 @@ services:
       REDIS_PORT_CALLBACK: ${REDIS_PORT_CALLBACK:-6379}
       FAUCET_AMOUNT: ${FAUCET_AMOUNT:-0}
       WALLET_KEY_FILE: ${WALLET_KEY_FILE:-/root/keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c}
+      PGP_PASSPHRASE: merman
+      META_URL: http://meta:8000
     command: ["./run_job.sh"]
     depends_on:
       - evm
       - postgres
       - redis
-        #- cic-eth-tasker
+      - cic-meta-server
+      - cic-eth-tasker
     volumes:
       - contract-config:/tmp/cic/config
+      - ./apps/contract-migration/testdata/pgp/:/tmp/cic/pgp
 
 
 
