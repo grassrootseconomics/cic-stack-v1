@@ -30,6 +30,8 @@ version:
   #image: python:3.7-stretch
   image: registry.gitlab.com/grassrootseconomics/cic-base-images/ci-version:b01318ae 
   stage: version
+  tags:
+    - integration
   script:
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - ssh-keyscan gitlab.com >> ~/.ssh/known_hosts && chmod 644 ~/.ssh/known_hosts
