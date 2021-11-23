@@ -490,7 +490,7 @@ services:
 
 
   cic-user-tasker:
-    image: ${IMAGE_BASE_URL:-registry.gitlab.com/grassrootseconomics/cic-internal-integration}cic-user:${TAG:-latest}
+    image: ${IMAGE_BASE_URL:-registry.gitlab.com/grassrootseconomics/cic-internal-integration}/cic-user:${TAG:-latest}
     build:
       context: apps/cic-ussd
       dockerfile: docker/Dockerfile
@@ -526,7 +526,7 @@ services:
 
 
   cic-user-server:
-    image: ${IMAGE_BASE_URL:-registry.gitlab.com/grassrootseconomics/cic-internal-integration}cic-user:${TAG:-latest}
+    image: ${IMAGE_BASE_URL:-registry.gitlab.com/grassrootseconomics/cic-internal-integration}/cic-user:${TAG:-latest}
     build:
       context: apps/cic-ussd
       dockerfile: docker/Dockerfile
@@ -555,7 +555,7 @@ services:
 
 
   cic-user-ussd-server:
-    image: ${IMAGE_BASE_URL:-registry.gitlab.com/grassrootseconomics/cic-internal-integration}cic-user:${TAG:-latest}
+    image: ${IMAGE_BASE_URL:-registry.gitlab.com/grassrootseconomics/cic-internal-integration}/cic-user:${TAG:-latest}
     build:
       context: apps/cic-ussd
       dockerfile: docker/Dockerfile
@@ -624,7 +624,7 @@ services:
     command: "/root/start_tasker.sh -q cic-notify -vv"
 
   data-seeding:
-      image: ${IMAGE_BASE_URL:-registry.gitlab.com/grassrootseconomics/cic-internal-integration}data-seeding:${TAG:-latest}
+      image: ${IMAGE_BASE_URL:-registry.gitlab.com/grassrootseconomics/cic-internal-integration}/data-seeding:${TAG:-latest}
       build:
         context: apps/data-seeding
         dockerfile: docker/Dockerfile
