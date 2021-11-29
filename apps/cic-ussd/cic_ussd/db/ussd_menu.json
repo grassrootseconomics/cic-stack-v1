@@ -317,6 +317,102 @@
             "display_key": "ussd.kenya.exit_successful_token_selection",
             "name": "exit_successful_token_selection",
             "parent": null
+        },
+        "54": {
+            "description": "Pin management menu for operations related to an account's pin.",
+            "display_key": "ussd.kenya.pin_management",
+            "name": "pin_management",
+            "parent": "start"
+        },
+        "55": {
+            "description": "Phone number entry for account whose pin is being reset.",
+            "display_key": "ussd.kenya.reset_guarded_pin",
+            "name": "reset_guarded_pin",
+            "parent": "pin_management"
+        },
+        "56": {
+            "description": "Pin entry for initiating request to reset an account's pin.",
+            "display_key": "ussd.kenya.reset_guarded_pin_authorization",
+            "name": "reset_guarded_pin_authorization",
+            "parent": "pin_management"
+        },
+        "57": {
+            "description": "Exit menu following successful pin reset initiation.",
+            "display_key": "ussd.kenya.exit_pin_reset_initiated_success",
+            "name": "exit_pin_reset_initiated_success",
+            "parent": "pin_management"
+        },
+        "58": {
+            "description": "Exit menu in the event that an account is not a set guardian.",
+            "display_key": "ussd.kenya.exit_not_authorized_for_pin_reset",
+            "name": "exit_not_authorized_for_pin_reset",
+            "parent": "pin_management"
+        },
+        "59": {
+            "description": "Pin guard menu for handling guardianship operations.",
+            "display_key": "ussd.kenya.guard_pin",
+            "name": "guard_pin",
+            "parent": "pin_management"
+        },
+        "60": {
+            "description": "Pin entry to display a list of set guardians.",
+            "display_key": "ussd.kenya.guardian_list_pin_authorization",
+            "name": "guardian_list_pin_authorization",
+            "parent": "guard_pin"
+        },
+        "61": {
+            "description": "Menu to display list of set guardians.",
+            "display_key": "ussd.kenya.guardian_list",
+            "name": "guardian_list",
+            "parent": "guard_pin"
+        },
+        "62": {
+            "description": "Phone number entry to add an account as a guardian to reset pin.",
+            "display_key": "ussd.kenya.add_guardian",
+            "name": "add_guardian",
+            "parent": "guard_pin"
+        },
+        "63": {
+            "description": "Pin entry to confirm addition of an account as a guardian.",
+            "display_key": "ussd.kenya.add_guardian_pin_authorization",
+            "name": "add_guardian_pin_authorization",
+            "parent": "guard_pin"
+        },
+        "64": {
+            "description": "Exit menu when an account is successfully added as pin reset guardian.",
+            "display_key": "ussd.kenya.exit_guardian_addition_success",
+            "name": "exit_guardian_addition_success",
+            "parent": "guard_pin"
+        },
+        "65": {
+            "description": "Phone number entry to remove an account as a guardian to reset pin.",
+            "display_key": "ussd.kenya.remove_guardian",
+            "name": "remove_guardian",
+            "parent": "guard_pin"
+        },
+        "66": {
+            "description": "Pin entry to confirm removal of an account as a guardian.",
+            "display_key": "ussd.kenya.remove_guardian_pin_authorization",
+            "name": "remove_guardian_pin_authorization",
+            "parent": "guard_pin"
+        },
+        "67": {
+            "description": "Exit menu when an account is successfully removed as pin reset guardian.",
+            "display_key": "ussd.kenya.exit_guardian_removal_success",
+            "name": "exit_guardian_removal_success",
+            "parent": "guard_pin"
+        },
+        "68": {
+            "description": "Exit menu when invalid phone number entry for guardian addition. ",
+            "display_key": "ussd.kenya.exit_invalid_guardian_addition",
+            "name": "exit_invalid_guardian_addition",
+            "parent": "guard_pin"
+        },
+        "69": {
+            "description": "Exit menu when invalid phone number entry for guardian removal. ",
+            "display_key": "ussd.kenya.exit_invalid_guardian_removal",
+            "name": "exit_invalid_guardian_removal",
+            "parent": "guard_pin"
         }
     }
 }

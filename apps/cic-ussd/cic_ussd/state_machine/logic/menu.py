@@ -81,6 +81,18 @@ def menu_six_selected(state_machine_data: Tuple[str, dict, Account, Session]) ->
     return user_input == '6'
 
 
+def menu_nine_selected(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
+    """
+    This function checks that user input matches a string with value '6'
+    :param state_machine_data: A tuple containing user input, a ussd session and user object.
+    :type state_machine_data: tuple
+    :return: A user input's match with '6'
+    :rtype: bool
+    """
+    user_input, ussd_session, account, session = state_machine_data
+    return user_input == '9'
+
+
 def menu_zero_zero_selected(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
     """
     This function checks that user input matches a string with value '00'

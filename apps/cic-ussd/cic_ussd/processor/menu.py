@@ -121,6 +121,27 @@ class MenuProcessor:
                 self.display_key, preferred_language, last_transaction_set=last_transaction_set
             )
 
+    def add_guardian_pin_authorization(self):
+        guardian_information = self.guardian_metadata()
+        return self.pin_authorization(guardian_information=guardian_information)
+
+    def guardian_list(self):
+        preferred_language = get_cached_preferred_language(self.account.blockchain_address)
+        if not preferred_language:
+            preferred_language = i18n.config.get('fallback')
+        set_guardians = self.account.get_guardians()
+        if set_guardians:
+            guardians_list = ''
+            guardians_list_header = translation_for('helpers.guardians_list_header', preferred_language)
+            for phone_number in set_guardians:
+                guardian = Account.get_by_phone_number(phone_number, self.session)
+                guardian_information = guardian.standard_metadata_id()
+                guardians_list += f'{guardian_information}\n'
+            guardians_list = guardians_list_header + '\n' + guardians_list
+        else:
+            guardians_list = translation_for('helpers.no_guardians_list', preferred_language)
+        return translation_for(self.display_key, preferred_language, guardians_list=guardians_list)
+
     def account_tokens(self) -> str:
         cached_token_data_list = get_cached_token_data_list(self.account.blockchain_address)
         token_data_list = parse_token_list(cached_token_data_list)
@@ -207,6 +228,20 @@ class MenuProcessor:
             f'{self.display_key}.retry', preferred_language, retry_pin_entry=retry_pin_entry
         )
 
+    def guarded_account_metadata(self):
+        guarded_account_phone_number = self.ussd_session.get('data').get('guarded_account_phone_number')
+        guarded_account = Account.get_by_phone_number(guarded_account_phone_number, self.session)
+        return guarded_account.standard_metadata_id()
+
+    def guardian_metadata(self):
+        guardian_phone_number = self.ussd_session.get('data').get('guardian_phone_number')
+        guardian = Account.get_by_phone_number(guardian_phone_number, self.session)
+        return guardian.standard_metadata_id()
+
+    def reset_guarded_pin_authorization(self):
+        guarded_account_information = self.guarded_account_metadata()
+        return self.pin_authorization(guarded_account_information=guarded_account_information)
+
     def start_menu(self):
         """
         :return:
@@ -276,6 +311,47 @@ class MenuProcessor:
             token_symbol=token_symbol,
             sender_information=tx_sender_information
         )
+
+    def exit_guardian_addition_success(self) -> str:
+        guardian_information = self.guardian_metadata()
+        preferred_language = get_cached_preferred_language(self.account.blockchain_address)
+        if not preferred_language:
+            preferred_language = i18n.config.get('fallback')
+        return translation_for(self.display_key,
+                               preferred_language,
+                               guardian_information=guardian_information)
+
+    def exit_guardian_removal_success(self):
+        guardian_information = self.guardian_metadata()
+        preferred_language = get_cached_preferred_language(self.account.blockchain_address)
+        if not preferred_language:
+            preferred_language = i18n.config.get('fallback')
+        return translation_for(self.display_key,
+                               preferred_language,
+                               guardian_information=guardian_information)
+
+    def exit_invalid_guardian_addition(self):
+        failure_reason = self.ussd_session.get('data').get('failure_reason')
+        preferred_language = get_cached_preferred_language(self.account.blockchain_address)
+        if not preferred_language:
+            preferred_language = i18n.config.get('fallback')
+        return translation_for(self.display_key, preferred_language, error_exit=failure_reason)
+
+    def exit_invalid_guardian_removal(self):
+        failure_reason = self.ussd_session.get('data').get('failure_reason')
+        preferred_language = get_cached_preferred_language(self.account.blockchain_address)
+        if not preferred_language:
+            preferred_language = i18n.config.get('fallback')
+        return translation_for(self.display_key, preferred_language, error_exit=failure_reason)
+
+    def exit_pin_reset_initiated_success(self):
+        guarded_account_information = self.guarded_account_metadata()
+        preferred_language = get_cached_preferred_language(self.account.blockchain_address)
+        if not preferred_language:
+            preferred_language = i18n.config.get('fallback')
+        return translation_for(self.display_key,
+                               preferred_language,
+                               guarded_account_information=guarded_account_information)
 
     def exit_insufficient_balance(self):
         """
@@ -379,17 +455,40 @@ def response(account: Account, display_key: str, menu_name: str, session: Sessio
         return menu_processor.transaction_pin_authorization()
 
     if menu_name == 'token_selection_pin_authorization':
-        logg.debug(f'RESPONSE IS: {menu_processor.token_selection_pin_authorization()}')
         return menu_processor.token_selection_pin_authorization()
 
     if menu_name == 'exit_insufficient_balance':
         return menu_processor.exit_insufficient_balance()
 
+    if menu_name == 'exit_invalid_guardian_addition':
+        return menu_processor.exit_invalid_guardian_addition()
+
+    if menu_name == 'exit_invalid_guardian_removal':
+        return menu_processor.exit_invalid_guardian_removal()
+
     if menu_name == 'exit_successful_transaction':
         return menu_processor.exit_successful_transaction()
 
+    if menu_name == 'exit_guardian_addition_success':
+        return menu_processor.exit_guardian_addition_success()
+
+    if menu_name == 'exit_guardian_removal_success':
+        return menu_processor.exit_guardian_removal_success()
+
+    if menu_name == 'exit_pin_reset_initiated_success':
+        return menu_processor.exit_pin_reset_initiated_success()
+
     if menu_name == 'account_balances':
         return menu_processor.account_balances()
+
+    if menu_name == 'guardian_list':
+        return menu_processor.guardian_list()
+
+    if menu_name == 'add_guardian_pin_authorization':
+        return menu_processor.add_guardian_pin_authorization()
+
+    if menu_name == 'reset_guarded_pin_authorization':
+        return menu_processor.reset_guarded_pin_authorization()
 
     if 'pin_authorization' in menu_name:
         return menu_processor.pin_authorization()

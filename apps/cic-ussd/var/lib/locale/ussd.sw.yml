@@ -69,7 +69,7 @@ sw:
       2. Chagua lugha utakayotumia
       3. Angalia salio
       4. Angalia taarifa ya matumizi
-      5. Badilisha nambari ya siri
+      5. Mipangilio ya nambari ya siri
       0. Nyuma
     metadata_management: |-
       CON Wasifu wangu
@@ -95,6 +95,13 @@ sw:
       0. Nyuma
     retry_pin_entry: |-
       CON Nambari uliyoweka si sahihi, jaribu tena. Una majaribio %{remaining_attempts} yaliyobaki.
+      0. Nyuma
+    pin_management: |-
+      CON Pin options
+      1. Badilisha nambari yangu ya siri
+      2. Tuma ombili la kubadilisha nambari ya siri
+      3. Linda nambari ya siri
+      0. Nyuma
     enter_current_pin:
       first: |-
         CON Weka nambari ya siri.
@@ -107,6 +114,73 @@ sw:
     new_pin_confirmation: |-
       CON Weka nambari yako ya siri tena
       0. Nyuma
+    reset_guarded_pin: |-
+      CON Weka nambari ya simu ili kutuma ombi la kubalisha nambari ya siri.
+      0. Nyuma
+    reset_guarded_pin_authorization:
+      first: |-
+        CON Weka nambari YAKO ya siri ili kudhibitisha ombi la kubadilisha nambari ya siri ya %{guarded_account_information}.
+        0. Nyuma
+      retry: |-
+        %{retry_pin_entry}
+    exit_pin_reset_initiated_success: |-
+      CON Ombi lako la kubadili nambari ya siri ya %{guarded_account_information} limetumwa.
+      0. Nyuma
+      9. Ondoka
+    exit_not_authorized_for_pin_reset: |-
+      CON Huruhusiwi kutuma ombi la kubadilisha nambari ya siri.
+      0. Nyuma
+      9. Ondoka
+    guard_pin: |-
+      CON Linda nambari ya siri
+      1. Walinzi wa namabari ya siri
+      2. Ongeza mlinzi
+      3. Ondoa mlinzi
+      0. Nyuma
+    guardian_list_pin_authorization:
+      first: |-
+        CON Weka nambari yako ya siri ili kuona walinzi uliowaongeza
+        0. Nyuma
+      retry: |-
+        %{retry_pin_entry}
+    guardian_list: |-
+      CON %{guardians_list}
+      0. Nyuma
+      9. Ondoka
+    add_guardian: |-
+      CON Weka nambari ya simu ili kuongeza mlinzi
+      0. Nyuma
+    add_guardian_pin_authorization:
+      first: |-
+        CON Weka nambari YAKO ya siri ili kumwongeza %{guardian_information} kama mlinzi
+        0. Nyuma
+      retry: |-
+        %{retry_pin_entry}
+    exit_guardian_addition_success: |-
+      CON Ombi lako la kumwongeza: %{guardian_information} kama mlinzi limefanikiwa
+      0. Nyuma
+      9. Ondoka
+    exit_invalid_guardian_addition: |-
+      CON %{error_exit}
+      0. Nyuma
+      9. Ondoka
+    remove_guardian: |-
+      CON Weka nambari ya simu ili kuondoa mlinzi
+      0. Nyuma
+    remove_guardian_pin_authorization:
+      first: |-
+        CON Weka nambari YAKO ya siri ili kumwondoa %{guardian_information} kama mlinzi
+        0. Nyuma
+      retry: |-
+        %{retry_pin_entry}
+    exit_guardian_removal_success: |-
+      CON Ombi lako la kumwondoa: %{guardian_information} kama mlinzi limefanikiwa
+      0. Nyuma
+      9. Ondoka
+    exit_invalid_guardian_removal: |-
+      CON %{error_exit}
+      0. Nyuma
+      9. Ondoka
     transaction_pin_authorization:
       first: |-
         CON %{recipient_information} atapokea %{transaction_amount} %{token_symbol} kutoka kwa %{sender_information}.

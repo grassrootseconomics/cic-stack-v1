@@ -70,7 +70,7 @@ en:
       2. Change language
       3. Check balance
       4. Check statement
-      5. Change PIN
+      5. PIN options
       0. Back
     metadata_management: |-
       CON My profile
@@ -96,6 +96,13 @@ en:
       0. Back
     retry_pin_entry: |-
       CON Incorrect PIN entered, please try again. You have %{remaining_attempts} attempts remaining.
+      0. Back
+    pin_management: |-
+      CON Pin options
+      1. Change PIN
+      2. Reset PIN
+      3. Guard PIN
+      0. Back
     enter_current_pin:
       first: |-
         CON Enter current PIN.
@@ -108,6 +115,73 @@ en:
     new_pin_confirmation: |-
       CON Enter your new four number PIN again
       0. Back
+    reset_guarded_pin: |-
+      CON Enter phone number you are the guardian to reset their pin
+      0. Back
+    reset_guarded_pin_authorization:
+      first: |-
+        CON Enter YOUR pin to confirm %{guarded_account_information}'s reset
+        0. Back
+      retry: |-
+        %{retry_pin_entry}
+    exit_pin_reset_initiated_success: |-
+      CON Success: You have initiated a PIN reset for %{guarded_account_information}
+      0. Back
+      9. Exit
+    exit_not_authorized_for_pin_reset: |-
+      CON Failure: You are not authorized to reset that PIN. You must be a guardian!
+      0. Back
+      9. Exit
+    guard_pin: |-
+      CON Pin guard
+      1. View guardians
+      2. Add guardian
+      3. Remove guardian
+      0. Back
+    guardian_list_pin_authorization:
+      first: |-
+        CON Enter your pin to view set guardians
+        0. Back
+      retry: |-
+        %{retry_pin_entry}
+    guardian_list: |-
+      CON %{guardians_list}
+      0. Back
+      9. Exit
+    add_guardian: |-
+      CON Enter phone number to add as pin reset guardian
+      0. Back
+    add_guardian_pin_authorization:
+      first: |-
+        CON Enter your pin to add %{guardian_information} as your PIN reset guardian
+        0. Back
+      retry: |-
+        %{retry_pin_entry}
+    exit_guardian_addition_success: |-
+      CON Success: %{guardian_information} can now reset your PIN
+      0. Back
+      9. Exit
+    exit_invalid_guardian_addition: |-
+      CON %{error_exit}
+      0. Back
+      9. Exit
+    remove_guardian: |-
+      CON Enter phone number to revoke guardianship:
+      0. Back
+    remove_guardian_pin_authorization:
+      first: |-
+        CON Enter your pin to remove %{guardian_information} as your PIN reset guardian
+        0. Back
+      retry: |-
+        %{retry_pin_entry}
+    exit_guardian_removal_success: |-
+      CON Success: %{guardian_information} PIN reset guardianship is revoked
+      0. Back
+      9. Exit
+    exit_invalid_guardian_removal: |-
+      CON %{error_exit}
+      0. Back
+      9. Exit
     transaction_pin_authorization:
       first: |-
         CON %{recipient_information} will receive %{transaction_amount} %{token_symbol} from %{sender_information}.
