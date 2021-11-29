@@ -13,7 +13,7 @@ from cic_ussd.cache import Cache
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.db.models.ussd_session import UssdSession as DbUssdSession
 
-logg = logging.getLogger()
+logg = logging.getLogger(__file__)
 
 
 class UssdSession:
@@ -239,11 +239,16 @@ def save_session_data(queue: Optional[str], session: Session, data: dict, ussd_s
     :param ussd_session: A ussd session passed to the state machine.
     :type ussd_session: UssdSession
     """
+    logg.debug(f'Saving: {data} session data to: {ussd_session}')
     cache = Cache.store
     external_session_id = ussd_session.get('external_session_id')
     existing_session_data = ussd_session.get('data')
     if existing_session_data:
-        data = {**existing_session_data, **data}
+        # replace session data entry
+        keys = data.keys()
+        for key in keys:
+            existing_session_data[key] = data[key]
+        data = existing_session_data
     in_redis_ussd_session = cache.get(external_session_id)
     in_redis_ussd_session = json.loads(in_redis_ussd_session)
     create_or_update_session(

@@ -9,6 +9,8 @@ en:
     Not provided
   no_transaction_history: |-
     No transaction history
+  no_tokens_list: |-
+    No tokens to list
   other: |-
     Other
   received: |-

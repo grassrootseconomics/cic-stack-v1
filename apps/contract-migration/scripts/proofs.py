@@ -64,7 +64,8 @@ def wrapper(chain_spec: ChainSpec, rpc: EthHTTPConnection) -> Declarator:
     return Declarator(chain_spec, gas_oracle=gas_oracle, nonce_oracle=nonce_oracle, signer=signer)
 
 
-def write_to_declarator(contract_address: hex, contract_wrapper: Declarator, proof: any, rpc: EthHTTPConnection, signer_address: hex, token_address: hex):
+def write_to_declarator(contract_address: hex, contract_wrapper: Declarator, proof: any, rpc: EthHTTPConnection,
+                        signer_address: hex, token_address: hex):
     operation = contract_wrapper.add_declaration(contract_address, signer_address, token_address, proof)
     results = rpc.do(operation[1])
     rpc.wait(results)
@@ -90,13 +91,15 @@ if __name__ == '__main__':
     token_meta_writer = MetadataRequestsHandler(cic_type=MetadataPointer.TOKEN_META, identifier=token_address_bytes)
     write_metadata(token_meta_writer, token_meta_data)
 
-    token_meta_symbol_writer = MetadataRequestsHandler(cic_type=MetadataPointer.TOKEN_META_SYMBOL, identifier=token_symbol_bytes)
+    token_meta_symbol_writer = MetadataRequestsHandler(cic_type=MetadataPointer.TOKEN_META_SYMBOL,
+                                                       identifier=token_symbol_bytes)
     write_metadata(token_meta_symbol_writer, token_meta_data)
 
     token_proof_writer = MetadataRequestsHandler(cic_type=MetadataPointer.TOKEN_PROOF, identifier=token_address_bytes)
     write_metadata(token_proof_writer, token_proof_data)
 
-    token_proof_symbol_writer = MetadataRequestsHandler(cic_type=MetadataPointer.TOKEN_PROOF_SYMBOL, identifier=token_symbol_bytes)
+    token_proof_symbol_writer = MetadataRequestsHandler(cic_type=MetadataPointer.TOKEN_PROOF_SYMBOL,
+                                                        identifier=token_symbol_bytes)
     write_metadata(token_proof_symbol_writer, token_proof_data)
 
     rpc = EthHTTPConnection(url=config.get('RPC_PROVIDER'), chain_spec=chain_spec)
@@ -109,6 +112,16 @@ if __name__ == '__main__':
     write_to_declarator(contract_address=args.address_declarator,
                         contract_wrapper=contract_wrapper,
                         proof=hashed_token_proof,
+                        rpc=rpc,
+                        signer_address=args.signer_address,
+                        token_address=args.e)
+
+    hashed_token_proof = hash_proof(args.token_symbol.encode('utf-8'))
+    identifier = bytes.fromhex(hashed_token_proof)
+    token_immutable_proof_writer = MetadataRequestsHandler(cic_type=MetadataPointer.NONE, identifier=identifier)
+    write_to_declarator(contract_address=args.address_declarator,
+                        contract_wrapper=contract_wrapper,
+                        proof=identifier,
                         rpc=rpc,
                         signer_address=args.signer_address,
                         token_address=args.e)

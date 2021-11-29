@@ -93,6 +93,30 @@ def menu_zero_zero_selected(state_machine_data: Tuple[str, dict, Account, Sessio
     return user_input == '00'
 
 
+def menu_eleven_selected(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
+    """
+    This function checks that user input matches a string with value '11'
+    :param state_machine_data: A tuple containing user input, a ussd session and user object.
+    :type state_machine_data: tuple
+    :return: A user input's match with '99'
+    :rtype: bool
+    """
+    user_input, ussd_session, account, session = state_machine_data
+    return user_input == '11'
+
+
+def menu_twenty_two_selected(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
+    """
+    This function checks that user input matches a string with value '22'
+    :param state_machine_data: A tuple containing user input, a ussd session and user object.
+    :type state_machine_data: tuple
+    :return: A user input's match with '99'
+    :rtype: bool
+    """
+    user_input, ussd_session, account, session = state_machine_data
+    return user_input == '22'
+
+
 def menu_ninety_nine_selected(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
     """
     This function checks that user input matches a string with value '99'

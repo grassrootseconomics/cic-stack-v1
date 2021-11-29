@@ -5,18 +5,17 @@ from typing import Tuple
 # third party imports
 import celery
 from phonenumbers.phonenumberutil import NumberParseException
+from sqlalchemy.orm.session import Session
 
 # local imports
 from cic_ussd.account.balance import get_cached_available_balance
 from cic_ussd.account.chain import Chain
-from cic_ussd.account.tokens import get_default_token_symbol
+from cic_ussd.account.tokens import get_active_token_symbol, get_cached_token_data
 from cic_ussd.account.transaction import OutgoingTransaction
-from cic_ussd.db.enum import AccountStatus
 from cic_ussd.db.models.account import Account
-from cic_ussd.db.models.base import SessionBase
 from cic_ussd.phone_number import process_phone_number, E164Format
 from cic_ussd.session.ussd_session import save_session_data
-from sqlalchemy.orm.session import Session
+
 
 logg = logging.getLogger(__file__)
 
@@ -63,7 +62,11 @@ def has_sufficient_balance(state_machine_data: Tuple[str, dict, Account, Session
     :rtype: bool
     """
     user_input, ussd_session, account, session = state_machine_data
-    return int(user_input) <= get_cached_available_balance(account.blockchain_address)
+    identifier = bytes.fromhex(account.blockchain_address)
+    token_symbol = get_active_token_symbol(account.blockchain_address)
+    token_data = get_cached_token_data(account.blockchain_address, token_symbol)
+    decimals = token_data.get('decimals')
+    return int(user_input) <= get_cached_available_balance(decimals, [identifier, token_symbol.encode('utf-8')])
 
 
 def save_recipient_phone_to_session_data(state_machine_data: Tuple[str, dict, Account, Session]):
@@ -122,9 +125,10 @@ def process_transaction_request(state_machine_data: Tuple[str, dict, Account, Se
     to_address = recipient.blockchain_address
     from_address = account.blockchain_address
     amount = int(ussd_session.get('data').get('transaction_amount'))
-    token_symbol = get_default_token_symbol()
-
+    token_symbol = get_active_token_symbol(account.blockchain_address)
+    token_data = get_cached_token_data(account.blockchain_address, token_symbol)
+    decimals = token_data.get('decimals')
     outgoing_tx_processor = OutgoingTransaction(chain_str=chain_str,
                                                 from_address=from_address,
                                                 to_address=to_address)
-    outgoing_tx_processor.transfer(amount=amount, token_symbol=token_symbol)
+    outgoing_tx_processor.transfer(amount=amount, decimals=decimals, token_symbol=token_symbol)

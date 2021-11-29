@@ -13,7 +13,7 @@ logg = logging.getLogger(__file__)
 
 
 class UssdMetadataHandler(MetadataRequestsHandler):
-    def __init__(self, cic_type: MetadataPointer, identifier: bytes):
+    def __init__(self, identifier: bytes, cic_type: MetadataPointer = None):
         super().__init__(cic_type, identifier)
 
     def cache_metadata(self, data: str):

@@ -8,7 +8,7 @@
   {
     "trigger": "scan_data",
     "source": "first_transaction_set",
-    "dest": "start",
+    "dest": "exit",
     "conditions": "cic_ussd.state_machine.logic.menu.menu_zero_zero_selected"
   },
   {
@@ -31,7 +31,7 @@
   {
     "trigger": "scan_data",
     "source": "middle_transaction_set",
-    "dest": "start",
+    "dest": "exit",
     "conditions": "cic_ussd.state_machine.logic.menu.menu_zero_zero_selected"
   },
   {
@@ -48,7 +48,7 @@
   {
     "trigger": "scan_data",
     "source": "last_transaction_set",
-    "dest": "start",
+    "dest": "exit",
     "conditions": "cic_ussd.state_machine.logic.menu.menu_zero_zero_selected"
   },
   {

@@ -9,6 +9,7 @@ from cic_types.condiments import MetadataPointer
 
 # local imports
 from cic_ussd.account.balance import (calculate_available_balance,
+                                      get_account_tokens_balance,
                                       get_adjusted_balance,
                                       get_balances,
                                       get_cached_adjusted_balance,
@@ -21,13 +22,20 @@ from cic_ussd.account.statement import (
     query_statement,
     statement_transaction_set
 )
-from cic_ussd.account.tokens import get_default_token_symbol
+from cic_ussd.account.tokens import (create_account_tokens_list,
+                                     get_active_token_symbol,
+                                     get_cached_token_data,
+                                     get_cached_token_symbol_list,
+                                     get_cached_token_data_list,
+                                     parse_token_list,
+                                     token_list_set)
 from cic_ussd.account.transaction import from_wei, to_wei
 from cic_ussd.cache import cache_data_key, cache_data
 from cic_ussd.db.models.account import Account
 from cic_ussd.metadata import PersonMetadata
 from cic_ussd.phone_number import Support
 from cic_ussd.processor.util import parse_person_metadata
+from cic_ussd.session.ussd_session import save_session_data
 from cic_ussd.translation import translation_for
 from sqlalchemy.orm.session import Session
 
@@ -48,22 +56,27 @@ class MenuProcessor:
         :return:
         :rtype:
         """
-        available_balance = get_cached_available_balance(self.account.blockchain_address)
+
         adjusted_balance = get_cached_adjusted_balance(self.identifier)
-        token_symbol = get_default_token_symbol()
+        token_symbol = get_active_token_symbol(self.account.blockchain_address)
+        token_data = get_cached_token_data(self.account.blockchain_address, token_symbol)
         preferred_language = get_cached_preferred_language(self.account.blockchain_address)
         if not preferred_language:
             preferred_language = i18n.config.get('fallback')
         with_available_balance = f'{self.display_key}.available_balance'
         with_fees = f'{self.display_key}.with_fees'
+        decimals = token_data.get('decimals')
+        available_balance = get_cached_available_balance(decimals, [self.identifier, token_symbol.encode('utf-8')])
         if not adjusted_balance:
             return translation_for(key=with_available_balance,
                                    preferred_language=preferred_language,
                                    available_balance=available_balance,
                                    token_symbol=token_symbol)
+
         adjusted_balance = json.loads(adjusted_balance)
-        tax_wei = to_wei(int(available_balance)) - int(adjusted_balance)
-        tax = from_wei(int(tax_wei))
+
+        tax_wei = to_wei(decimals, int(available_balance)) - int(adjusted_balance)
+        tax = from_wei(decimals, int(tax_wei))
         return translation_for(key=with_fees,
                                preferred_language=preferred_language,
                                available_balance=available_balance,
@@ -76,21 +89,25 @@ class MenuProcessor:
         :rtype:
         """
         cached_statement = get_cached_statement(self.account.blockchain_address)
-        statement = json.loads(cached_statement)
-        statement_transactions = parse_statement_transactions(statement)
-        transaction_sets = [statement_transactions[tx:tx + 3] for tx in range(0, len(statement_transactions), 3)]
+        transaction_sets = []
+        if cached_statement:
+            statement = json.loads(cached_statement)
+            statement_transactions = parse_statement_transactions(statement)
+            transaction_sets = [statement_transactions[tx:tx + 3] for tx in range(0, len(statement_transactions), 3)]
         preferred_language = get_cached_preferred_language(self.account.blockchain_address)
         if not preferred_language:
             preferred_language = i18n.config.get('fallback')
-        first_transaction_set = []
-        middle_transaction_set = []
-        last_transaction_set = []
+        no_transaction_history = statement_transaction_set(preferred_language, transaction_sets)
+        first_transaction_set = no_transaction_history
+        middle_transaction_set = no_transaction_history
+        last_transaction_set = no_transaction_history
         if transaction_sets:
             first_transaction_set = statement_transaction_set(preferred_language, transaction_sets[0])
         if len(transaction_sets) >= 2:
             middle_transaction_set = statement_transaction_set(preferred_language, transaction_sets[1])
         if len(transaction_sets) >= 3:
             last_transaction_set = statement_transaction_set(preferred_language, transaction_sets[2])
+
         if self.display_key == 'ussd.kenya.first_transaction_set':
             return translation_for(
                 self.display_key, preferred_language, first_transaction_set=first_transaction_set
@@ -104,7 +121,42 @@ class MenuProcessor:
                 self.display_key, preferred_language, last_transaction_set=last_transaction_set
             )
 
-    def help(self):
+    def account_tokens(self) -> str:
+        cached_token_data_list = get_cached_token_data_list(self.account.blockchain_address)
+        token_data_list = parse_token_list(cached_token_data_list)
+        token_list_sets = [token_data_list[tds:tds + 3] for tds in range(0, len(token_data_list), 3)]
+        preferred_language = get_cached_preferred_language(self.account.blockchain_address)
+        if not preferred_language:
+            preferred_language = i18n.config.get('fallback')
+        no_token_list = token_list_set(preferred_language, [])
+        first_account_tokens_set = no_token_list
+        middle_account_tokens_set = no_token_list
+        last_account_tokens_set = no_token_list
+        if token_list_sets:
+            data = {
+                'account_tokens_list': cached_token_data_list
+            }
+            save_session_data(data=data, queue='cic-ussd', session=self.session, ussd_session=self.ussd_session)
+            first_account_tokens_set = token_list_set(preferred_language, token_list_sets[0])
+
+        if len(token_list_sets) >= 2:
+            middle_account_tokens_set = token_list_set(preferred_language, token_list_sets[1])
+        if len(token_list_sets) >= 3:
+            last_account_tokens_set = token_list_set(preferred_language, token_list_sets[2])
+        if self.display_key == 'ussd.kenya.first_account_tokens_set':
+            return translation_for(
+                self.display_key, preferred_language, first_account_tokens_set=first_account_tokens_set
+            )
+        if self.display_key == 'ussd.kenya.middle_account_tokens_set':
+            return translation_for(
+                self.display_key, preferred_language, middle_account_tokens_set=middle_account_tokens_set
+            )
+        if self.display_key == 'ussd.kenya.last_account_tokens_set':
+            return translation_for(
+                self.display_key, preferred_language, last_account_tokens_set=last_account_tokens_set
+            )
+
+    def help(self) -> str:
         preferred_language = get_cached_preferred_language(self.account.blockchain_address)
         if not preferred_language:
             preferred_language = i18n.config.get('fallback')
@@ -161,30 +213,48 @@ class MenuProcessor:
         :rtype:
         """
         chain_str = Chain.spec.__str__()
-        token_symbol = get_default_token_symbol()
+        token_symbol = get_active_token_symbol(self.account.blockchain_address)
+        token_data = get_cached_token_data(self.account.blockchain_address, token_symbol)
+        decimals = token_data.get('decimals')
         blockchain_address = self.account.blockchain_address
         balances = get_balances(blockchain_address, chain_str, token_symbol, False)[0]
-        key = cache_data_key(self.identifier, MetadataPointer.BALANCES)
+        key = cache_data_key([self.identifier, token_symbol.encode('utf-8')], MetadataPointer.BALANCES)
         cache_data(key, json.dumps(balances))
-        available_balance = calculate_available_balance(balances)
+        available_balance = calculate_available_balance(balances, decimals)
         now = datetime.now()
         if (now - self.account.created).days >= 30:
             if available_balance <= 0:
                 logg.info(f'Not retrieving adjusted balance, available balance: {available_balance} is insufficient.')
             else:
                 timestamp = int((now - timedelta(30)).timestamp())
-                adjusted_balance = get_adjusted_balance(to_wei(int(available_balance)), chain_str, timestamp, token_symbol)
-                key = cache_data_key(self.identifier, MetadataPointer.BALANCES_ADJUSTED)
+                adjusted_balance = get_adjusted_balance(to_wei(decimals, int(available_balance)), chain_str, timestamp, token_symbol)
+                key = cache_data_key([self.identifier, token_symbol.encode('utf-8')], MetadataPointer.BALANCES_ADJUSTED)
                 cache_data(key, json.dumps(adjusted_balance))
 
         query_statement(blockchain_address)
-
+        token_symbols_list = get_cached_token_symbol_list(blockchain_address)
+        get_account_tokens_balance(blockchain_address, chain_str, token_symbols_list)
+        create_account_tokens_list(blockchain_address)
         preferred_language = get_cached_preferred_language(self.account.blockchain_address)
         if not preferred_language:
             preferred_language = i18n.config.get('fallback')
         return translation_for(
             self.display_key, preferred_language, account_balance=available_balance, account_token_name=token_symbol
         )
+
+    def token_selection_pin_authorization(self) -> str:
+        """
+        :return:
+        :rtype:
+        """
+        selected_token = self.ussd_session.get('data').get('selected_token')
+        token_name = selected_token.get('name')
+        token_symbol = selected_token.get('symbol')
+        token_issuer = selected_token.get('issuer')
+        token_contact = selected_token.get('contact')
+        token_location = selected_token.get('location')
+        token_data = f'{token_name} ({token_symbol})\n{token_issuer}\n{token_contact}\n{token_location}\n'
+        return self.pin_authorization(token_data=token_data)
 
     def transaction_pin_authorization(self) -> str:
         """
@@ -195,12 +265,14 @@ class MenuProcessor:
         recipient = Account.get_by_phone_number(recipient_phone_number, self.session)
         tx_recipient_information = recipient.standard_metadata_id()
         tx_sender_information = self.account.standard_metadata_id()
-        token_symbol = get_default_token_symbol()
+        token_symbol = get_active_token_symbol(self.account.blockchain_address)
+        token_data = get_cached_token_data(self.account.blockchain_address, token_symbol)
         user_input = self.ussd_session.get('data').get('transaction_amount')
-        transaction_amount = to_wei(value=int(user_input))
+        decimals = token_data.get('decimals')
+        transaction_amount = to_wei(decimals=decimals, value=int(user_input))
         return self.pin_authorization(
             recipient_information=tx_recipient_information,
-            transaction_amount=from_wei(transaction_amount),
+            transaction_amount=from_wei(decimals, transaction_amount),
             token_symbol=token_symbol,
             sender_information=tx_sender_information
         )
@@ -210,21 +282,23 @@ class MenuProcessor:
         :return:
         :rtype:
         """
-        available_balance = get_cached_available_balance(self.account.blockchain_address)
         preferred_language = get_cached_preferred_language(self.account.blockchain_address)
         if not preferred_language:
             preferred_language = i18n.config.get('fallback')
         session_data = self.ussd_session.get('data')
+        token_symbol = get_active_token_symbol(self.account.blockchain_address)
+        token_data = get_cached_token_data(self.account.blockchain_address, token_symbol)
+        decimals = token_data.get('decimals')
+        available_balance = get_cached_available_balance(decimals, [self.identifier, token_symbol.encode('utf-8')])
         transaction_amount = session_data.get('transaction_amount')
-        transaction_amount = to_wei(value=int(transaction_amount))
-        token_symbol = get_default_token_symbol()
+        transaction_amount = to_wei(decimals=decimals, value=int(transaction_amount))
         recipient_phone_number = self.ussd_session.get('data').get('recipient_phone_number')
         recipient = Account.get_by_phone_number(recipient_phone_number, self.session)
         tx_recipient_information = recipient.standard_metadata_id()
         return translation_for(
             self.display_key,
             preferred_language,
-            amount=from_wei(transaction_amount),
+            amount=from_wei(decimals, transaction_amount),
             token_symbol=token_symbol,
             recipient_information=tx_recipient_information,
             token_balance=available_balance
@@ -242,6 +316,14 @@ class MenuProcessor:
             preferred_language = i18n.config.get('fallback')
         return translation_for('ussd.kenya.exit_pin_blocked', preferred_language, support_phone=Support.phone_number)
 
+    def exit_successful_token_selection(self) -> str:
+        selected_token = self.ussd_session.get('data').get('selected_token')
+        token_symbol = selected_token.get('symbol')
+        preferred_language = get_cached_preferred_language(self.account.blockchain_address)
+        if not preferred_language:
+            preferred_language = i18n.config.get('fallback')
+        return translation_for(self.display_key,preferred_language,token_symbol=token_symbol)
+
     def exit_successful_transaction(self):
         """
         :return:
@@ -251,8 +333,10 @@ class MenuProcessor:
         preferred_language = get_cached_preferred_language(self.account.blockchain_address)
         if not preferred_language:
             preferred_language = i18n.config.get('fallback')
-        transaction_amount = to_wei(amount)
-        token_symbol = get_default_token_symbol()
+        token_symbol = get_active_token_symbol(self.account.blockchain_address)
+        token_data = get_cached_token_data(self.account.blockchain_address, token_symbol)
+        decimals = token_data.get('decimals')
+        transaction_amount = to_wei(decimals, amount)
         recipient_phone_number = self.ussd_session.get('data').get('recipient_phone_number')
         recipient = Account.get_by_phone_number(phone_number=recipient_phone_number, session=self.session)
         tx_recipient_information = recipient.standard_metadata_id()
@@ -260,7 +344,7 @@ class MenuProcessor:
         return translation_for(
             self.display_key,
             preferred_language,
-            transaction_amount=from_wei(transaction_amount),
+            transaction_amount=from_wei(decimals, transaction_amount),
             token_symbol=token_symbol,
             recipient_information=tx_recipient_information,
             sender_information=tx_sender_information
@@ -294,6 +378,10 @@ def response(account: Account, display_key: str, menu_name: str, session: Sessio
     if menu_name == 'transaction_pin_authorization':
         return menu_processor.transaction_pin_authorization()
 
+    if menu_name == 'token_selection_pin_authorization':
+        logg.debug(f'RESPONSE IS: {menu_processor.token_selection_pin_authorization()}')
+        return menu_processor.token_selection_pin_authorization()
+
     if menu_name == 'exit_insufficient_balance':
         return menu_processor.exit_insufficient_balance()
 
@@ -312,6 +400,9 @@ def response(account: Account, display_key: str, menu_name: str, session: Sessio
     if 'transaction_set' in menu_name:
         return menu_processor.account_statement()
 
+    if 'account_tokens_set' in menu_name:
+        return menu_processor.account_tokens()
+
     if menu_name == 'display_user_metadata':
         return menu_processor.person_metadata()
 
@@ -320,6 +411,9 @@ def response(account: Account, display_key: str, menu_name: str, session: Sessio
 
     if menu_name == 'exit_pin_blocked':
         return menu_processor.exit_pin_blocked()
+
+    if menu_name == 'exit_successful_token_selection':
+        return menu_processor.exit_successful_token_selection()
 
     preferred_language = get_cached_preferred_language(account.blockchain_address)
 

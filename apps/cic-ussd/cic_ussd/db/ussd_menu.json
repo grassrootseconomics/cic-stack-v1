@@ -287,7 +287,36 @@
             "display_key": "ussd.kenya.dob_edit_pin_authorization",
             "name": "dob_edit_pin_authorization",
             "parent": "metadata_management"
+        },
+        "49": {
+            "description": "Menu to display first set of tokens in the account's token list.",
+            "display_key": "ussd.kenya.first_account_tokens_set",
+            "name": "first_account_tokens_set",
+            "parent": null
+        },
+        "50": {
+            "description": "Menu to display middle set of tokens in the account's token list.",
+            "display_key": "ussd.kenya.middle_account_tokens_set",
+            "name": "middle_account_tokens_set",
+            "parent": null
+        },
+        "51": {
+            "description": "Menu to display last set of tokens in the account's token list.",
+            "display_key": "ussd.kenya.last_account_tokens_set",
+            "name": "last_account_tokens_set",
+            "parent": null
+        },
+        "52": {
+            "description": "Pin entry menu for setting an active token.",
+            "display_key": "ussd.kenya.token_selection_pin_authorization",
+            "name": "token_selection_pin_authorization",
+            "parent": null
+        },
+        "53": {
+            "description": "Exit following a successful active token setting.",
+            "display_key": "ussd.kenya.exit_successful_token_selection",
+            "name": "exit_successful_token_selection",
+            "parent": null
         }
-
     }
 }
