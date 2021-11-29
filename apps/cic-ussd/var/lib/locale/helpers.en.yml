@@ -19,3 +19,18 @@ en:
     Sent
   to: |-
     To
+  guardians_list_header: |-
+    Walinzi uliowaongeza ni:
+  no_guardians_list: |-
+    No guardians set
+  error:
+    no_phone_number_provided: |-
+      No phone number was provided.
+    no_matching_account: |-
+      The number provided is not registered.
+    is_initiator: |-
+      Phone number cannot be your own.
+    is_existent_guardian: |-
+      This phone number is is already added as a guardian.
+    is_not_existent_guardian: |-
+      Phone number not set as PIN reset guardian.

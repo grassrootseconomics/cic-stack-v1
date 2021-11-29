@@ -4,6 +4,8 @@ import json
 # external imports
 from cic_eth.api import Api
 from cic_types.condiments import MetadataPointer
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm.session import Session
 
 # local imports
 from cic_ussd.account.metadata import get_cached_preferred_language, parse_account_metadata
@@ -12,8 +14,9 @@ from cic_ussd.db.enum import AccountStatus
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.db.models.task_tracker import TaskTracker
 from cic_ussd.encoder import check_password_hash, create_password_hash
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm.session import Session
+from cic_ussd.phone_number import Support
+
+support_phone = Support.phone_number
 
 
 class Account(SessionBase):
@@ -29,12 +32,16 @@ class Account(SessionBase):
     failed_pin_attempts = Column(Integer)
     status = Column(Integer)
     preferred_language = Column(String)
+    guardians = Column(String)
+    guardian_quora = Column(Integer)
 
     def __init__(self, blockchain_address, phone_number):
         self.blockchain_address = blockchain_address
         self.phone_number = phone_number
         self.password_hash = None
         self.failed_pin_attempts = 0
+        # self.guardians = f'{support_phone}' if support_phone else None
+        self.guardian_quora = 1
         self.status = AccountStatus.PENDING.value
 
     def __repr__(self):
@@ -44,6 +51,28 @@ class Account(SessionBase):
         """This method is used to reset failed pin attempts and change account status to Active."""
         self.failed_pin_attempts = 0
         self.status = AccountStatus.ACTIVE.value
+
+    def add_guardian(self, phone_number: str):
+        set_guardians = phone_number
+        if self.guardians:
+            set_guardians = self.guardians.split(',')
+            set_guardians.append(phone_number)
+            ','.join(set_guardians)
+        self.guardians = set_guardians
+
+    def remove_guardian(self, phone_number: str):
+        set_guardians = self.guardians.split(',')
+        set_guardians.remove(phone_number)
+        if len(set_guardians) > 1:
+            self.guardians = ','.join(set_guardians)
+        else:
+            self.guardians = set_guardians[0]
+
+    def get_guardians(self) -> list:
+        return self.guardians.split(',') if self.guardians else []
+
+    def set_guardian_quora(self, quora: int):
+        self.guardian_quora = quora
 
     def create_password(self, password):
         """This method takes a password value and hashes the value before assigning it to the corresponding

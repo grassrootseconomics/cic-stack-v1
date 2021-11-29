@@ -5,7 +5,6 @@ from typing import Optional
 import phonenumbers
 
 # local imports
-from cic_ussd.db.models.account import Account
 
 
 class E164Format:
