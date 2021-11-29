@@ -69,7 +69,8 @@ def parse_statement_transactions(statement: list):
     parsed_transactions = []
     for transaction in statement:
         action_tag = transaction.get('action_tag')
-        amount = from_wei(transaction.get('token_value'))
+        decimals = transaction.get('token_decimals')
+        amount = from_wei(decimals, transaction.get('token_value'))
         direction_tag = transaction.get('direction_tag')
         token_symbol = transaction.get('token_symbol')
         metadata_id = transaction.get('metadata_id')

@@ -32,14 +32,37 @@ sw:
     start: |-
       CON Salio %{account_balance} %{account_token_name}
       1. Tuma
-      2. Akaunti yangu
-      3. Usaidizi
+      2. Sarafu yangu
+      3. Akaunti yangu
+      4. Usaidizi
     enter_transaction_recipient: |-
       CON Weka nambari ya simu
       0. Nyuma
     enter_transaction_amount: |-
       CON Weka kiwango
       0. Nyuma
+    first_account_tokens_set: |-
+      CON Chagua nambari au ishara kutoka kwa salio zako:
+      %{first_account_tokens_set}
+      11. Mbele
+      00. Ondoka
+    middle_account_tokens_set: |-
+      CON Chagua nambari au ishara kutoka kwa salio zako:
+      %{middle_account_tokens_set}
+      11. Mbele
+      22. Nyuma
+      00. Ondoka
+    last_account_tokens_set: |-
+      CON Chagua nambari au ishara kutoka kwa salio zako:
+      %{last_account_tokens_set}
+      22. Nyuma
+      00. Ondoka
+    token_selection_pin_authorization:
+      first: |-
+        CON %{token_data}
+        Weka nambari ya siri kuchagua:
+      retry: |-
+        %{retry_pin_entry}
     account_management: |-
       CON Akaunti yangu
       1. Wasifu wangu
@@ -72,7 +95,6 @@ sw:
       0. Nyuma
     retry_pin_entry: |-
       CON Nambari uliyoweka si sahihi, jaribu tena. Una majaribio %{remaining_attempts} yaliyobaki.
-      0. Back
     enter_current_pin:
       first: |-
         CON Weka nambari ya siri.
@@ -200,6 +222,10 @@ sw:
     exit_insufficient_balance: |-
       CON Malipo ya %{amount} %{token_symbol} kwa %{recipient_information} halijakamilika kwa sababu salio lako haitoshi.
       Akaunti yako ya Sarafu ina salio ifuatayo: %{token_balance}
+      00. Nyuma
+      99. Ondoka
+    exit_successful_token_selection: |-
+      CON Chaguo lako limekamilika, %{token_symbol} ni sarafu itakayotumika.
       00. Nyuma
       99. Ondoka
     invalid_service_code: |-

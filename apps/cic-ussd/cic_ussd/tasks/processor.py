@@ -47,7 +47,8 @@ def cache_statement(parsed_transaction: dict, querying_party: str):
     statement_transactions = []
     if cached_statement:
         statement_transactions = json.loads(cached_statement)
-    statement_transactions.append(parsed_transaction)
+    if parsed_transaction not in statement_transactions:
+        statement_transactions.append(parsed_transaction)
     data = json.dumps(statement_transactions)
     identifier = bytes.fromhex(querying_party)
     key = cache_data_key(identifier, MetadataPointer.STATEMENT)
@@ -74,6 +75,14 @@ def parse_transaction(transaction: dict) -> dict:
     role = transaction.get('role')
     alt_blockchain_address = transaction.get('alt_blockchain_address')
     blockchain_address = transaction.get('blockchain_address')
+    identifier = bytes.fromhex(blockchain_address)
+    token_symbol = transaction.get('token_symbol')
+    if role == 'recipient':
+        key = cache_data_key(identifier=identifier, salt=MetadataPointer.TOKEN_LAST_RECEIVED)
+        cache_data(key, token_symbol)
+    if role == 'sender':
+        key = cache_data_key(identifier=identifier, salt=MetadataPointer.TOKEN_LAST_SENT)
+        cache_data(key, token_symbol)
     account = validate_transaction_account(blockchain_address, role, session)
     alt_account = session.query(Account).filter_by(blockchain_address=alt_blockchain_address).first()
     if alt_account:

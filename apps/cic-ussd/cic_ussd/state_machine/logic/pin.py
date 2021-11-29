@@ -3,7 +3,6 @@ user's pin.
 """
 
 # standard imports
-import json
 import logging
 import re
 from typing import Tuple
@@ -16,6 +15,7 @@ from cic_ussd.db.models.account import Account
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.db.enum import AccountStatus
 from cic_ussd.encoder import create_password_hash, check_password_hash
+from cic_ussd.processor.util import wait_for_session_data
 from cic_ussd.session.ussd_session import create_or_update_session, persist_ussd_session
 
 
@@ -31,11 +31,8 @@ def is_valid_pin(state_machine_data: Tuple[str, dict, Account, Session]) -> bool
     :rtype: bool
     """
     user_input, ussd_session, account, session = state_machine_data
-    pin_is_valid = False
     matcher = r'^\d{4}$'
-    if re.match(matcher, user_input):
-        pin_is_valid = True
-    return pin_is_valid
+    return bool(re.match(matcher, user_input))
 
 
 def is_authorized_pin(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
@@ -68,7 +65,7 @@ def save_initial_pin_to_session_data(state_machine_data: Tuple[str, dict, Accoun
     :param state_machine_data: A tuple containing user input, a ussd session and user object.
     :type state_machine_data: tuple
     """
-    user_input, ussd_session, user, session = state_machine_data
+    user_input, ussd_session, account, session = state_machine_data
     initial_pin = create_password_hash(user_input)
     if ussd_session.get('data'):
         data = ussd_session.get('data')
@@ -97,7 +94,8 @@ def pins_match(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
     :return: A match between two pin values.
     :rtype: bool
     """
-    user_input, ussd_session, user, session = state_machine_data
+    user_input, ussd_session, account, session = state_machine_data
+    wait_for_session_data('Initial pin', session_data_key='initial_pin', ussd_session=ussd_session)
     initial_pin = ussd_session.get('data').get('initial_pin')
     return check_password_hash(user_input, initial_pin)
 
@@ -107,11 +105,12 @@ def complete_pin_change(state_machine_data: Tuple[str, dict, Account, Session]):
     :param state_machine_data: A tuple containing user input, a ussd session and user object.
     :type state_machine_data: tuple
     """
-    user_input, ussd_session, user, session = state_machine_data
+    user_input, ussd_session, account, session = state_machine_data
     session = SessionBase.bind_session(session=session)
+    wait_for_session_data('Initial pin', session_data_key='initial_pin', ussd_session=ussd_session)
     password_hash = ussd_session.get('data').get('initial_pin')
-    user.password_hash = password_hash
-    session.add(user)
+    account.password_hash = password_hash
+    session.add(account)
     session.flush()
     SessionBase.release_session(session=session)
 
@@ -134,6 +133,6 @@ def is_valid_new_pin(state_machine_data: Tuple[str, dict, Account, Session]) -> 
     :return: A match between two pin values.
     :rtype: bool
     """
-    user_input, ussd_session, user, session = state_machine_data
-    is_old_pin = user.verify_password(password=user_input)
+    user_input, ussd_session, account, session = state_machine_data
+    is_old_pin = account.verify_password(password=user_input)
     return is_valid_pin(state_machine_data=state_machine_data) and not is_old_pin

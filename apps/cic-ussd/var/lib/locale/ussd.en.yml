@@ -33,14 +33,37 @@ en:
     start: |-
       CON Balance %{account_balance} %{account_token_name}
       1. Send
-      2. My Account
-      3. Help
+      2. My Sarafu
+      3. My Account
+      4. Help
     enter_transaction_recipient: |-
       CON Enter phone number
       0. Back
     enter_transaction_amount: |-
       CON Enter amount
       0. Back
+    first_account_tokens_set: |-
+      CON Choose a number or symbol from your balances:
+      %{first_account_tokens_set}
+      11. Next
+      00. Exit
+    middle_account_tokens_set: |-
+      CON Choose a number or symbol from your balances:
+      %{middle_account_tokens_set}
+      11. Next
+      22. Previous
+      00. Exit
+    last_account_tokens_set: |-
+      CON Choose a number or symbol from your balances:
+      %{last_account_tokens_set}
+      22. Previous
+      00. Exit
+    token_selection_pin_authorization:
+      first: |-
+        CON %{token_data}
+        Enter pin to select:
+      retry: |-
+        %{retry_pin_entry}
     account_management: |-
       CON My account
       1. My profile
@@ -73,7 +96,6 @@ en:
       0. Back
     retry_pin_entry: |-
       CON Incorrect PIN entered, please try again. You have %{remaining_attempts} attempts remaining.
-      0. Back
     enter_current_pin:
       first: |-
         CON Enter current PIN.
@@ -201,6 +223,10 @@ en:
     exit_insufficient_balance: |-
       CON Payment of %{amount} %{token_symbol} to %{recipient_information} has failed due to insufficent balance.
       Your Sarafu-Network balances is: %{token_balance}
+      00. Back
+      99. Exit
+    exit_successful_token_selection: |-
+      CON Success! %{token_symbol} is your active Sarafu.
       00. Back
       99. Exit
     invalid_service_code: |-

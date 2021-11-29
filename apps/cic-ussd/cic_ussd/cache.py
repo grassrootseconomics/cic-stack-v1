@@ -1,12 +1,13 @@
 # standard imports
 import hashlib
 import logging
+from typing import Union
 
 # external imports
 from cic_types.condiments import MetadataPointer
 from redis import Redis
 
-logg = logging.getLogger()
+logg = logging.getLogger(__file__)
 
 
 class Cache:
@@ -39,7 +40,7 @@ def get_cached_data(key: str):
     return cache.get(name=key)
 
 
-def cache_data_key(identifier: bytes, salt: MetadataPointer):
+def cache_data_key(identifier: Union[list, bytes], salt: MetadataPointer):
     """
     :param identifier:
     :type identifier:
@@ -49,6 +50,10 @@ def cache_data_key(identifier: bytes, salt: MetadataPointer):
     :rtype:
     """
     hash_object = hashlib.new("sha256")
-    hash_object.update(identifier)
+    if isinstance(identifier, list):
+        for identity in identifier:
+            hash_object.update(identity)
+    else:
+        hash_object.update(identifier)
     hash_object.update(salt.value.encode(encoding="utf-8"))
     return hash_object.digest().hex()
