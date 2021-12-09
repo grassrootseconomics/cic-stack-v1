@@ -1,41 +1,19 @@
-# cic-internal-integration
+# Community Inclusion Currency Stack (CIC Stack) 
+
+A custodial evm wallet for executing transactions via USSD
 
 ## Getting started 
 
 This repo uses docker-compose and docker buildkit. Set the following environment variables to get started:
-
 
 ```
 export COMPOSE_DOCKER_CLI_BUILD=1
 export DOCKER_BUILDKIT=1
 ```
 
-start services, database, redis and local ethereum node
-```
-docker-compose up -d
-```
+To get started see [./apps/contract-migration/README.md](./apps/contract-migration/README.md)
 
-Run app/contract-migration to deploy contracts
-```
-RUN_MASK=3 docker-compose up contract-migration
-```
+## Documentation 
 
-stop cluster
-```
-docker-compose down
-```
+[https://docs.grassecon.org/cic_stack/](https://docs.grassecon.org/cic_stack/)
 
-stop cluster and delete data
-```
-docker-compose down -v --remove-orphans
-```
-
-rebuild an images
-```
-docker-compose up --build <service_name>
-```
-
-to delete the buildkit cache
-```
-docker builder prune --filter type=exec.cachemount
-```
