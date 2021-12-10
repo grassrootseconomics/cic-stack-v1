@@ -8,7 +8,7 @@ RUN apt-get install libffi-dev -y
 
 COPY requirements.txt . 
 
-ARG EXTRA_PIP_INDEX_URL="https://pip.grassrootseconomics.net:8433"
+ARG EXTRA_PIP_INDEX_URL="https://pip.grassrootseconomics.net"
 ARG EXTRA_PIP_ARGS=""
 ARG PIP_INDEX_URL="https://pypi.org/simple"
 RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \

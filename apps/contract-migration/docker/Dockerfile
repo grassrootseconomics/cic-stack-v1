@@ -19,7 +19,7 @@ COPY requirements.txt .
 #RUN apt-get install libffi-dev
 
 ARG pip_index_url=https://pypi.org/simple
-ARG EXTRA_PIP_INDEX_URL="https://pip.grassrootseconomics.net:8433"
+ARG EXTRA_PIP_INDEX_URL="https://pip.grassrootseconomics.net"
 ARG EXTRA_PIP_ARGS=""
 ARG PIP_INDEX_URL="https://pypi.org/simple"
 ARG pip_trusted_host=pypi.org

@@ -6,24 +6,22 @@ This folder contains tools to generate and import test data.
 
 Three sets of tools are available, sorted by respective subdirectories.
 
-* **eth**: Import using sovereign wallets.
-* **cic_eth**: Import using the `cic_eth` custodial engine.
-* **cic_ussd**: Import using the `cic_ussd` interface (backed by `cic_eth`)
+- **eth**: Import using sovereign wallets.
+- **cic_eth**: Import using the `cic_eth` custodial engine.
+- **cic_ussd**: Import using the `cic_ussd` interface (backed by `cic_eth`)
 
 Each of the modules include two main scripts:
 
-* **import_users.py**: Registers all created accounts in the network
-* **import_balance.py**: Transfer an opening balance using an external keystore wallet
+- **import_users.py**: Registers all created accounts in the network
+- **import_balance.py**: Transfer an opening balance using an external keystore wallet
 
 The balance script will sync with the blockchain, processing transactions and triggering actions when it finds. In its current version it does not keep track of any other state, so it will run indefinitly and needs You the Human to decide when it has done what it needs to do.
 
-
 In addition the following common tools are available:
 
-* **create_import_users.py**: User creation script
-* **verify.py**: Import verification script
-* **cic_meta**: Metadata imports
-
+- **create_import_users.py**: User creation script
+- **verify.py**: Import verification script
+- **cic_meta**: Metadata imports
 
 ## REQUIREMENTS
 
@@ -36,13 +34,11 @@ source .venv/bin/activate
 
 Install all requirements from the `requirements.txt` file:
 
-`pip install --extra-index-url https://pip.grassrootseconomics.net:8433 -r requirements.txt`
-
+`pip install --extra-index-url https://pip.grassrootseconomics.net -r requirements.txt`
 
 If you are importing metadata, also do ye olde:
 
 `npm install`
-
 
 ## HOW TO USE
 
@@ -60,7 +56,6 @@ If you want to use a `import_balance.py` script to add to the user's balance fro
 
 `python create_import_users.py --gift-threshold <max_units_to_send> [--dir <datadir>] <number_of_users>`
 
-
 ### Step 2 - Services
 
 Unless you know what you are doing, start with a clean slate, and execute (in the repository root):
@@ -72,21 +67,21 @@ Then go through, in sequence:
 #### Base requirements
 
 If you are importing using `eth` and _not_ importing metadata, then the only service you need running in the cluster is:
-* eth
+
+- eth
 
 In all other cases you will _also_ need:
-* postgres
-* redis
 
+- postgres
+- redis
 
 #### EVM provisions
 
-This step is needed in *all* cases.
+This step is needed in _all_ cases.
 
 `RUN_MASK=1 docker-compose up contract-migration`
 
 After this step is run, you can find top-level ethereum addresses (like the cic registry address, which you will need below) in `<repository_root>/service-configs/.env`
-
 
 #### Custodial provisions
 
@@ -94,24 +89,24 @@ This step is _only_ needed if you are importing using `cic_eth` or `cic_ussd`
 
 `RUN_MASK=2 docker-compose up contract-migration`
 
-
 #### Custodial services
 
 If importing using `cic_eth` or `cic_ussd` also run:
-* cic-eth-tasker
-* cic-eth-dispatcher
-* cic-eth-tracker
-* cic-eth-retrier
+
+- cic-eth-tasker
+- cic-eth-dispatcher
+- cic-eth-tracker
+- cic-eth-retrier
 
 If importing using `cic_ussd` also run:
-* cic-user-tasker
-* cic-user-ussd-server
-* cic-notify-tasker
+
+- cic-user-tasker
+- cic-user-ussd-server
+- cic-notify-tasker
 
 If metadata is to be imported, also run:
-* cic-meta-server
 
-
+- cic-meta-server
 
 ### Step 3 - User imports
 
@@ -125,10 +120,7 @@ All external balance transactions are saved in raw wire format in `<datadir>/txs
 
 If the contract migrations have been executed with the default "giftable" token contract, then the `token_symbol` in the `import_balance` scripts should be set to `GFT`.
 
-
-
-#### Alternative 1 - Sovereign wallet import - `eth` 
-
+#### Alternative 1 - Sovereign wallet import - `eth`
 
 First, make a note of the **block height** before running anything:
 
@@ -142,9 +134,7 @@ After the script completes, keystore files for all generated accouts will be fou
 
 Then run:
 
-`python eth/import_balance.py -v -r <cic_registry_address> -p <eth_provider> --token-symbol <token_symbol> --offset <block_height_at_start> -y ../keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c <datadir>` 
-
-
+`python eth/import_balance.py -v -r <cic_registry_address> -p <eth_provider> --token-symbol <token_symbol> --offset <block_height_at_start> -y ../keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c <datadir>`
 
 #### Alternative 2 - Custodial engine import - `cic_eth`
 
@@ -157,7 +147,6 @@ In another terminal:
 `python cic_eth/import_users.py -v --redis-host-callback <redis_hostname_in_docker> out`
 
 The `redis_hostname_in_docker` value is the hostname required to reach the redis server from within the docker cluster, and should be `redis` if you left the docker-compose unchanged. The `import_users` script will receive the address of each newly created custodial account on a redis subscription fed by a callback task in the `cic_eth` account creation task chain.
-
 
 #### Alternative 3 - USSD import - `cic_ussd`
 
@@ -177,12 +166,9 @@ In the event that you are running the command in a local environment you may wan
 
 `python cic_ussd/import_users.py -v --ussd-host <user_ussd_server_host> --ussd-port <user_ussd_server_port> --ussd-no-ssl -c config out`
 
-
-
 ### Step 4 - Metadata import (optional)
 
 The metadata import scripts can be run at any time after step 1 has been completed.
-
 
 #### Importing user metadata
 
@@ -194,21 +180,17 @@ Monitors a folder for output from the `import_users.py` script, adding the metad
 
 If _number of users_ is omitted the script will run until manually interrupted.
 
-
-
 #### Importing phone pointer
 
 `node cic_meta/import_meta_phone.js <datadir> <number_of_users>`
 
 If you imported using `cic_ussd`, the phone pointer is _already added_ and this script will do nothing.
 
-
 ### Importing preferences metadata
 
 `node cic_meta/import_meta_preferences.js <datadir> <number_of_users>`
 
 If you used the `cic_ussd/import_user.py` script to import your users, preferences metadata is generated and will be imported.
-
 
 ##### Importing pins and ussd data (optional)
 
@@ -228,33 +210,32 @@ Once the creation of the pins file is complete, proceed to import the pins and u
 `python cic_ussd/import_pins.py -c config -v pinsdir <path to pin export dir tree>`
 
 - To import ussd data:
-`python cic_ussd/import_ussd_data.py -c config -v userdir <path to the users export dir tree>`
+  `python cic_ussd/import_ussd_data.py -c config -v userdir <path to the users export dir tree>`
 
 The balance script is a celery task worker, and will not exit by itself in its current version. However, after it's done doing its job, you will find "reached nonce ... exiting" among the last lines of the log.
 
 The connection parameters for the `cic-ussd-server` is currently _hardcoded_ in the `import_users.py` script file.
 
-
 ### Step 5 - Verify
 
-`python verify.py -v -c config -r <cic_registry_address> -p <eth_provider> --token-symbol <token_symbol> <datadir>` 
+`python verify.py -v -c config -r <cic_registry_address> -p <eth_provider> --token-symbol <token_symbol> <datadir>`
 
 Included checks:
-* Private key is in cic-eth keystore
-* Address is in accounts index
-* Address has gas balance
-* Address has triggered the token faucet
-* Address has token balance matching the gift threshold 
-* Personal metadata can be retrieved and has exact match
-* Phone pointer metadata can be retrieved and matches address
-* USSD menu response is initial state after registration
+
+- Private key is in cic-eth keystore
+- Address is in accounts index
+- Address has gas balance
+- Address has triggered the token faucet
+- Address has token balance matching the gift threshold
+- Personal metadata can be retrieved and has exact match
+- Phone pointer metadata can be retrieved and matches address
+- USSD menu response is initial state after registration
 
 Checks can be selectively included and excluded. See `--help` for details.
 
 Will output one line for each check, with name of check and number of errors found per check.
 
 Should exit with code 0 if all input data is found in the respective services.
-
 
 ## KNOWN ISSUES
 
