@@ -515,7 +515,7 @@ class Api(ApiBase):
         :param password: Password to encode the password with in the backend (careful, you will have to remember it)
         :type password: str
         :param register: Register the new account in accounts index backend
-        :type password: bool
+        :type register: bool
         :returns: uuid of root task
         :rtype: celery.Task
         """
