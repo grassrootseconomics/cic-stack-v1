@@ -395,6 +395,8 @@ def cache_transfer_data(
     sender_address = tx_normalize.wallet_address(tx['from'])
     recipient_address = tx_normalize.wallet_address(tx_data[0])
     token_value = tx_data[1]
+    source_token_address = tx_normalize.executable_address(tx['to'])
+    destination_token_address = source_token_address
 
 
     session = SessionBase.create_session()
@@ -402,8 +404,8 @@ def cache_transfer_data(
             'hash': tx_hash_hex,
             'from': sender_address,
             'to': recipient_address,
-            'source_token': tx['to'],
-            'destination_token': tx['to'],
+            'source_token': source_token_address,
+            'destination_token': destination_token_address,
             'from_value': token_value,
             'to_value': token_value,
             }
@@ -435,14 +437,16 @@ def cache_transfer_from_data(
     spender_address = tx_data[0]
     recipient_address = tx_data[1]
     token_value = tx_data[2]
+    source_token_address = tx_normalize.executable_address(tx['to'])
+    destination_token_address = source_token_address
 
     session = SessionBase.create_session()
     tx_dict = {
             'hash': tx_hash_hex,
             'from': tx['from'],
             'to': recipient_address,
-            'source_token': tx['to'],
-            'destination_token': tx['to'],
+            'source_token': source_token_address,
+            'destination_token': destination_token_address,
             'from_value': token_value,
             'to_value': token_value,
             }
@@ -474,14 +478,16 @@ def cache_approve_data(
     sender_address = tx_normalize.wallet_address(tx['from'])
     recipient_address = tx_normalize.wallet_address(tx_data[0])
     token_value = tx_data[1]
+    source_token_address = tx_normalize.executable_address(tx['to'])
+    destination_token_address = source_token_address
 
     session = SessionBase.create_session()
     tx_dict = {
             'hash': tx_hash_hex,
             'from': sender_address,
             'to': recipient_address,
-            'source_token': tx['to'],
-            'destination_token': tx['to'],
+            'source_token': source_token_address,
+            'destination_token': destination_token_address,
             'from_value': token_value,
             'to_value': token_value,
             }
