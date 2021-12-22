@@ -18,6 +18,7 @@ fi
 must_address "$CIC_REGISTRY_ADDRESS" "registry"
 must_eth_rpc
 
+
 # get required addresses from registries
 token_index_address=`eth-contract-registry-list -u -i $CHAIN_SPEC -p $RPC_PROVIDER -e $CIC_REGISTRY_ADDRESS $DEV_DEBUG_FLAG --raw TokenRegistry`
 accounts_index_address=`eth-contract-registry-list -u -i $CHAIN_SPEC -p $RPC_PROVIDER -e $CIC_REGISTRY_ADDRESS $DEV_DEBUG_FLAG --raw AccountRegistry`
@@ -28,11 +29,11 @@ REDIS_HOST_CALLBACK=${REDIS_HOST_CALLBACK:-$REDIS_HOST}
 REDIS_PORT_CALLBACK=${REDIS_PORT_CALLBACK:-$REDIS_PORT}
 >&2 echo -e "\033[;96mcreate account for gas gifter\033[;39m"
 gas_gifter=`cic-eth-create --redis-timeout 120 $DEV_DEBUG_FLAG --redis-host-callback $REDIS_HOST_CALLBACK --redis-port-callback $REDIS_PORT_CALLBACK --no-register`
-cic-eth-tag -i $CHAIN_SPEC GAS_GIFTER $gas_gifter
+cic-eth-tag -i $CHAIN_SPEC --set --tag GAS_GIFTER $gas_gifter
 
 >&2 echo -e "\033[;96mcreate account for accounts index writer\033[;39m"
 accounts_index_writer=`cic-eth-create --redis-timeout 120 $DEV_DEBUG_FLAG --redis-host-callback $REDIS_HOST_CALLBACK --redis-port-callback $REDIS_PORT_CALLBACK --no-register`
-cic-eth-tag -i $CHAIN_SPEC ACCOUNT_REGISTRY_WRITER $accounts_index_writer
+cic-eth-tag -i $CHAIN_SPEC --set --tag ACCOUNT_REGISTRY_WRITER $accounts_index_writer
 
 
 # Assign system writer for accounts index

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -a
+set -e
 
 if [ -z $DEV_DATA_DIR ]; then
 	export DEV_DATA_DIR=`mktemp -d`
@@ -33,6 +34,7 @@ else
 	fi
 	rm $bash_debug_flag -f ${DEV_DATA_DIR}/env_reset
 	rm $bash_debug_flag -f $noncefile
+	export SYNCER_OFFSET=`eth-info --raw block`
 	confini-dump --schema-dir ./config --prefix export > ${DEV_DATA_DIR}/env_reset
 fi
 
@@ -55,4 +57,5 @@ fi
 # Migration variable processing
 confini-dump --schema-dir ./config > ${DEV_DATA_DIR}/env_reset
 
+set +e
 set +a
