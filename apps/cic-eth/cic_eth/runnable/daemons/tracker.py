@@ -36,6 +36,7 @@ from cic_eth.runnable.daemons.filters import (
         TxFilter,
         RegistrationFilter,
         TransferAuthFilter,
+        TokenFilter,
         )
 from cic_eth.stat import init_chain_stat
 from cic_eth.registry import (
@@ -99,10 +100,10 @@ def main():
     syncer_backends = SQLBackend.resume(chain_spec, block_offset)
 
     if len(syncer_backends) == 0:
-        initial_block_start = config.get('SYNCER_OFFSET')
-        initial_block_offset = block_offset
+        initial_block_start = int(config.get('SYNCER_OFFSET'))
+        initial_block_offset = int(block_offset)
         if config.true('SYNCER_NO_HISTORY'):
-            initial_block_start = block_offset
+            initial_block_start = initial_block_offset
             initial_block_offset += 1
         syncer_backends.append(SQLBackend.initial(chain_spec, initial_block_offset, start_block_height=initial_block_start))
         logg.info('found no backends to resume, adding initial sync from history start {} end {}'.format(initial_block_start, initial_block_offset))
@@ -154,6 +155,8 @@ def main():
 
     gas_filter = GasFilter(chain_spec, config.get('CELERY_QUEUE'))
 
+    token_gas_cache_filter = TokenFilter(chain_spec, config.get('CELERY_QUEUE'))
+
     #transfer_auth_filter = TransferAuthFilter(registry, chain_spec, config.get('_CELERY_QUEUE'))
 
     i = 0
@@ -163,6 +166,7 @@ def main():
         syncer.add_filter(registration_filter)
         # TODO: the two following filter functions break the filter loop if return uuid. Pro: less code executed. Con: Possibly unintuitive flow break
         syncer.add_filter(tx_filter)
+        syncer.add_filter(token_gas_cache_filter)
         #syncer.add_filter(transfer_auth_filter)
         for cf in callback_filters:
             syncer.add_filter(cf)

@@ -41,6 +41,7 @@ from chainqueue.db.models.tx import TxCache
 from chainqueue.db.models.otx import Otx
 
 # local imports
+from cic_eth.db.models.gas_cache import GasCache
 from cic_eth.db.models.role import AccountRole
 from cic_eth.db.models.base import SessionBase
 from cic_eth.error import (
@@ -65,17 +66,56 @@ from cic_eth.encode import (
         ZERO_ADDRESS_NORMAL,
         unpack_normal,
         )
+from cic_eth.error import SeppukuError
+from cic_eth.eth.util import MAXIMUM_FEE_UNITS
 
 celery_app = celery.current_app
 logg = logging.getLogger()
 
 
-MAXIMUM_FEE_UNITS = 8000000
 
-class MaxGasOracle:
+@celery_app.task(base=CriticalSQLAlchemyTask)
+def apply_gas_value_cache(address, method, value, tx_hash):
+    return apply_gas_value_cache_local(address, method, value, tx_hash)
 
-    def gas(code=None):
-        return MAXIMUM_FEE_UNITS
+
+def apply_gas_value_cache_local(address, method, value, tx_hash, session=None):
+    address = tx_normalize.executable_address(address)
+    tx_hash = tx_normalize.tx_hash(tx_hash)
+    value = int(value)
+
+    session = SessionBase.bind_session(session)
+    q = session.query(GasCache)
+    q = q.filter(GasCache.address==address)
+    q = q.filter(GasCache.method==method)
+    o = q.first()
+
+    if o == None:
+        o = GasCache(address, method, value, tx_hash)
+    elif tx.gas_used > o.value:
+        o.value = value
+        o.tx_hash = strip_0x(tx_hash)
+
+    session.add(o)
+    session.commit()
+
+    SessionBase.release_session(session)
+
+
+def have_gas_minimum(chain_spec, address, min_gas, session=None, rpc=None):
+    if rpc == None:
+        rpc = RPCConnection.connect(chain_spec, 'default')
+    o = balance(add_0x(address))
+    r = rpc.do(o)
+    try: 
+        r = int(r)
+    except ValueError:
+        r = strip_0x(r)
+        r = int(r, 16)
+    logg.debug('have gas minimum {} have gas {} minimum is {}'.format(address, r, min_gas))
+    if r < min_gas:
+        return False
+    return True
 
 
 def create_check_gas_task(tx_signed_raws_hex, chain_spec, holder_address, gas=None, tx_hashes_hex=None, queue=None):
@@ -357,6 +397,13 @@ def refill_gas(self, recipient_address, chain_spec_dict):
     # set up evm RPC connection
     rpc = RPCConnection.connect(chain_spec, 'default')
 
+    # check the gas balance of the gifter
+    if not have_gas_minimum(chain_spec, gas_provider, self.safe_gas_refill_amount):
+        raise SeppukuError('Noooooooooooo; gas gifter {} is broke!'.format(gas_provider))
+
+    if not have_gas_minimum(chain_spec, gas_provider, self.safe_gas_gifter_balance):
+        logg.error('Gas gifter {} gas balance is below the safe level to operate!'.format(gas_provider))
+    
     # set up transaction builder
     nonce_oracle = CustodialTaskNonceOracle(gas_provider, self.request.root_id, session=session)
     gas_oracle = self.create_gas_oracle(rpc)
