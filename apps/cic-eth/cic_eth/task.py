@@ -25,12 +25,14 @@ logg = logging.getLogger()
 celery_app = celery.current_app
 
 
+
 class BaseTask(celery.Task):
 
     session_func = SessionBase.create_session
     call_address = ZERO_ADDRESS
     trusted_addresses = []
     min_fee_price = 1
+    min_fee_limit = 30000
     default_token_address = None
     default_token_symbol = None
     default_token_name = None
@@ -42,7 +44,7 @@ class BaseTask(celery.Task):
         if address == None:
             return RPCGasOracle(
                 conn,
-                code_callback=kwargs.get('code_callback'),
+                code_callback=kwargs.get('code_callback', self.get_min_fee_limit),
                 min_price=self.min_fee_price,
                 id_generator=kwargs.get('id_generator'),
                 )
@@ -54,6 +56,10 @@ class BaseTask(celery.Task):
                 min_price=self.min_fee_price,
                 id_generator=kwargs.get('id_generator'),
                 )
+
+
+    def get_min_fee_limit(self, code):
+        return self.min_fee_limit
 
 
     def create_session(self):

@@ -18,6 +18,7 @@ from eth_address_declarator.declarator import AddressDeclarator
 from funga.eth.signer import EIP155Signer
 from funga.eth.keystore.dict import DictKeystore
 from hexathon import add_0x, strip_0x
+from okota.token_index.index import to_identifier
 
 # local imports
 
@@ -109,6 +110,7 @@ if __name__ == '__main__':
     identifier = bytes.fromhex(hashed_token_proof)
     token_immutable_proof_writer = MetadataRequestsHandler(cic_type=MetadataPointer.NONE, identifier=identifier)
     write_metadata(token_immutable_proof_writer, token_proof_data)
+    logg.debug(f'Writing hashed proof: {hashed_token_proof}')
     write_to_declarator(contract_address=args.address_declarator,
                         contract_wrapper=contract_wrapper,
                         proof=hashed_token_proof,
@@ -116,12 +118,11 @@ if __name__ == '__main__':
                         signer_address=args.signer_address,
                         token_address=args.e)
 
-    hashed_token_proof = hash_proof(args.token_symbol.encode('utf-8'))
-    identifier = bytes.fromhex(hashed_token_proof)
-    token_immutable_proof_writer = MetadataRequestsHandler(cic_type=MetadataPointer.NONE, identifier=identifier)
+    hashed_token_proof = to_identifier(args.token_symbol)
+    logg.debug(f'Writing hashed proof: {hashed_token_proof}')
     write_to_declarator(contract_address=args.address_declarator,
                         contract_wrapper=contract_wrapper,
-                        proof=identifier,
+                        proof=hashed_token_proof,
                         rpc=rpc,
                         signer_address=args.signer_address,
                         token_address=args.e)

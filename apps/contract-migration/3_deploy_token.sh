@@ -61,7 +61,7 @@ function deploy_token_erc20_demurrage_token() {
 	_deploy_token_defaults "DET" "Demurrage Token"
 	advance_nonce
 	debug_rpc
-	TOKEN_ADDRESS=`erc20-demurrage-token-deploy --nonce $nonce $fee_price_arg -p $RPC_PROVIDER -y $WALLET_KEY_FILE -i $CHAIN_SPEC --name "$TOKEN_NAME" --symbol $TOKEN_SYMBOL $DEV_DEBUG_FLAG -ww -s` 
+	TOKEN_ADDRESS=`erc20-demurrage-token-deploy --nonce $nonce $fee_price_arg -p $RPC_PROVIDER -y $WALLET_KEY_FILE -i $CHAIN_SPEC --name "$TOKEN_NAME" --symbol $TOKEN_SYMBOL --decimals $TOKEN_DECIMALS $DEV_DEBUG_FLAG -ww -s`
 }
 
 function deploy_accounts_index() {

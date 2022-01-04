@@ -27,9 +27,9 @@ from cic_types.processor import generate_metadata_pointer
 from cic_types import MetadataPointer
 from eth_accounts_index.registry import AccountRegistry
 from eth_contract_registry import Registry
-from crypto_dev_signer.keystore.dict import DictKeystore
-from crypto_dev_signer.eth.signer.defaultsigner import ReferenceSigner as EIP155Signer
-from crypto_dev_signer.keystore.keyfile import to_dict as to_keyfile_dict
+from funga.eth.keystore.dict import DictKeystore
+from funga.eth.signer.defaultsigner import EIP155Signer
+from funga.eth.keystore.keyfile import to_dict as to_keyfile_dict
 
 # local imports
 from common.dirs import initialize_dirs

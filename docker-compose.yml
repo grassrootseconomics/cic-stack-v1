@@ -153,7 +153,7 @@ services:
       SIGNER_PROVIDER: ${SIGNER_PROVIDER:-http://cic-signer:8000}
       SIGNER_SECRET: ${SIGNER_SECRET:-deadbeef}
       TASKS_TRACE_QUEUE_STATUS: ${TASKS_TRACE_QUEUE_STATUS:-1}
-      ETH_MIN_FEE_PRICE: $ETH_MIN_FEE_PRICE
+      ETH_MIN_FEE_PRICE: ${ETH_MIN_FEE_PRICE:-1000000000}
     restart: unless-stopped 
     depends_on:
       - evm
@@ -164,13 +164,13 @@ services:
       - signer-data:/run/crypto-dev-signer
       - contract-config:/tmp/cic/config/:ro
     command:
-      - /bin/bash
-      - -c
-      - |
-        set -a
-        if [[ -f /tmp/cic/config/env_reset ]]; then source /tmp/cic/config/env_reset; fi 
-        set +a
-        ./start_tasker.sh --aux-all -q cic-eth  -vv
+        - /bin/bash
+        - -c
+        - |
+            set -a
+            if [[ -f /tmp/cic/config/env_reset ]]; then source /tmp/cic/config/env_reset; fi 
+            set +a
+            ./start_tasker.sh --aux-all -q cic-eth  -vv
 
 
   cic-eth-tracker:
@@ -203,7 +203,7 @@ services:
       SYNCER_LOOP_INTERVAL: ${SYNCER_LOOP_INTERVAL:-5}
       SYNCER_NO_HISTORY: ${SYNCER_NO_HISTORY:-1}
       SYNCER_OFFSET: ${SYNCER_OFFSET:-0}
-      TASKS_TRANSFER_CALLBACKS: ${TASKS_TRANSFER_CALLBACKS:-"cic-eth:cic_eth.callbacks.noop.noop,cic-ussd:cic_ussd.tasks.callback_handler.transaction_callback"}
+      TASKS_TRANSFER_CALLBACKS: ${TASKS_TRANSFER_CALLBACKS:-cic-eth:cic_eth.callbacks.noop.noop,cic-ussd:cic_ussd.tasks.callback_handler.transaction_callback}
     restart: unless-stopped 
     depends_on:
       - evm
@@ -342,7 +342,7 @@ services:
       SYNCER_LOOP_INTERVAL: ${SYNCER_LOOP_INTERVAL:-5}
       SYNCER_OFFSET: ${SYNCER_OFFSET:-0}
       SYNCER_NO_HISTORY: ${SYNCER_NO_HISTORY:-1}
-      TASKS_TRANSFER_CALLBACKS: ${TASKS_TRANSFER_CALLBACKS:-"cic-eth:cic_eth.callbacks.noop.noop,cic-ussd:cic_ussd.tasks.callback_handler.transaction_callback"}
+      TASKS_TRANSFER_CALLBACKS: ${TASKS_TRANSFER_CALLBACKS:-cic-eth:cic_eth.callbacks.noop.noop,cic-ussd:cic_ussd.tasks.callback_handler.transaction_callback}
     restart: unless-stopped 
     depends_on:
       - evm
@@ -497,7 +497,7 @@ services:
       dockerfile: docker/Dockerfile
       args:
         PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
-        EXTRA_PIP_INDEX_URL: ${EXTRA_PIP_INDEX_URL:-https://pip.grassrootseconomics.net:8433}
+        EXTRA_PIP_INDEX_URL: ${EXTRA_PIP_INDEX_URL:-https://pip.grassrootseconomics.net}
         EXTRA_PIP_ARGS: $EXTRA_PIP_ARGS
         DOCKER_REGISTRY: ${DEV_DOCKER_REGISTRY:-registry.gitlab.com/grassrootseconomics}
     environment:
