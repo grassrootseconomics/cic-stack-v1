@@ -13,7 +13,6 @@ from cic_types.condiments import MetadataPointer
 from cic_ussd.account.chain import Chain
 from cic_ussd.account.transaction import from_wei
 from cic_ussd.cache import cache_data_key, get_cached_data
-from cic_ussd.translation import translation_for
 
 logg = logging.getLogger(__name__)
 
@@ -97,17 +96,3 @@ def query_statement(blockchain_address: str, limit: int = 9):
         callback_param=blockchain_address
     )
     cic_eth_api.list(address=blockchain_address, limit=limit)
-
-
-def statement_transaction_set(preferred_language: str, transaction_reprs: list):
-    """
-    :param preferred_language:
-    :type preferred_language:
-    :param transaction_reprs:
-    :type transaction_reprs:
-    :return:
-    :rtype:
-    """
-    if not transaction_reprs:
-        return translation_for('helpers.no_transaction_history', preferred_language)
-    return ''.join(f'{transaction_repr}\n' for transaction_repr in transaction_reprs)

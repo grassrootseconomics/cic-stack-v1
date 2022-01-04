@@ -1,0 +1,19 @@
+keys,en,sw
+female,Female,Mwanamke
+from,From,Kutoka kwa
+male,Male,Mwanaume
+not_provided,Not provided,Haijawekwa
+no_language_list,No language list,Hamna lugha ya kuchagua
+no_transaction_history,No transaction history,Hamna ripoti ya matumizi
+no_tokens_list,No tokens to list,Hamna sarafu nyingine
+other,Other,Nyingine
+received,Received,Ulipokea
+sent,Sent,Ulituma
+to,To,Kwa
+guardians_list_header,Your set guardians are:,Walinzi uliowaongeza ni:
+no_guardians_list,No guardians set,Hamna walinzi walioongezwa
+error.no_phone_number_provided,No phone number was provided.,Namabari ya simu haijawekwa.
+error.no_matching_account,The number provided is not registered.,Nambari uliyoweka haijasajiliwa.
+error.is_initiator,Phone number cannot be your own.,Nambari yafaa kuwa tofauti na yako.
+error.is_existent_guardian,This phone number is is already added as a guardian.,Namabari hii tayari imeongezwa kama mlinzi wa nambari ya siri.
+error.is_not_existent_guardian,Phone number not set as PIN reset guardian.,Nambari hii haijaongezwa kama mlinzi wa nambari ya siri.

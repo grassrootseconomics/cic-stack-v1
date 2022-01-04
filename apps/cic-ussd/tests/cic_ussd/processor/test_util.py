@@ -32,7 +32,7 @@ def test_parse_person_metadata(activated_account, cache_person_metadata, cache_p
     cached_person_metadata = person_metadata.get_cached_metadata()
     person_metadata = json.loads(cached_person_metadata)
     preferred_language = get_cached_preferred_language(activated_account.blockchain_address)
-    display_key = 'ussd.kenya.display_person_metadata'
+    display_key = 'ussd.display_person_metadata'
     parsed_person_metadata = parse_person_metadata(cached_person_metadata,
                                                    display_key,
                                                    preferred_language)

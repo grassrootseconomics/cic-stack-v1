@@ -18,6 +18,7 @@ from cic_types.ext.metadata.signer import Signer
 
 # local imports
 from cic_ussd.account.chain import Chain
+from cic_ussd.account.guardianship import Guardianship
 from cic_ussd.account.tokens import query_default_token
 from cic_ussd.cache import cache_data, cache_data_key, Cache
 from cic_ussd.db import dsn_from_config
@@ -33,7 +34,7 @@ from cic_ussd.processor.ussd import handle_menu_operations
 from cic_ussd.runnable.server_base import exportable_parser, logg
 from cic_ussd.session.ussd_session import UssdSession as InMemoryUssdSession
 from cic_ussd.state_machine import UssdStateMachine
-from cic_ussd.translation import translation_for
+from cic_ussd.translation import generate_locale_files, Languages, translation_for
 from cic_ussd.validator import check_ip, check_request_content_length, validate_phone_number, validate_presence
 
 args = exportable_parser.parse_args()
@@ -55,10 +56,6 @@ data_source_name = dsn_from_config(config)
 SessionBase.connect(data_source_name,
                     pool_size=int(config.get('DATABASE_POOL_SIZE')),
                     debug=config.true('DATABASE_DEBUG'))
-
-# set up translations
-i18n.load_path.append(config.get('LOCALE_PATH'))
-i18n.set('fallback', config.get('LOCALE_FALLBACK'))
 
 # set Fernet key
 PasswordEncoder.set_key(config.get('APP_PASSWORD_PEPPER'))
@@ -121,6 +118,22 @@ valid_service_codes = config.get('USSD_SERVICE_CODE').split(",")
 E164Format.region = config.get('E164_REGION')
 Support.phone_number = config.get('OFFICE_SUPPORT_PHONE')
 
+validate_presence(config.get('SYSTEM_GUARDIANS_FILE'))
+Guardianship.load_system_guardians(config.get('SYSTEM_GUARDIANS_FILE'))
+
+generate_locale_files(locale_dir=config.get('LOCALE_PATH'),
+                      schema_file_path=config.get('SCHEMA_FILE_PATH'),
+                      translation_builder_path=config.get('LOCALE_FILE_BUILDERS'))
+
+# set up translations
+i18n.load_path.append(config.get('LOCALE_PATH'))
+i18n.set('fallback', config.get('LOCALE_FALLBACK'))
+
+validate_presence(config.get('LANGUAGES_FILE'))
+Languages.load_languages_dict(config.get('LANGUAGES_FILE'))
+languages = Languages()
+languages.cache_system_languages()
+
 
 def application(env, start_response):
     """Loads python code for application to be accessible over web server
@@ -175,7 +188,7 @@ def application(env, start_response):
 
         if service_code not in valid_service_codes:
             response = translation_for(
-                'ussd.kenya.invalid_service_code',
+                'ussd.invalid_service_code',
                 i18n.config.get('fallback'),
                 valid_service_code=valid_service_codes[0]
             )
@@ -189,9 +202,7 @@ def application(env, start_response):
             return []
         logg.debug('session {} started for {}'.format(external_session_id, phone_number))
 
-        response = handle_menu_operations(
-            chain_str, external_session_id, phone_number, args.q, service_code, session, user_input
-        )
+        response = handle_menu_operations(external_session_id, phone_number, args.q, service_code, session, user_input)
         response_bytes, headers = with_content_headers(headers, response)
         start_response('200 OK,', headers)
         session.commit()

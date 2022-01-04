@@ -47,11 +47,11 @@ def test_menu_processor(activated_account,
     preferred_language = get_cached_preferred_language(activated_account.blockchain_address)
     available_balance = get_cached_available_balance(activated_account.blockchain_address)
     token_symbol = get_default_token_symbol()
-    with_available_balance = 'ussd.kenya.account_balances.available_balance'
-    with_fees = 'ussd.kenya.account_balances.with_fees'
+    with_available_balance = 'ussd.account_balances.available_balance'
+    with_fees = 'ussd.account_balances.with_fees'
     ussd_menu = UssdMenu.find_by_name('account_balances')
     name = ussd_menu.get('name')
-    resp = response(activated_account, 'ussd.kenya.account_balances', name, init_database, generic_ussd_session)
+    resp = response(activated_account, 'ussd.account_balances', name, init_database, generic_ussd_session)
     assert resp == translation_for(with_available_balance,
                                    preferred_language,
                                    available_balance=available_balance,
@@ -61,7 +61,7 @@ def test_menu_processor(activated_account,
     key = cache_data_key(identifier, MetadataPointer.BALANCES_ADJUSTED)
     adjusted_balance = 45931650.64654012
     cache_data(key, json.dumps(adjusted_balance))
-    resp = response(activated_account, 'ussd.kenya.account_balances', name, init_database, generic_ussd_session)
+    resp = response(activated_account, 'ussd.account_balances', name, init_database, generic_ussd_session)
     tax_wei = to_wei(int(available_balance)) - int(adjusted_balance)
     tax = from_wei(int(tax_wei))
     assert resp == translation_for(key=with_fees,
@@ -84,28 +84,28 @@ def test_menu_processor(activated_account,
     if len(transaction_sets) >= 3:
         last_transaction_set = statement_transaction_set(preferred_language, transaction_sets[2])
 
-    display_key = 'ussd.kenya.first_transaction_set'
+    display_key = 'ussd.first_transaction_set'
     ussd_menu = UssdMenu.find_by_name('first_transaction_set')
     name = ussd_menu.get('name')
     resp = response(activated_account, display_key, name, init_database, generic_ussd_session)
 
     assert resp == translation_for(display_key, preferred_language, first_transaction_set=first_transaction_set)
 
-    display_key = 'ussd.kenya.middle_transaction_set'
+    display_key = 'ussd.middle_transaction_set'
     ussd_menu = UssdMenu.find_by_name('middle_transaction_set')
     name = ussd_menu.get('name')
     resp = response(activated_account, display_key, name, init_database, generic_ussd_session)
 
     assert resp == translation_for(display_key, preferred_language, middle_transaction_set=middle_transaction_set)
 
-    display_key = 'ussd.kenya.last_transaction_set'
+    display_key = 'ussd.last_transaction_set'
     ussd_menu = UssdMenu.find_by_name('last_transaction_set')
     name = ussd_menu.get('name')
     resp = response(activated_account, display_key, name, init_database, generic_ussd_session)
 
     assert resp == translation_for(display_key, preferred_language, last_transaction_set=last_transaction_set)
 
-    display_key = 'ussd.kenya.display_user_metadata'
+    display_key = 'ussd.display_user_metadata'
     ussd_menu = UssdMenu.find_by_name('display_user_metadata')
     name = ussd_menu.get('name')
     identifier = bytes.fromhex(activated_account.blockchain_address)
@@ -114,7 +114,7 @@ def test_menu_processor(activated_account,
     resp = response(activated_account, display_key, name, init_database, generic_ussd_session)
     assert resp == parse_person_metadata(cached_person_metadata, display_key, preferred_language)
 
-    display_key = 'ussd.kenya.account_balances_pin_authorization'
+    display_key = 'ussd.account_balances_pin_authorization'
     ussd_menu = UssdMenu.find_by_name('account_balances_pin_authorization')
     name = ussd_menu.get('name')
     resp = response(activated_account, display_key, name, init_database, generic_ussd_session)
@@ -122,11 +122,11 @@ def test_menu_processor(activated_account,
 
     activated_account.failed_pin_attempts = 1
     resp = response(activated_account, display_key, name, init_database, generic_ussd_session)
-    retry_pin_entry = translation_for('ussd.kenya.retry_pin_entry', preferred_language, remaining_attempts=2)
+    retry_pin_entry = translation_for('ussd.retry_pin_entry', preferred_language, remaining_attempts=2)
     assert resp == translation_for(f'{display_key}.retry', preferred_language, retry_pin_entry=retry_pin_entry)
     activated_account.failed_pin_attempts = 0
 
-    display_key = 'ussd.kenya.start'
+    display_key = 'ussd.start'
     ussd_menu = UssdMenu.find_by_name('start')
     name = ussd_menu.get('name')
     resp = response(activated_account, display_key, name, init_database, generic_ussd_session)
@@ -135,7 +135,7 @@ def test_menu_processor(activated_account,
                                    account_balance=available_balance,
                                    account_token_name=token_symbol)
 
-    display_key = 'ussd.kenya.start'
+    display_key = 'ussd.start'
     ussd_menu = UssdMenu.find_by_name('start')
     name = ussd_menu.get('name')
     older_timestamp = (activated_account.created - datetime.timedelta(days=35))
@@ -144,7 +144,7 @@ def test_menu_processor(activated_account,
     response(activated_account, display_key, name, init_database, generic_ussd_session)
     assert mock_get_adjusted_balance['timestamp'] == int((datetime.datetime.now() - datetime.timedelta(days=30)).timestamp())
 
-    display_key = 'ussd.kenya.transaction_pin_authorization'
+    display_key = 'ussd.transaction_pin_authorization'
     ussd_menu = UssdMenu.find_by_name('transaction_pin_authorization')
     name = ussd_menu.get('name')
     generic_ussd_session['data'] = {
@@ -163,7 +163,7 @@ def test_menu_processor(activated_account,
                                    token_symbol=token_symbol,
                                    sender_information=tx_sender_information)
 
-    display_key = 'ussd.kenya.exit_insufficient_balance'
+    display_key = 'ussd.exit_insufficient_balance'
     ussd_menu = UssdMenu.find_by_name('exit_insufficient_balance')
     name = ussd_menu.get('name')
     generic_ussd_session['data'] = {
@@ -180,13 +180,13 @@ def test_menu_processor(activated_account,
                                    recipient_information=tx_recipient_information,
                                    token_balance=available_balance)
 
-    display_key = 'ussd.kenya.exit_invalid_menu_option'
+    display_key = 'ussd.exit_invalid_menu_option'
     ussd_menu = UssdMenu.find_by_name('exit_invalid_menu_option')
     name = ussd_menu.get('name')
     resp = response(activated_account, display_key, name, init_database, generic_ussd_session)
     assert resp == translation_for(display_key, preferred_language, support_phone=Support.phone_number)
 
-    display_key = 'ussd.kenya.exit_successful_transaction'
+    display_key = 'ussd.exit_successful_transaction'
     ussd_menu = UssdMenu.find_by_name('exit_successful_transaction')
     name = ussd_menu.get('name')
     generic_ussd_session['data'] = {
