@@ -63,10 +63,7 @@ class Account(SessionBase):
     def remove_guardian(self, phone_number: str):
         set_guardians = self.guardians.split(',')
         set_guardians.remove(phone_number)
-        if len(set_guardians) > 1:
-            self.guardians = ','.join(set_guardians)
-        else:
-            self.guardians = set_guardians[0]
+        self.guardians = ','.join(set_guardians)
 
     def get_guardians(self) -> list:
         return self.guardians.split(',') if self.guardians else []

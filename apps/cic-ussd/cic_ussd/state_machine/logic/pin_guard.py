@@ -87,7 +87,7 @@ def is_valid_guardian_addition(state_machine_data: Tuple[str, dict, Account, Ses
     guardianship = Guardianship()
     is_system_guardian = guardianship.is_system_guardian(phone_number)
     is_initiator = phone_number == account.phone_number
-    is_existent_guardian = phone_number in account.get_guardians()
+    is_existent_guardian = phone_number in account.get_guardians() or is_system_guardian
 
     failure_reason = ''
     if not is_valid_account:

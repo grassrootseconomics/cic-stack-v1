@@ -417,7 +417,7 @@ class MenuProcessor:
         preferred_language = get_cached_preferred_language(self.account.blockchain_address)
         if not preferred_language:
             preferred_language = i18n.config.get('fallback')
-        return translation_for(self.display_key,preferred_language,token_symbol=token_symbol)
+        return translation_for(self.display_key, preferred_language, token_symbol=token_symbol)
 
     def exit_successful_transaction(self):
         """

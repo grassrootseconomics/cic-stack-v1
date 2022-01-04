@@ -40,6 +40,7 @@ def statement(activated_account):
             'blockchain_address': activated_account.blockchain_address,
             'token_symbol': 'GFT',
             'token_value': 25000000,
+            'token_decimals': 6,
             'role': 'sender',
             'action_tag': 'Sent',
             'direction_tag': 'To',
@@ -63,7 +64,7 @@ def transaction_result(activated_account, load_config, valid_recipient):
         'destination_token_symbol': load_config.get('TEST_TOKEN_SYMBOL'),
         'source_token_decimals': 6,
         'destination_token_decimals': 6,
-        'chain': 'evm:bloxberg:8996'
+        'chain': load_config.get('CHAIN_SPEC')
     }
 
 
