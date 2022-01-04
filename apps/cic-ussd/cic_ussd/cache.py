@@ -14,7 +14,7 @@ class Cache:
     store: Redis = None
 
 
-def cache_data(key: str, data: str):
+def cache_data(key: str, data: [bytes, float, int, str]):
     """
     :param key:
     :type key:

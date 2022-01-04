@@ -90,7 +90,7 @@ def test_standard_metadata_id(activated_account, cache_person_metadata, pending_
 
 def test_account_create(init_cache, init_database, load_chain_spec, mock_account_creation_task_result, task_uuid):
     chain_str = Chain.spec.__str__()
-    create(chain_str, phone_number(), init_database)
+    create(chain_str, phone_number(), init_database, 'en')
     assert len(init_database.query(TaskTracker).all()) == 1
     account_creation_data = get_cached_data(task_uuid)
     assert json.loads(account_creation_data).get('status') == AccountStatus.PENDING.name

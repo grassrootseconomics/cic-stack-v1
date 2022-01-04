@@ -38,11 +38,5 @@ def celery_config():
 
 
 @pytest.fixture(scope='session')
-def celery_worker_parameters():
-    return {
-#            'queues': ('cic-notify'),
-            }
-
-@pytest.fixture(scope='session')
 def celery_enable_logging():
     return True

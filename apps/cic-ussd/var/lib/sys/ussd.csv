@@ -574,9 +574,9 @@ products_edit_pin_authorization.first,"CON Please enter your PIN
 0. Dheebi"
 products_edit_pin_authorization.retry,%{retry_pin_entry},%{retry_pin_entry},%{retry_pin_entry},%{retry_pin_entry},%{retry_pin_entry},%{retry_pin_entry},%{retry_pin_entry}
 account_balances.available_balance,"CON Your balances are as follows:
-balance: %{available_balance} %{token_symbol}
+  %{available_balance} %{token_symbol}
 0. Back","CON Salio zako ni zifuatazo:
-  salio: %{available_balance} %{token_symbol}
+  %{available_balance} %{token_symbol}
 0. Rudi","CON Utyalo waku ni uu:
  utyalo: %{available_balance} %{token_symbol}
 0. Syoka itina","CON Matigari maku ni maya:
@@ -659,9 +659,11 @@ first_transaction_set,"CON %{first_transaction_set}
 1. Dhuur
 00. Bai"
 middle_transaction_set,"CON %{middle_transaction_set}
+
 11. Next
 22. Previous
 00. Exit","CON %{middle_transaction_set}
+
 11. Mbele
 22. Rudi
 00. Ondoka","CON %{middle_transaction_set}
@@ -681,8 +683,10 @@ middle_transaction_set,"CON %{middle_transaction_set}
 2. Dheebi
 00. Bai"
 last_transaction_set,"CON %{last_transaction_set}
+
 22. Previous
 00. Exit","CON %{last_transaction_set}
+
 22. Rudi
 00. Ondoka","CON %{last_transaction_set}
 2. Itina
