@@ -33,8 +33,8 @@ from chainlib.eth.error import (
         RequestMismatchException,
         )
 from chainlib.chain import ChainSpec
-from crypto_dev_signer.eth.signer import ReferenceSigner as EIP155Signer
-from crypto_dev_signer.keystore.dict import DictKeystore
+from funga.eth.signer import EIP155Signer
+from funga.eth.keystore.dict import DictKeystore
 from cic_types.models.person import Person
 from eth_erc20 import ERC20
 from cic_eth.cli.chain import chain_interface
