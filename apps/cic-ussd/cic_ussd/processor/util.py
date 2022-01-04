@@ -3,7 +3,7 @@ import datetime
 import json
 import logging
 import time
-from typing import Union
+from typing import List, Union
 
 # external imports
 from cic_types.condiments import MetadataPointer
@@ -21,9 +21,7 @@ logg = logging.getLogger(__file__)
 def latest_input(user_input: str) -> str:
     """
     :param user_input:
-    :type user_input:
     :return:
-    :rtype:
     """
     return user_input.split('*')[-1]
 
@@ -85,6 +83,27 @@ def resume_last_ussd_session(last_state: str) -> Document:
     return UssdMenu.find_by_name(last_state)
 
 
+def ussd_menu_list(fallback: str, menu_list: list, split: int = 3) -> List[str]:
+    """
+    :param fallback:
+    :type fallback:
+    :param menu_list:
+    :type menu_list:
+    :param split:
+    :type split:
+    :return:
+    :rtype:
+    """
+    menu_list_sets = [menu_list[item:item + split] for item in range(0, len(menu_list), split)]
+    menu_list_reprs = []
+    for i in range(split):
+        try:
+            menu_list_reprs.append(''.join(f'{list_set_item}\n' for list_set_item in menu_list_sets[i]).rstrip('\n'))
+        except IndexError:
+            menu_list_reprs.append(fallback)
+    return menu_list_reprs
+
+
 def wait_for_cache(identifier: Union[list, bytes], resource_name: str, salt: MetadataPointer, interval: int = 1, max_retry: int = 5):
     """
     :param identifier:
@@ -132,17 +151,28 @@ def wait_for_session_data(resource_name: str, session_data_key: str, ussd_sessio
     :return:
     :rtype:
     """
-    session_data = ussd_session.get('data').get(session_data_key)
-    counter = 0
-    while session_data is None:
-        logg.debug(f'Waiting for: {resource_name}. Checking after: {interval} ...')
+    data = ussd_session.get('data')
+    data_poller = 0
+    while not data:
+        logg.debug(f'Waiting for data object on ussd session: {ussd_session.get("external_session_id")}')
+        logg.debug(f'Data poller at: {data_poller}. Checking again after: {interval} secs...')
         time.sleep(interval)
-        counter += 1
-        session_data = ussd_session.get('data').get(session_data_key)
-        if session_data is not None:
-            logg.debug(f'{resource_name} now available.')
+        data_poller += 1
+        if data:
+            logg.debug(f'Data object found, proceeding to poll for: {session_data_key}')
             break
-        else:
-            if counter == max_retry:
-                logg.debug(f'Could not find: {resource_name} within: {max_retry}')
+    if data:
+        session_data_poller = 0
+        session_data = data.get(session_data_key)
+        while not session_data_key:
+            logg.debug(
+                f'Session data poller at: {data_poller} with max retry at: {max_retry}. Checking again after: {interval} secs...')
+            time.sleep(interval)
+            session_data_poller += 1
+
+            if session_data:
+                logg.debug(f'{resource_name} now available.')
                 break
+
+            elif session_data_poller >= max_retry:
+                logg.debug(f'Could not find data object within: {max_retry}')

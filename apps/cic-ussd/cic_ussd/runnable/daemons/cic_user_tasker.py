@@ -20,6 +20,7 @@ from cic_ussd.db import dsn_from_config
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.phone_number import Support
 from cic_ussd.session.ussd_session import UssdSession as InMemoryUssdSession
+from cic_ussd.translation import generate_locale_files
 from cic_ussd.validator import validate_presence
 
 logging.basicConfig(level=logging.WARNING)
@@ -82,6 +83,10 @@ key_file_path = f"{config.get('PGP_KEYS_PATH')}{config.get('PGP_PRIVATE_KEYS')}"
 if key_file_path:
     validate_presence(path=key_file_path)
 Signer.key_file_path = key_file_path
+
+generate_locale_files(locale_dir=config.get('LOCALE_PATH'),
+                      schema_file_path=config.get('SCHEMA_FILE_PATH'),
+                      translation_builder_path=config.get('LOCALE_FILE_BUILDERS'))
 
 # set up translations
 i18n.load_path.append(config.get('LOCALE_PATH'))

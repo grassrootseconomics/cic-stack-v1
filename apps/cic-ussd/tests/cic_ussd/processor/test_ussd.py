@@ -97,7 +97,7 @@ def test_handle_menu_operations(activated_account,
     valid_service_codes = load_config.get('USSD_SERVICE_CODE').split(",")
     preferred_language = i18n.config.get('fallback')
     resp = handle_menu_operations(chain_str, external_session_id, phone, None, valid_service_codes[0], init_database, '4444')
-    assert resp == translation_for('ussd.kenya.account_creation_prompt', preferred_language)
+    assert resp == translation_for('ussd.account_creation_prompt', preferred_language)
     cached_ussd_session = get_cached_data(external_session_id)
     ussd_session = json.loads(cached_ussd_session)
     assert ussd_session['msisdn'] == phone
@@ -118,5 +118,5 @@ def test_handle_menu_operations(activated_account,
         preferred_language = get_cached_preferred_language(activated_account.blockchain_address)
         persisted_ussd_session.state = 'enter_transaction_recipient'
         resp = handle_menu_operations(chain_str, external_session_id, phone, None, valid_service_codes[0], init_database, '1')
-        assert resp == translation_for('ussd.kenya.enter_transaction_recipient', preferred_language)
+        assert resp == translation_for('ussd.enter_transaction_recipient', preferred_language)
 

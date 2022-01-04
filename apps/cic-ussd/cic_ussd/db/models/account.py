@@ -171,7 +171,7 @@ class Account(SessionBase):
         return check_password_hash(password, self.password_hash)
 
 
-def create(chain_str: str, phone_number: str, session: Session):
+def create(chain_str: str, phone_number: str, session: Session, preferred_language: str):
     """
     :param chain_str:
     :type chain_str:
@@ -179,12 +179,14 @@ def create(chain_str: str, phone_number: str, session: Session):
     :type phone_number:
     :param session:
     :type session:
+    :param preferred_language:
+    :type preferred_language:
     :return:
     :rtype:
     """
     api = Api(callback_task='cic_ussd.tasks.callback_handler.account_creation_callback',
               callback_queue='cic-ussd',
-              callback_param='',
+              callback_param=preferred_language,
               chain_str=chain_str)
     task_uuid = api.create_account().id
     TaskTracker.add(session=session, task_uuid=task_uuid)

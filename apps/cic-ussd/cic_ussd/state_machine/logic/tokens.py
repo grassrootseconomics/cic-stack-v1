@@ -23,7 +23,7 @@ def is_valid_token_selection(state_machine_data: Tuple[str, dict, Account, Sessi
     account_tokens_list = session_data.get('account_tokens_list')
     if not account_tokens_list:
         wait_for_session_data('Account token list', session_data_key='account_tokens_list', ussd_session=ussd_session)
-    if user_input not in ['00', '22']:
+    if user_input not in ['00', '11', '22']:
         try:
             user_input = int(user_input)
             return user_input <= len(account_tokens_list)
