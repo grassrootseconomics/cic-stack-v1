@@ -15,5 +15,5 @@ To get started see [./apps/contract-migration/README.md](./apps/contract-migrati
 
 ## Documentation 
 
-[https://docs.grassecon.org/cic_stack/](https://docs.grassecon.org/cic_stack/)
+[https://docs.grassecon.org/software/](https://docs.grassecon.org/software/)
 
