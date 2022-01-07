@@ -3,12 +3,10 @@ ARG DOCKER_REGISTRY="registry.gitlab.com/grassrootseconomics"
 FROM $DOCKER_REGISTRY/cic-base-images:python-3.8.6-dev-e8eb2ee2
 
 RUN apt-get install -y redis-server
+
 # create secrets directory
 RUN mkdir -vp pgp/keys
 
-# create application directory
-RUN mkdir -vp cic-ussd
-RUN mkdir -vp data
 
 ARG EXTRA_PIP_INDEX_URL=https://pip.grassrootseconomics.net
 ARG EXTRA_PIP_ARGS=""
@@ -25,7 +23,8 @@ RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
 COPY . .
 RUN python setup.py install
 
-COPY cic_ussd/db/ussd_menu.json data/
+# create local files directory
+RUN mkdir -vp cic_ussd/data/locale
 
 COPY docker/*.sh ./
 RUN chmod +x /root/*.sh
