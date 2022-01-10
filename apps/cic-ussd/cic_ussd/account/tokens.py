@@ -14,7 +14,7 @@ from cic_ussd.account.chain import Chain
 from cic_ussd.cache import cache_data, cache_data_key, get_cached_data
 from cic_ussd.error import CachedDataNotFoundError, SeppukuError
 from cic_ussd.metadata.tokens import query_token_info, query_token_metadata
-from cic_ussd.processor.util import wait_for_cache
+from cic_ussd.processor.poller import wait_for_cache
 
 logg = logging.getLogger(__file__)
 

@@ -15,7 +15,7 @@ from cic_ussd.db.models.account import Account
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.db.enum import AccountStatus
 from cic_ussd.encoder import create_password_hash, check_password_hash
-from cic_ussd.processor.util import wait_for_session_data
+from cic_ussd.processor.poller import wait_for_session_data
 from cic_ussd.session.ussd_session import create_or_update_session, persist_ussd_session
 
 

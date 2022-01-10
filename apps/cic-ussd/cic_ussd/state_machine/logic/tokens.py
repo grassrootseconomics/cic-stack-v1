@@ -7,7 +7,7 @@ from sqlalchemy.orm.session import Session
 # local imports
 from cic_ussd.account.tokens import set_active_token
 from cic_ussd.db.models.account import Account
-from cic_ussd.processor.util import wait_for_session_data
+from cic_ussd.processor.poller import wait_for_session_data
 from cic_ussd.session.ussd_session import save_session_data
 
 

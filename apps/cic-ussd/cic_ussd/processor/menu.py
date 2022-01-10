@@ -31,7 +31,8 @@ from cic_ussd.cache import cache_data_key, cache_data, get_cached_data
 from cic_ussd.db.models.account import Account
 from cic_ussd.metadata import PersonMetadata
 from cic_ussd.phone_number import Support
-from cic_ussd.processor.util import parse_person_metadata, ussd_menu_list, wait_for_session_data
+from cic_ussd.processor.poller import wait_for_session_data
+from cic_ussd.processor.util import parse_person_metadata, ussd_menu_list
 from cic_ussd.session.ussd_session import save_session_data
 from cic_ussd.state_machine.logic.language import preferred_langauge_from_selection
 from cic_ussd.translation import translation_for
