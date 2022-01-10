@@ -17,5 +17,5 @@ def test_translation_for(set_locale_files):
         key='ussd.exit_invalid_request',
         preferred_language='sw'
     )
-    assert swahili_translation == 'END Chaguo si sahihi.'
+    assert swahili_translation == 'END Chaguo si sahihi'
     assert english_translation == 'END Invalid request.'

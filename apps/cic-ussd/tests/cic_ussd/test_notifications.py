@@ -9,7 +9,7 @@ from cic_ussd.notifications import Notifier
 
 @pytest.mark.parametrize("key, preferred_language, recipient, expected_message", [
     ("ussd.exit", "en", "+254712345678", "END Thank you for using the service."),
-    ("ussd.exit", "sw", "+254712345678", "END Asante kwa kutumia huduma.")
+    ("ussd.exit", "sw", "+254712345678", "END Asante kwa kutumia huduma")
 ])
 def test_send_sms_notification(celery_session_worker,
                                expected_message,
