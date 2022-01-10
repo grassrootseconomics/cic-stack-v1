@@ -796,18 +796,18 @@ invalid_service_code,Please dial %{valid_service_code} to access Sarafu Network,
 help,"CON For assistance call %{support_phone}
 00. Back
 99. Exit","CON Kwa usaidizi piga simu %{support_phone}
-0. Rudi
-9. Ondoka","CON Kwa utethyo kuna simu %{support_phone}
-0. Itina
-9. Ondoka","CON Kwa uteithio hora thimu %{support_phone}
-0. Coka
-9. Uma","CON Kwa Kuavizwa piga simu  %{support_phone}
-0. Uya nyuma
-9. Uka","CON Kuom kony go simu e %{support_phone}
-0. Dog chien
-9. Wuogi","CON Qarqars simu dai%{support_phone}
-0. Dheebi
-9. Bai"
+00. Rudi
+99. Ondoka","CON Kwa utethyo kuna simu %{support_phone}
+00. Itina
+99. Ondoka","CON Kwa uteithio hora thimu %{support_phone}
+00. Coka
+99. Uma","CON Kwa Kuavizwa piga simu  %{support_phone}
+00. Uya nyuma
+99. Uka","CON Kuom kony go simu e %{support_phone}
+00. Dog chien
+99. Wuogi","CON Qarqars simu dai%{support_phone}
+00. Dheebi
+99. Bai"
 complete,"CON Your request has been sent. You will receive an SMS shortly.
 00. Back
 99. Exit","CON Ombi lako limetumwa. Utapokea uthibitishaji wa SMS kwa muda mfupi.
