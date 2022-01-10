@@ -15,7 +15,7 @@ from cic_ussd.cache import Cache, cache_data, cache_data_key, get_cached_data
 from cic_ussd.account.chain import Chain
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.db.models.account import Account
-from cic_ussd.processor.util import wait_for_cache
+from cic_ussd.processor.poller import wait_for_cache
 from cic_ussd.account.statement import filter_statement_transactions
 from cic_ussd.account.transaction import transaction_actors
 from cic_ussd.account.tokens import (collate_token_metadata,
