@@ -16,6 +16,7 @@ from cic_ussd.processor.menu import response
 from cic_ussd.processor.util import latest_input, resume_last_ussd_session
 from cic_ussd.session.ussd_session import create_or_update_session, persist_ussd_session
 from cic_ussd.state_machine import UssdStateMachine
+from cic_ussd.state_machine.logic.manager import States
 from cic_ussd.validator import is_valid_response
 
 
@@ -123,7 +124,16 @@ def handle_no_account_menu_operations(account: Optional[Account],
     :return:
     :rtype:
     """
-    menu = UssdMenu.find_by_name('initial_language_selection')
+    initial_language_selection = 'initial_language_selection'
+    menu = UssdMenu.find_by_name(initial_language_selection)
+    last_ussd_session: UssdSession = UssdSession.last_ussd_session(phone_number, session)
+    if last_ussd_session:
+        menu_name = menu.get('name')
+        if user_input:
+            state = next_state(account, session, user_input, last_ussd_session.to_json())
+            menu = UssdMenu.find_by_name(state)
+        elif menu_name not in States.non_resumable_states and menu_name != initial_language_selection:
+            menu = resume_last_ussd_session(last_ussd_session.state)
     ussd_session = create_or_update_session(
         external_session_id=external_session_id,
         msisdn=phone_number,
@@ -132,15 +142,6 @@ def handle_no_account_menu_operations(account: Optional[Account],
         session=session,
         user_input=user_input)
     persist_ussd_session(external_session_id, queue)
-    last_ussd_session: UssdSession = UssdSession.last_ussd_session(phone_number, session)
-    if last_ussd_session:
-        if not user_input:
-            menu = resume_last_ussd_session(last_ussd_session.state)
-        else:
-            session = SessionBase.bind_session(session)
-            state = next_state(account, session, user_input, last_ussd_session.to_json())
-            menu = UssdMenu.find_by_name(state)
-
     return response(account=account,
                     display_key=menu.get('display_key'),
                     menu_name=menu.get('name'),

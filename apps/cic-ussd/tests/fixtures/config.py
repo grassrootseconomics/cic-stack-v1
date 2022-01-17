@@ -16,6 +16,7 @@ from cic_ussd.files.local_files import create_local_file_data_stores, json_file_
 from cic_ussd.menu.ussd_menu import UssdMenu
 from cic_ussd.phone_number import E164Format, Support
 from cic_ussd.state_machine import UssdStateMachine
+from cic_ussd.state_machine.logic.manager import States
 from cic_ussd.translation import generate_locale_files, Languages
 from cic_ussd.validator import validate_presence
 
@@ -67,6 +68,11 @@ def load_config():
 @pytest.fixture(scope='function')
 def load_e164_region(load_config):
     E164Format.region = load_config.get('E164_REGION')
+
+
+@pytest.fixture(scope='session', autouse=True)
+def load_non_resumable_states(load_config):
+    States.load_non_resumable_states(load_config.get('MACHINE_NON_RESUMABLE_STATES'))
 
 
 @pytest.fixture(scope='session')
