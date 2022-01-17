@@ -2,7 +2,7 @@
 
 import json
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 # external imports
 import celery
@@ -143,9 +143,11 @@ def statement_callback(self, result, param: str, status_code: int):
         recipient_transaction, sender_transaction = transaction_actors(transaction)
         if recipient_transaction.get('blockchain_address') == param:
             recipient_transaction['alt_blockchain_address'] = sender_transaction.get('blockchain_address')
+            recipient_transaction['timestamp'] = datetime.utcfromtimestamp(transaction.get('timestamp')).strftime('%d/%m/%y, %H:%M')
             generate(param, queue, recipient_transaction)
         if sender_transaction.get('blockchain_address') == param:
             sender_transaction['alt_blockchain_address'] = recipient_transaction.get('blockchain_address')
+            sender_transaction['timestamp'] = datetime.utcfromtimestamp(transaction.get('timestamp')).strftime('%d/%m/%y, %H:%M')
             generate(param, queue, sender_transaction)
 
 
@@ -230,6 +232,10 @@ def transaction_callback(result: dict, param: str, status_code: int):
     """
     if status_code != 0:
         raise ValueError(f'Unexpected status code: {status_code}.')
+
+    print(f'THE RETURNING TRANSACTION IS: {result}')
+    print(f'STATUS CODE: {status_code}')
+    print(f'WITH PARAM: {param}')
 
     chain_str = Chain.spec.__str__()
     destination_token_symbol = result.get('destination_token_symbol')
