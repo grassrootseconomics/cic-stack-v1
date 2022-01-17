@@ -34,6 +34,7 @@ from cic_ussd.processor.ussd import handle_menu_operations
 from cic_ussd.runnable.server_base import exportable_parser, logg
 from cic_ussd.session.ussd_session import UssdSession as InMemoryUssdSession
 from cic_ussd.state_machine import UssdStateMachine
+from cic_ussd.state_machine.logic.manager import States
 from cic_ussd.translation import generate_locale_files, Languages, translation_for
 from cic_ussd.validator import check_ip, check_request_content_length, validate_phone_number, validate_presence
 
@@ -93,6 +94,9 @@ celery.Celery(backend=config.get('CELERY_RESULT_URL'), broker=config.get('CELERY
 # load states and transitions data
 states = json_file_parser(filepath=config.get('MACHINE_STATES'))
 transitions = json_file_parser(filepath=config.get('MACHINE_TRANSITIONS'))
+
+# make non-resumable states accessible globally
+States.load_non_resumable_states(config.get("MACHINE_NON_RESUMABLE_STATES"))
 
 chain_spec = ChainSpec.from_chain_str(config.get('CHAIN_SPEC'))
 

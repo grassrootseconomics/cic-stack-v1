@@ -540,5 +540,8 @@ def response(account: Account, display_key: str, menu_name: str, session: Sessio
     if menu_name == 'exit_successful_token_selection':
         return menu_processor.exit_successful_token_selection()
 
-    preferred_language = get_cached_preferred_language(account.blockchain_address)
+    preferred_language = i18n.config.get('fallback')
+    if account:
+        preferred_language = get_cached_preferred_language(account.blockchain_address)
+
     return translation_for(display_key, preferred_language)

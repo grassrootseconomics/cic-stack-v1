@@ -6,13 +6,12 @@ import time
 from typing import List, Union
 
 # external imports
-from cic_types.condiments import MetadataPointer
 from cic_types.models.person import get_contact_data_from_vcard
 from tinydb.table import Document
 
 # local imports
-from cic_ussd.cache import cache_data_key, get_cached_data
 from cic_ussd.menu.ussd_menu import UssdMenu
+from cic_ussd.state_machine.logic.manager import States
 from cic_ussd.translation import translation_for
 
 logg = logging.getLogger(__file__)
@@ -66,19 +65,8 @@ def resume_last_ussd_session(last_state: str) -> Document:
     :return:
     :rtype:
     """
-    # TODO [Philip]: This can be cleaned further
-    non_reusable_states = [
-        'account_creation_prompt',
-        'exit',
-        'exit_invalid_pin',
-        'exit_invalid_new_pin',
-        'exit_invalid_recipient',
-        'exit_invalid_request',
-        'exit_pin_blocked',
-        'exit_pin_mismatch',
-        'exit_successful_transaction'
-    ]
-    if last_state in non_reusable_states:
+
+    if last_state in States.non_resumable_states:
         return UssdMenu.find_by_name('start')
     return UssdMenu.find_by_name(last_state)
 
