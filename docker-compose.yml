@@ -554,6 +554,7 @@ services:
     restart: on-failure 
     ports:
       - ${DEV_CIC_USER_SERVER_PORT:-63415}:9500
+      - 5050:5050
     depends_on:
       - postgres
       - redis
@@ -595,6 +596,7 @@ services:
       - cic-cache-tasker
     ports:
       - ${DEV_CIC_USER_USSD_SERVER_PORT:-63315}:9000
+      - 5051:5050
     volumes:
       - ./apps/contract-migration/testdata/pgp/:/usr/src/secrets/
     command: "/root/start_cic_user_ussd_server.sh -vv"
