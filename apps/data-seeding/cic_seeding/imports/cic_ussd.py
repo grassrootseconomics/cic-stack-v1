@@ -170,7 +170,6 @@ class CicUssdImporter(Importer):
 
 
     def _queue_user(self, i, u, tags=[]):
-        #iu = ImportUser(self.dh, u, self.chain_spec, self.source_chain_spec)
         self.dh.add(None, u.original_address, 'ussd_phone')
 
 
