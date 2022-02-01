@@ -30,7 +30,8 @@ function sendit(uid, envelope) {
 
 		},
 	};
-	let url = config.get('META_URL');
+	let url = config.get('META_PROVIDER');
+	console.log('meta url ' + config.get('META_PROVIDER'));
 	url = url.replace(new RegExp('^(.+://[^/]+)/*$'), '$1/');
 	console.log('posting to url: ' + url + uid);
 	const req = http.request(url + uid, opts, (res) => {
