@@ -24,6 +24,7 @@ from cic_eth.pytest.fixtures_database import *
 from cic_eth.pytest.fixtures_role import *
 from cic_eth.pytest.fixtures_contract import *
 from cic_eth.pytest.fixtures_token import *
+
 from chainlib.eth.pytest import *
 from eth_contract_registry.pytest import *
 from cic_eth_registry.pytest.fixtures_contracts import *
