@@ -2,6 +2,7 @@
 import datetime
 import logging
 from typing import Optional
+from datetime import datetime, timedelta
 
 # external imports
 import celery
@@ -74,7 +75,7 @@ def parse_statement_transactions(statement: list):
         direction_tag = transaction.get('direction_tag')
         token_symbol = transaction.get('token_symbol')
         metadata_id = transaction.get('alt_metadata_id')
-        timestamp = transaction.get('timestamp')
+        timestamp = convert_to_tz(transaction.get('timestamp'))
         transaction_repr = f'{action_tag} {amount} {token_symbol} {direction_tag} {metadata_id} {timestamp}'
         parsed_transactions.append(transaction_repr)
     return parsed_transactions
@@ -97,3 +98,16 @@ def query_statement(blockchain_address: str, limit: int = 9):
         callback_param=blockchain_address
     )
     cic_eth_api.list(address=blockchain_address, limit=limit)
+
+
+def convert_to_tz(time_str: str, tz_offset: int=3):
+    """
+    This function normalizes the UTC time in statements to the local timezone
+    :time_format: String, time in the format %d/%m/%y, %H:%M
+    """
+
+    timestr_format = '%d/%m/%y, %H:%M'
+    parsed_date_str = datetime.strptime(time_str, timestr_format)
+    normalized_time = parsed_date_str + timedelta(hours=tz_offset)
+
+    return normalized_time.strftime(timestr_format)
