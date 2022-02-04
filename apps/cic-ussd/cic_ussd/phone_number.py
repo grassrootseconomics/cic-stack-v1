@@ -1,5 +1,4 @@
 # standard imports
-from typing import Optional
 
 # third-party imports
 import phonenumbers

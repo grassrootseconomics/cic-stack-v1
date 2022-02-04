@@ -14,7 +14,7 @@ from cic_ussd.db.enum import AccountStatus
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.db.models.task_tracker import TaskTracker
 from cic_ussd.encoder import check_password_hash, create_password_hash
-from cic_ussd.phone_number import Support
+from cic_ussd.phone_number import E164Format, process_phone_number, Support
 
 support_phone = Support.phone_number
 
@@ -91,6 +91,9 @@ class Account(SessionBase):
         """
         session = SessionBase.bind_session(session=session)
         account = session.query(Account).filter_by(phone_number=phone_number).first()
+        if account is None:
+            phone_number = process_phone_number(phone_number, E164Format.region)
+            account = session.query(Account).filter_by(phone_number=phone_number).first()
         SessionBase.release_session(session=session)
         return account
 

@@ -29,7 +29,7 @@ from cic_ussd.files.local_files import create_local_file_data_stores, json_file_
 from cic_ussd.http.requests import get_request_endpoint, get_request_method
 from cic_ussd.http.responses import with_content_headers
 from cic_ussd.menu.ussd_menu import UssdMenu
-from cic_ussd.phone_number import process_phone_number, Support, E164Format
+from cic_ussd.phone_number import Support, E164Format
 from cic_ussd.processor.ussd import handle_menu_operations
 from cic_ussd.runnable.server_base import exportable_parser, logg
 from cic_ussd.session.ussd_session import UssdSession as InMemoryUssdSession
@@ -178,9 +178,6 @@ def application(env, start_response):
             user_input = post_data.get('text')[0]
         except TypeError:
             user_input = ""
-
-        if phone_number:
-            phone_number = process_phone_number(phone_number=phone_number, region=E164Format.region)
 
         if not check_ip(config=config, env=env):
             start_response('403 Sneaky, sneaky', errors_headers)

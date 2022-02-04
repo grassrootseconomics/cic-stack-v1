@@ -29,6 +29,7 @@ from cic_seeding.index import (
 from cic_seeding.chain import (
         TamperedBlock,
         )
+from cic_seeding.legacy import legacy_link_data
 
 logg = logging.getLogger()
 
@@ -150,7 +151,7 @@ class CicUssdImporter(Importer):
     def _build_ussd_request(self, phone_number, service_code, txt=None):
         session = uuid.uuid4().hex
         if txt == None:
-            txt = service_code
+            txt = ""
         data = {
             'sessionId': session,
             'serviceCode': service_code,
