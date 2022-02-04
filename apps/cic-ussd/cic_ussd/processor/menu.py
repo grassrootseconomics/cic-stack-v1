@@ -75,8 +75,8 @@ class MenuProcessor:
 
         adjusted_balance = json.loads(adjusted_balance)
 
-        tax_wei = to_wei(decimals, int(available_balance)) - int(adjusted_balance)
-        tax = from_wei(decimals, int(tax_wei))
+        tax_wei = to_wei(decimals, available_balance - adjusted_balance)
+        tax = from_wei(decimals, tax_wei)
         return translation_for(key=with_fees,
                                preferred_language=preferred_language,
                                available_balance=available_balance,
@@ -281,7 +281,7 @@ class MenuProcessor:
                 logg.info(f'Not retrieving adjusted balance, available balance: {available_balance} is insufficient.')
             else:
                 timestamp = int((now - timedelta(30)).timestamp())
-                adjusted_balance = get_adjusted_balance(to_wei(decimals, int(available_balance)), chain_str, timestamp, token_symbol)
+                adjusted_balance = get_adjusted_balance(to_wei(decimals, available_balance), chain_str, timestamp, token_symbol)
                 key = cache_data_key([self.identifier, token_symbol.encode('utf-8')], MetadataPointer.BALANCES_ADJUSTED)
                 cache_data(key, json.dumps(adjusted_balance))
 
@@ -323,7 +323,7 @@ class MenuProcessor:
         token_data = get_cached_token_data(self.account.blockchain_address, token_symbol)
         user_input = self.ussd_session.get('data').get('transaction_amount')
         decimals = token_data.get('decimals')
-        transaction_amount = to_wei(decimals=decimals, value=int(user_input))
+        transaction_amount = to_wei(decimals=decimals, value=user_input)
         return self.pin_authorization(
             recipient_information=tx_recipient_information,
             transaction_amount=from_wei(decimals, transaction_amount),
@@ -386,7 +386,7 @@ class MenuProcessor:
         decimals = token_data.get('decimals')
         available_balance = get_cached_available_balance(decimals, [self.identifier, token_symbol.encode('utf-8')])
         transaction_amount = session_data.get('transaction_amount')
-        transaction_amount = to_wei(decimals=decimals, value=int(transaction_amount))
+        transaction_amount = to_wei(decimals=decimals, value=transaction_amount)
         recipient_phone_number = self.ussd_session.get('data').get('recipient_phone_number')
         recipient = Account.get_by_phone_number(recipient_phone_number, self.session)
         tx_recipient_information = recipient.standard_metadata_id()
@@ -425,7 +425,7 @@ class MenuProcessor:
         :return:
         :rtype:
         """
-        amount = int(self.ussd_session.get('data').get('transaction_amount'))
+        amount = self.ussd_session.get('data').get('transaction_amount')
         preferred_language = get_cached_preferred_language(self.account.blockchain_address)
         if not preferred_language:
             preferred_language = i18n.config.get('fallback')

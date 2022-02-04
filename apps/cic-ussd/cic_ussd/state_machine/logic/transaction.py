@@ -13,6 +13,7 @@ from cic_ussd.account.tokens import get_active_token_symbol, get_cached_token_da
 from cic_ussd.account.transaction import OutgoingTransaction
 from cic_ussd.db.models.account import Account
 from cic_ussd.session.ussd_session import save_session_data
+from cic_ussd.state_machine.logic.util import cash_rounding_precision
 
 
 logg = logging.getLogger(__file__)
@@ -42,7 +43,7 @@ def is_valid_transaction_amount(state_machine_data: Tuple[str, dict, Account, Se
     """
     user_input, ussd_session, account, session = state_machine_data
     try:
-        return int(user_input) > 0
+        return cash_rounding_precision(user_input) > 0
     except ValueError:
         return False
 
@@ -60,7 +61,7 @@ def has_sufficient_balance(state_machine_data: Tuple[str, dict, Account, Session
     token_symbol = get_active_token_symbol(account.blockchain_address)
     token_data = get_cached_token_data(account.blockchain_address, token_symbol)
     decimals = token_data.get('decimals')
-    return int(user_input) <= get_cached_available_balance(decimals, [identifier, token_symbol.encode('utf-8')])
+    return cash_rounding_precision(user_input) <= get_cached_available_balance(decimals, [identifier, token_symbol.encode('utf-8')])
 
 
 def save_recipient_phone_to_session_data(state_machine_data: Tuple[str, dict, Account, Session]):
@@ -99,7 +100,7 @@ def save_transaction_amount_to_session_data(state_machine_data: Tuple[str, dict,
     user_input, ussd_session, account, session = state_machine_data
 
     session_data = ussd_session.get('data') or {}
-    session_data['transaction_amount'] = user_input
+    session_data['transaction_amount'] = cash_rounding_precision(user_input)
     save_session_data('cic-ussd', session, session_data, ussd_session)
 
 
@@ -116,7 +117,7 @@ def process_transaction_request(state_machine_data: Tuple[str, dict, Account, Se
     recipient = Account.get_by_phone_number(phone_number=recipient_phone_number, session=session)
     to_address = recipient.blockchain_address
     from_address = account.blockchain_address
-    amount = int(ussd_session.get('data').get('transaction_amount'))
+    amount = ussd_session.get('data').get('transaction_amount')
     token_symbol = get_active_token_symbol(account.blockchain_address)
     token_data = get_cached_token_data(account.blockchain_address, token_symbol)
     decimals = token_data.get('decimals')
