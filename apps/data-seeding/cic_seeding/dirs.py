@@ -206,7 +206,7 @@ class DirHandler:
             sys.stderr.write('no users to import. please run create_import_users.py first\n')
             sys.exit(1)
 
-        mkdirs = self.__address_dirs | self.__hash_dirs
+        mkdirs = self.__address_dirs or self.__hash_dirs
         for d in mkdirs.keys():
             os.makedirs(self.dirs[d], exist_ok=True)
 

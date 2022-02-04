@@ -25,7 +25,7 @@ def alembic_config():
 
 @pytest.fixture(scope='session')
 def load_config():
-    config_directory = os.path.join(root_directory, '.config/test')
+    config_directory = os.path.join(root_directory, 'cic_notify', 'data', 'config', 'test')
     config = Config(default_dir=config_directory)
     config.process()
     logg.debug('config loaded\n{}'.format(config))

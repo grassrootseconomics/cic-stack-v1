@@ -678,7 +678,7 @@ services:
     depends_on:
       - postgres
       - redis
-    command: "/root/start_tasker.sh -q cic-notify -vv"
+    command: "/usr/src/start_tasker.sh -q cic-notify -vv"
 
   data-seeding:
       image: ${IMAGE_BASE_URL:-registry.gitlab.com/grassrootseconomics/cic-internal-integration}/data-seeding:${TAG:-latest}

@@ -21,7 +21,7 @@ RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
 
 
 COPY . .
-RUN python setup.py install
+RUN pip install .
 
 # create local files directory
 RUN mkdir -vp cic_ussd/data/locale

@@ -15,7 +15,7 @@ def test_log(caplog, celery_session_worker):
     recipient = phone_number()
     caplog.set_level(logging.INFO)
     s_log = celery.signature(
-        'cic_notify.tasks.sms.log.log', [message, recipient]
+        'cic_notify.tasks.default.log.log', [message, recipient]
     )
     s_log.apply_async().get()
     assert f'message to {recipient}: {message}' in caplog.text

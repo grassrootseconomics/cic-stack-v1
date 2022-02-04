@@ -15,7 +15,7 @@ def test_persist_notification(celery_session_worker, init_database):
     message = 'Hello world.'
     recipient = phone_number()
     s_persist_notification = celery.signature(
-        'cic_notify.tasks.sms.db.persist_notification', (message, recipient)
+        'cic_notify.tasks.default.db.persist_notification', (message, recipient)
     )
     s_persist_notification.apply_async().get()
 

@@ -79,7 +79,7 @@ else:
     config = confini.Config(base_config_dir, os.environ.get('CONFINI_ENV_PREFIX'))
 config.process()
 args_override = {
-    'CIC_CHAIN_SPEC': getattr(args, 'i'),
+    'CHAIN_SPEC': getattr(args, 'i'),
     'CHAIN_SPEC_SOURCE': getattr(args, 'old_chain_spec'),
     'RPC_PROVIDER': getattr(args, 'p'),
     'CIC_REGISTRY_ADDRESS': getattr(args, 'r'),

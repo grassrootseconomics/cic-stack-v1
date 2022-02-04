@@ -1,40 +1,51 @@
 # standard imports
 import logging
-import re
+import os
 
-# third-party imports
-import cic_notify.tasks.sms.db
-from celery.app.control import Inspect
+# external imports
 import celery
 
 # local imports
-from cic_notify.tasks import sms
+from cic_notify.mux import Muxer
 
 app = celery.current_app
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
 
+root_directory = os.path.dirname(__file__)
+default_config_directory = os.path.join(root_directory, 'data', 'config', 'tasks')
+
+
+# initialize muxer
+Muxer.initialize(default_config_directory)
+
 
 class Api:
-    def __init__(self, queue: any = 'cic-notify'):
+    def __init__(self, channel_keys=None, queue: any = 'cic-notify'):
         """
-        :param queue: The queue on which to execute notification tasks
+        :param queue: The queue on which to execute notification tasks.
         :type queue: str
         """
+        if channel_keys is None:
+            channel_keys = []
+        self.channel_keys = channel_keys
         self.queue = queue
 
-    def sms(self, message: str, recipient: str):
-        """This function chains all sms tasks in order to send a message, log and persist said data to disk
-        :param message: The message to be sent to the recipient.
-        :type message: str
-        :param recipient: The phone number of the recipient.
-        :type recipient: str
-        :return: a celery Task
-        :rtype: Celery.Task
+    def notify(self, message: str, recipient: str):
         """
-        s_send = celery.signature('cic_notify.tasks.sms.africastalking.send', [message, recipient], queue=self.queue)
-        s_log = celery.signature('cic_notify.tasks.sms.log.log', [message, recipient], queue=self.queue)
-        s_persist_notification = celery.signature(
-            'cic_notify.tasks.sms.db.persist_notification', [message, recipient], queue=self.queue)
-        signatures = [s_send, s_log, s_persist_notification]
+        :param message:
+        :type message:
+        :param recipient:
+        :type recipient:
+        :return:
+        :rtype:
+        """
+
+        muxer = Muxer()
+        muxer.route(channel_keys=self.channel_keys)
+
+        signatures = []
+        for task in muxer.tasks:
+            signature = celery.signature(task, [message, recipient, ], queue=self.queue)
+            signatures.append(signature)
         return celery.group(signatures)()

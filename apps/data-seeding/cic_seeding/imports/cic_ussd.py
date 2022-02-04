@@ -9,7 +9,6 @@ import threading
 import time
 
 # external imports
-from urlybird.host import url_apply_port_string
 import phonenumbers
 from cic_types.processor import (
         generate_metadata_pointer,
