@@ -2,6 +2,18 @@
 
 A custodial wallet and blockchain bidirectional interface engine for community inclusion currencies. Check the [CIC Stack summary](https://docs.grassecon.org/software) page for more information.
 
+
+### Coverage status
+
+| Microservice | Coverage |
+| ------ | ------ |
+| cic-ussd | [![cic-ussd](https://coverage-reports.grassecon.net/report/badge/cic-ussd)](https://coverage-reports.grassecon.net/report/summary/cic-ussd) |
+| cic-cache | [![cic-cache](https://coverage-reports.grassecon.net/report/badge/cic-cache)](https://coverage-reports.grassecon.net/report/summary/cic-cache) |
+| cic-notify | [![cic-notify](https://coverage-reports.grassecon.net/report/badge/cic-notify)](https://coverage-reports.grassecon.net/report/summary/cic-notify) |
+| cic-eth | [![cic-eth](https://coverage-reports.grassecon.net/report/badge/cic-eth)](https://coverage-reports.grassecon.net/report/summary/cic-eth) |
+| cic-meta | [![cic-meta](https://coverage-reports.grassecon.net/report/badge/cic-meta)](https://coverage-reports.grassecon.net/report/summary/cic-meta) |
+
+
 ### Contributing
 
 See our [contribution guidelines](https://docs.grassecon.org/community/contrib/) for more details on:
