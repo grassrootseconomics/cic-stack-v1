@@ -196,8 +196,6 @@ class CicUssdImporter(Importer):
             f.close()
 
 
-    # create account is simply a matter of selecting the language on the menu.
-    # TODO: add language preference data to imports generation, and already "import" the language in this step.
     def create_account(self, i, u):
         phone_number = phone_number_to_e164(u.phone, None)
         req = self._build_ussd_request(
@@ -222,9 +220,10 @@ class CicUssdImporter(Importer):
             if len(response_data) < 3:
                 raise RuntimeError('Unexpected response length')
             elif response_data[:3] == 'END':
-                logg.info('detected ussd END; user {} {} created'.format(u, phone_number))
+                logg.debug('detected ussd END, so user should have been created now')
                 break
             logg.debug('ussd response is still CON, retrying')
+            time.sleep(0.1)
 
 
     def process_meta_custom_tags(self, i, u):
