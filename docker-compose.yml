@@ -95,7 +95,6 @@ services:
       - ./apps/contract-migration/:/root/
 
 
-
   cic-signer:
     image: ${IMAGE_BASE_URL:-registry.gitlab.com/grassrootseconomics/cic-internal-integration}/funga-eth:${TAG:-latest}
     build: 
