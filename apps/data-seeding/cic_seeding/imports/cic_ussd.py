@@ -142,9 +142,10 @@ def apply_default_stores(config, semaphore, stores={}):
 # Also provides the sync filter that stores block transactions for deferred processing.
 class CicUssdImporter(Importer):
 
-    def __init__(self, config, rpc, signer, signer_address, stores={}, default_tag=[]):
+    def __init__(self, config, rpc, signer, signer_address, stores={}, default_tag=[], preferences={}):
         super(CicUssdImporter, self).__init__(config, rpc, signer=signer, signer_address=signer_address, stores=stores, default_tag=default_tag)
 
+        self.preferences = preferences
         self.ussd_provider = config.get('USSD_PROVIDER')
         self.ussd_valid_service_codes = config.get('USSD_SERVICE_CODE').split(',')
         self.ussd_service_code = self.ussd_valid_service_codes[0]
@@ -206,12 +207,12 @@ class CicUssdImporter(Importer):
         response = urllib.request.urlopen(req)
         response_data = response.read().decode('utf-8')
         logg.debug('ussd response: {}'.format(response_data))
-
+        language_selection = '1' if self.preferences[phone_number] == 'en' else '2'
         while True:
             req = self._build_ussd_request(
                                  phone_number,
                                  self.ussd_service_code,
-                                 txt='1',
+                                 txt=language_selection,
                                  )
             logg.debug('ussd request: {} {}'.format(req.full_url, req.data))
             response = urllib.request.urlopen(req)

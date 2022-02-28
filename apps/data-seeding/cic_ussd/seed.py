@@ -96,6 +96,11 @@ config.add(False, '_RESET', True)
 logg.debug(f'config loaded from {args.c}:\n{config}')
 
 
+preferences_data = {}
+with open(f"{args.user_dir}/preferences.json", "r") as f:
+    preferences_data = json.load(f)
+
+
 if __name__ == '__main__':
     store_path = os.path.join(config.get('_USERDIR'), 'ussd_address')
     #unconnected_address_store = AddressQueue(store_path)
@@ -111,6 +116,6 @@ if __name__ == '__main__':
         'ussd_address': unconnected_address_store,
         'ussd_phone': unconnected_phone_store,
         },
-        )
+        preferences=preferences_data)
     imp.prepare()
     imp.process_src(tags=args.tag)

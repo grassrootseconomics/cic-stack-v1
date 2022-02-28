@@ -64,6 +64,7 @@ class AddressIndex:
             if len(r) == 0:
                 break
             (address, v) = r.split(',', 1)
+            address = address.split(":")[0]
             address = normalize_key(address)
             self.store[address] = v
             logg.debug('added key {}: {} value {} to {} from file {}'.format(i, address, v, self, file))
