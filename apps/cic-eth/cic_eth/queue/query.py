@@ -55,6 +55,16 @@ def get_tx_local(chain_spec, tx_hash, session=None):
     SessionBase.release_session(session)
     return r
 
+@celery_app.task(base=CriticalSQLAlchemyTask)
+def get_latest_txs(chain_spec_dict, count=10):
+    chain_spec = ChainSpec.from_dict(chain_spec_dict)
+    return get_latest_txs_local(chain_spec, count=count)
+
+def get_latest_txs_local(chain_spec, count=10, session=None):
+    session = SessionBase.bind_session(session)
+    r = chainqueue.sql.query.get_latest_txs(chain_spec, count=count, session=session)
+    SessionBase.release_session(session)
+    return r
 
 @celery_app.task(base=CriticalSQLAlchemyTask)
 def get_account_tx(chain_spec_dict, address, as_sender=True, as_recipient=True, counterpart=None):

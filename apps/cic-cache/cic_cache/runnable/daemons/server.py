@@ -64,7 +64,7 @@ def application(env, start_response):
     session.close()
 
     headers.append(('Content-Length', str(len(content))),)
-    headers.append(('Access-Control-Allow-Origin', '*',));
+    headers.append(('Access-Control-Allow-Origin', '*',))
 
     if len(content) == 0:
         headers.append(('Content-Type', 'text/plain, charset=UTF-8',))

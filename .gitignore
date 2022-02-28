@@ -17,3 +17,4 @@ build/
 **/*secret.yaml
 apps/data-seeding/out/
 .envrc
+.vscode

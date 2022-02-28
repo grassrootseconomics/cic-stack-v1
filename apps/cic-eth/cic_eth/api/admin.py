@@ -75,7 +75,6 @@ class AdminApi:
                 )
         return s_proxy.apply_async()
 
-
     
     def registry(self):
         s_registry = celery.signature(
@@ -386,6 +385,59 @@ class AdminApi:
 
         return tx_dict_list
 
+    def txs_latest(self, chain_spec, count=10, renderer=None, w=sys.stdout):
+        """Lists latest locally originated transactions.
+
+        Performs a synchronous call to the Celery task responsible for performing the query.
+        """
+
+        last_nonce = -1
+        s = celery.signature(
+                'cic_eth.queue.query.get_latest_txs',
+                [
+                    chain_spec.asdict(),
+                ],
+                kwargs={
+                    "count": count
+                },
+                queue=self.queue,
+                )
+        txs = s.apply_async().get()
+        tx_dict_list = []
+        for tx_hash in txs.keys():
+            errors = []
+            s = celery.signature(
+                    'cic_eth.queue.query.get_tx_cache',
+                    [
+                        chain_spec.asdict(),
+                        tx_hash,
+                        ],
+                    queue=self.queue,
+                    )
+            tx_dict = s.apply_async().get()
+            if tx_dict['nonce'] - last_nonce > 1:
+                logg.error(f"nonce gap; {tx_dict['nonce']} followed {last_nonce} for address {tx_dict['sender']} tx {tx_hash}")
+                errors.append('nonce')
+            elif tx_dict['nonce'] == last_nonce:
+                logg.info(f"nonce {tx_dict['nonce']} duplicate for address {tx_dict['sender']} in tx {tx_hash}")
+            last_nonce = tx_dict['nonce']
+
+            
+            o = {
+                'nonce': tx_dict['nonce'], 
+                'tx_hash': tx_dict['tx_hash'],
+                'status': tx_dict['status'],
+                'date_updated': tx_dict['date_updated'],
+                'date_created': tx_dict['date_created'],
+                'errors': errors,
+                    }
+            if renderer != None:
+                r = renderer(o)
+                w.write(r + '\n')
+            else:
+                tx_dict_list.append(o)
+
+        return tx_dict_list
 
     # TODO: Add exception upon non-existent tx aswell as invalid tx data to docstring 
     # TODO: This method is WAY too long

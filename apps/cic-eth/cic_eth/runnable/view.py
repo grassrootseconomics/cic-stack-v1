@@ -39,17 +39,31 @@ default_format = 'terminal'
 
 arg_flags = cic_eth.cli.argflag_std_base
 local_arg_flags = cic_eth.cli.argflag_local_taskcallback
-argparser = cic_eth.cli.ArgumentParser(arg_flags)
+argparser = cic_eth.cli.ArgumentParser(arg_flags, description="""
+# Examples
+cic-eth-inspect # Returns the lastest 10 transactions
+cic-eth-inspect --count 20  # Returns the lastest 20 transactions
+
+cic-eth-inspect <transaction>
+
+cic-eth-inspect <transaction_hash>
+
+cic-eth-inspect <address>
+
+cic-eth-inspect lock
+""")
 argparser.add_argument('-f', '--format', dest='f', default=default_format, type=str, help='Output format')
-argparser.add_argument('query', type=str, help='Transaction, transaction hash, account or "lock"')
+argparser.add_argument('--count', dest='count', default=10, type=int, help='Max number of transactions to return (DEFAULT=10)')
+argparser.add_argument('query', type=str, help='Transaction, transaction hash, account, "lock", if no value is passed then the latest 10 transactions (--count 10) will be returned', nargs='?')
 argparser.process_local_flags(local_arg_flags)
 args = argparser.parse_args()
 
 
 extra_args = {
     'f': '_FORMAT',
+    'count': '_TX_COUNT',
     'query': '_QUERY',
-        }
+}
 config = cic_eth.cli.Config.from_args(args, arg_flags, local_arg_flags, extra_args=extra_args)
 
 celery_app = cic_eth.cli.CeleryApp.from_config(config)
@@ -100,12 +114,7 @@ def render_tx(o, **kwargs):
     return content
 
 def render_account(o, **kwargs):
-    s = '{} {} {} {}'.format(
-            o['date_updated'],
-            o['nonce'],
-            o['tx_hash'],
-            o['status'],
-            )
+    s = f"{o['date_updated']} {o['nonce']} {o['tx_hash']} {o['status']}"
     if len(o['errors']) > 0:
         s += ' !{}'.format(','.join(o['errors']))
 
@@ -137,21 +146,24 @@ def main():
     renderer = render_tx
 
     query = config.get('_QUERY')
+    tx_count = config.get('_TX_COUNT')
     try:
         query = hex_uniform(strip_0x(query))
     except TypeError:
         pass
     except ValueError:
         pass
-
-    if len(query) > 64:
+    if not query:
+        txs = admin_api.txs_latest(chain_spec, count=tx_count, renderer=render_account)
+        renderer = render_account
+    elif len(query) > 64:
         admin_api.tx(chain_spec, tx_raw=query, renderer=renderer)
     elif len(query) > 40:
         admin_api.tx(chain_spec, tx_hash=query, renderer=renderer)
-
     elif len(query) == 40:
         txs = admin_api.account(chain_spec, query, include_recipient=False, renderer=render_account)
         renderer = render_account
+
     elif len(query) >= 4 and query[:4] == 'lock':
         t = admin_api.get_lock()
         txs = t.get()
@@ -161,7 +173,6 @@ def main():
             sys.stdout.write(r + '\n')
     else:
         raise ValueError('cannot parse argument {}'.format(query))
-                   
 
 if __name__ == '__main__':
     main()
