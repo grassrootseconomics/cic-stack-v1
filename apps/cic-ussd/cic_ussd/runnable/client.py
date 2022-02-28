@@ -58,7 +58,7 @@ if port == None:
     port = args.port
 if ssl == None:
     ssl = not args.nossl
-elif ssl == 0:
+elif ssl == '0':
     ssl = False
 else:
     ssl = True

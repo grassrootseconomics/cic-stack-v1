@@ -94,6 +94,7 @@ i18n.load_path.append(config.get('LOCALE_PATH'))
 i18n.set('fallback', config.get('LOCALE_FALLBACK'))
 
 chain_spec = ChainSpec.from_chain_str(config.get('CHAIN_SPEC'))
+Chain.spec = chain_spec
 
 # make non-resumable states accessible globally
 States.load_non_resumable_states(config.get("MACHINE_NON_RESUMABLE_STATES"))
@@ -102,8 +103,6 @@ E164Format.region = config.get('E164_REGION')
 Support.phone_number = config.get('OFFICE_SUPPORT_PHONE')
 
 
-Chain.spec = chain_spec
-Support.phone_number = config.get('OFFICE_SUPPORT_PHONE')
 # set up celery
 current_app = celery.Celery(__name__)
 
