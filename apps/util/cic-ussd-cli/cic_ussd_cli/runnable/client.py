@@ -12,7 +12,6 @@ import json
 import argparse
 import logging
 import urllib
-from xdg.BaseDirectory import xdg_config_home
 from urllib import parse, request
 
 # third-party imports
