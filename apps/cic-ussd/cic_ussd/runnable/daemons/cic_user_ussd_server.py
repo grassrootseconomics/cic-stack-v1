@@ -155,7 +155,12 @@ def application(env, start_response):
     # create session for the life time of http request
     session = SessionBase.create_session()
 
-    if get_request_method(env=env) == 'POST' and get_request_endpoint(env=env) == '/':
+    if get_request_endpoint(env) == '/health-check':
+        session.close()
+        start_response('200 OK', headers)
+        return [b'healthy']
+
+    elif get_request_method(env=env) == 'POST' and get_request_endpoint(env=env) == '/':
 
         if env.get('CONTENT_TYPE') != 'application/x-www-form-urlencoded':
             start_response('405 Urlencoded, please', errors_headers)
