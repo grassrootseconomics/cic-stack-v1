@@ -11,6 +11,7 @@ import uuid
 import json
 import argparse
 import logging
+import tempfile
 import urllib
 from urllib import parse, request
 
@@ -64,7 +65,11 @@ else:
 
 def main():
 
-    # TODO: improve url building 
+    (fn, fp) = tempfile.mkstemp()
+    input_file = fp
+    logg.debug('creating state file {}'.format(input_file))
+
+    # TODO: improve url building
     url = 'http'
     if ssl:
         url += 's'
@@ -86,8 +91,18 @@ def main():
     while state != "END":
 
         if state != "_BEGIN":
-            user_input = input('next> ')
+            user_input = None
+            try:
+                user_input = input('next> ')
+            except KeyboardInterrupt:
+                break
+            with open(input_file, 'r') as file:
+                prev_input = file.readline() if os.path.getsize(input_file) > 0 else ''
+                user_input = '{}*{}'.format(prev_input, user_input) if len(prev_input) > 0 else user_input
+            with open(input_file, 'w+') as file:
+                file.write(user_input)
             data['text'] = user_input
+            logg.debug('user input = "{}"'.format(data['text']))
 
         req = urllib.request.Request(url)
         urlencoded_data = parse.urlencode(data)
@@ -99,6 +114,9 @@ def main():
         state = response_data[:3]
         out = response_data[4:]
         print(out)
+
+    logg.debug('removing state file {}'.format(input_file))
+    os.unlink(input_file)
 
 
 if __name__ == "__main__":
