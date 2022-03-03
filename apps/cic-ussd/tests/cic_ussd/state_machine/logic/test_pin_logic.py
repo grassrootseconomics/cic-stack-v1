@@ -41,7 +41,7 @@ def test_is_valid_pin(activated_account, expected, generic_ussd_session, init_da
 ])
 def test_pins_match(activated_account, cached_ussd_session, init_cache, init_database, user_input):
     state_machine_data = (user_input, cached_ussd_session.to_json(), activated_account, init_database)
-    cached_ussd_session.set_data('initial_pin', create_password_hash(user_input))
+    cached_ussd_session.set_data('initial_pin', user_input)
     assert pins_match(state_machine_data) is True
 
 
@@ -56,7 +56,7 @@ def test_save_initial_pin_to_session_data(activated_account,
     save_initial_pin_to_session_data(state_machine_data)
     ussd_session = get_cached_data(cached_ussd_session.external_session_id)
     ussd_session = json.loads(ussd_session)
-    assert check_password_hash('1212', ussd_session.get('data')['initial_pin'])
+    assert '1212' == ussd_session.get('data')['initial_pin']
     cached_ussd_session.set_data('some_key', 'some_value')
     state_machine_data = ('1212', cached_ussd_session.to_json(), activated_account, init_database)
     save_initial_pin_to_session_data(state_machine_data)

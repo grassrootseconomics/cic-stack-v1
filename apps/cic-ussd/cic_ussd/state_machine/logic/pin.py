@@ -70,13 +70,12 @@ def save_initial_pin_to_session_data(state_machine_data: Tuple[str, dict, Accoun
     :type state_machine_data: tuple
     """
     user_input, ussd_session, account, session = state_machine_data
-    initial_pin = create_password_hash(user_input)
     if ussd_session.get('data'):
         data = ussd_session.get('data')
-        data['initial_pin'] = initial_pin
+        data['initial_pin'] = user_input
     else:
         data = {
-            'initial_pin': initial_pin
+            'initial_pin': user_input
         }
     external_session_id = ussd_session.get('external_session_id')
     create_or_update_session(
@@ -99,9 +98,8 @@ def pins_match(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
     :rtype: bool
     """
     user_input, ussd_session, account, session = state_machine_data
-    wait_for_session_data('Initial pin', session_data_key='initial_pin', ussd_session=ussd_session)
     initial_pin = ussd_session.get('data').get('initial_pin')
-    return check_password_hash(user_input, initial_pin)
+    return user_input == initial_pin
 
 
 def complete_pin_change(state_machine_data: Tuple[str, dict, Account, Session]):
@@ -111,7 +109,6 @@ def complete_pin_change(state_machine_data: Tuple[str, dict, Account, Session]):
     """
     user_input, ussd_session, account, session = state_machine_data
     session = SessionBase.bind_session(session=session)
-    wait_for_session_data('Initial pin', session_data_key='initial_pin', ussd_session=ussd_session)
     password_hash = ussd_session.get('data').get('initial_pin')
     account.password_hash = password_hash
     session.add(account)

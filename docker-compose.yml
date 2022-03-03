@@ -83,6 +83,7 @@ services:
       PGP_PASSPHRASE: merman
       META_URL: http://meta:8000
       LOGLEVEL: ${LOGLEVEL:-info}
+      SYNCER_OFFSET: ${SYNCER_OFFSET:-0}
     command: ["./run_job.sh"]
     depends_on:
       - evm
