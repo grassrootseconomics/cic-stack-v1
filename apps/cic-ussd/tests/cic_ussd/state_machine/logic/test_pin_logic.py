@@ -20,7 +20,7 @@ from cic_ussd.state_machine.logic.pin import (complete_pin_change,
 def test_complete_pin_change(activated_account, cached_ussd_session, init_database):
     state_machine_data = ('1212', cached_ussd_session.to_json(), activated_account, init_database)
     assert activated_account.password_hash is not None
-    cached_ussd_session.set_data('initial_pin', create_password_hash('1212'))
+    cached_ussd_session.set_data('initial_pin', '1212')
     complete_pin_change(state_machine_data)
     assert activated_account.verify_password('1212') is True
 

@@ -109,8 +109,8 @@ def complete_pin_change(state_machine_data: Tuple[str, dict, Account, Session]):
     """
     user_input, ussd_session, account, session = state_machine_data
     session = SessionBase.bind_session(session=session)
-    password_hash = ussd_session.get('data').get('initial_pin')
-    account.password_hash = password_hash
+    password = ussd_session.get('data').get('initial_pin')
+    account.create_password(password)
     session.add(account)
     session.flush()
     SessionBase.release_session(session=session)
