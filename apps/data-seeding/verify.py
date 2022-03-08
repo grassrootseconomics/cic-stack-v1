@@ -10,6 +10,7 @@ import urllib
 import urllib.request
 import uuid
 import urllib.parse
+import re
 
 # external imports
 import celery
@@ -112,6 +113,7 @@ argparser.add_argument('--skip-all', dest='skip_all', action='store_true', help=
 argparser.add_argument('--exclude', action='append', type=str, default=[], help='skip specified verification')
 argparser.add_argument('--include', action='append', type=str, help='include specified verification')
 argparser.add_argument('--list-verifications', dest='list_verifications', action='store_true', help='print a list of verification check identifiers')
+argparser.add_argument('--balance-adjust', dest='balance_adjust', type=str, help='Adjust original balance and apply bounded value check')
 argparser.add_argument('--token-symbol', default='GFT', type=str, dest='token_symbol', help='Token symbol to use for trnsactions')
 argparser.add_argument('-r', '--registry-address', type=str, dest='r', help='CIC Registry address')
 argparser.add_argument('--env-prefix', default=os.environ.get('CONFINI_ENV_PREFIX'), dest='env_prefix', type=str, help='environment prefix for variables to overwrite configuration')
@@ -172,6 +174,21 @@ old_chain_spec = ChainSpec.from_chain_str(args.old_chain_spec)
 old_chain_str = str(old_chain_spec)
 user_dir = args.user_dir # user_out_dir from import_users.py
 exit_on_error = args.x
+balance_modifier = 0
+if args.balance_adjust != None:
+    re_adjust = '^([+-])?(\d+(\.\d+)?)(%)?$'
+    r = re.search(re_adjust, args.balance_adjust)
+    if r.group(4) == '%':
+        balance_modifier = float(r.group(2))
+        if r.group(1) == '-':
+            balance_modifier *= -1.0
+        logg.info('using balance modifier percentage of {}%'.format(balance_modifier))
+        balance_modifier = float(balance_modifier * 0.01)
+    else:
+        balance_modifier = int(r.group(2))
+        if r.group(1) == '-':
+            balance_modifier *= -1
+        logg.info('using balance modifier literal of {} token units'.format(balance_modifier))
 
 active_tests = []
 exclude = []
@@ -313,7 +330,7 @@ class VerifierError(Exception):
 
 class Verifier:
 
-    def __init__(self, importer, conn, cic_eth_api, gas_oracle, chain_spec, exit_on_error=False):
+    def __init__(self, importer, conn, cic_eth_api, gas_oracle, chain_spec, exit_on_error=False, balance_adjust=0):
         self.conn = conn
         self.gas_oracle = gas_oracle
         self.chain_spec = chain_spec
@@ -325,6 +342,8 @@ class Verifier:
         self.imp = importer
         self.lookup = self.imp.lookup
         self.faucet_amount = 0
+        self.balance_adjust = balance_adjust
+        self.balance_adjust_percentage = isinstance(balance_adjust, float)
 
         verifymethods = []
         for k in dir(self):
@@ -352,16 +371,37 @@ class Verifier:
             raise VerifierError(n, 'accounts index')
 
 
+    def __adjust_balance(self, balance):
+        if self.balance_adjust == 0:
+            return balance
+        old_balance = balance
+        if self.balance_adjust_percentage:
+            mod = int(balance * self.balance_adjust)
+            balance += mod
+        else:
+            balance = balance + self.balance_adjust
+        logg.debug('balance adjusted {} -> {}'.format(old_balance, balance))
+        return balance
+
     def verify_balance(self, address, balance):
         o = self.erc20_tx_factory.balance(self.imp.token_address, address)
         r = self.conn.do(o)
+        old_balance = balance
+        balance = self.__adjust_balance(balance)
         try:
             actual_balance = int(strip_0x(r), 16)
         except ValueError:
             actual_balance = int(r)
         balance = int(balance) * 1000000
         balance += self.faucet_amount
-        if balance != actual_balance:
+        r = True
+        if old_balance == balance:
+            r = balance == actual_balance
+        elif old_balance < balance:
+            r = old_balance < actual_balance
+        else:
+            r = old_balance > actual_balance
+        if not r:
             raise VerifierError((actual_balance, balance), 'balance')
 
 
@@ -505,7 +545,7 @@ def main():
     imp = Importer(config, conn, None, None)
     imp.prepare()
 
-    verifier = Verifier(imp, conn, api, gas_oracle, chain_spec, exit_on_error=exit_on_error)
+    verifier = Verifier(imp, conn, api, gas_oracle, chain_spec, exit_on_error=exit_on_error, balance_adjust=balance_modifier)
 
     user_new_dir = os.path.join(user_dir, 'new')
     i = 0

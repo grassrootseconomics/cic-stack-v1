@@ -165,6 +165,25 @@ Will output one line for each check, with name of check and number of accounts s
 Should exit with code 0 if all input data is found in the respective services.
 
 
+#### Verifying adjusted balances
+
+If a token contract that applies decay or growth is used (e.g. the reference demurrage contract `erc20-demurrage-token`), then simple balance checks will always fail.
+
+The verify script provides the `--balance-adjust` option for this purpose. The adjustment can be expressed in negative or positive, aswell as integer or percentage. Integer adjustments adjust the original balance for comparison by the literal token unit amount. Percentage adjusts with a percentage of the original balance.
+
+The following values are all valid arguments.
+
+```
+--balance-adjust 0 (default)
+--balance-adjust 5000
+--balance-adjust="-5000"
+--balance-adjust '50%'
+--balance-adjust='-50%'
+```
+
+(Please note the use of `=` as negative numbers without the equality assignment will interpret the options argument as a flag)
+
+
 ## KNOWN ISSUES
 
 - When the account callback in `cic_eth` fails, the `cic_eth/seed.py` script will exit with a cryptic complaint concerning a `None` value.
