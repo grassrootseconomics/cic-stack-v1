@@ -38,23 +38,32 @@ def parse_person_metadata(cached_metadata: str, display_key: str, preferred_lang
     """
     user_metadata = json.loads(cached_metadata)
     contact_data = get_contact_data_from_vcard(user_metadata.get('vcard'))
-    full_name = f'{contact_data.get("given")} {contact_data.get("family")}'
-    date_of_birth = user_metadata.get('date_of_birth')
-    year_of_birth = date_of_birth.get('year')
-    present_year = datetime.datetime.now().year
-    age = present_year - year_of_birth
+    given_name = contact_data.get("given")
+    family_name = contact_data.get("family")
+    if date_of_birth := user_metadata.get('date_of_birth'):
+        year_of_birth = date_of_birth.get('year')
+        present_year = datetime.datetime.now().year
+        age = present_year - year_of_birth
+    else:
+        age = None
     gender = user_metadata.get('gender')
     products = ', '.join(user_metadata.get('products'))
     location = user_metadata.get('location').get('area_name')
+
+    absent = translation_for('helpers.not_provided', preferred_language)
+    person_metadata = [given_name, family_name, age, gender, products, location]
+    person_metadata = [absent if elem is None else elem for elem in person_metadata]
+
+    full_name = f'{person_metadata[0]} {person_metadata[1]}'
 
     return translation_for(
         key=display_key,
         preferred_language=preferred_language,
         full_name=full_name,
-        age=age,
-        gender=gender,
-        location=location,
-        products=products
+        age=person_metadata[2],
+        gender=person_metadata[3],
+        location=person_metadata[4],
+        products=person_metadata[5]
     )
 
 
