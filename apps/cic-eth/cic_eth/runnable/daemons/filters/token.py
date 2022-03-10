@@ -12,6 +12,7 @@ from chainlib.eth.address import is_same_address
 from chainlib.eth.error import RequestMismatchException
 from cic_eth_registry import CICRegistry
 from cic_eth_registry.erc20 import ERC20Token
+from cic_eth_registry.error import UnknownContractError
 from eth_token_index import TokenUniqueSymbolIndex
 import celery
 
@@ -42,7 +43,13 @@ class TokenFilter(SyncFilter):
         token = ERC20Token(self.chain_spec, conn, token_address)
 
         registry = CICRegistry(self.chain_spec, conn)
-        r = registry.by_name(token.symbol, sender_address=self.caller_address)
+        r = None
+        try:
+            r = registry.by_name(token.symbol, sender_address=self.caller_address)
+        except UnknownContractError:
+            logg.debug('token {} not in registry, skipping'.format(token.symbol))
+            return None
+
         if is_same_address(r, ZERO_ADDRESS):
             return None
 
