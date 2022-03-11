@@ -208,14 +208,25 @@ class CicUssdImporter(Importer):
         response_data = response.read().decode('utf-8')
         logg.debug('ussd response: {}'.format(response_data))
         language_selection = '1' if self.preferences[phone_number] == 'en' else '2'
+        attempts = 0
         while True:
+            attempts += 1
             req = self._build_ussd_request(
                                  phone_number,
                                  self.ussd_service_code,
                                  txt=language_selection,
                                  )
             logg.debug('ussd request: {} {}'.format(req.full_url, req.data))
-            response = urllib.request.urlopen(req)
+            response = None
+            try:
+                response = urllib.request.urlopen(req)
+            except urllib.error.HTTPError as e:
+                if attempts is 5:
+                    raise e
+                if e.code >= 500:
+                    time.sleep(0.3)
+                    continue
+                raise e
             response_data = response.read().decode('utf-8')
             logg.debug('ussd response: {}'.format(response_data))
             if len(response_data) < 3:
