@@ -97,7 +97,7 @@ def set_active_token(activated_account, init_cache, token_symbol):
 
 @pytest.fixture(scope='function')
 def cache_token_data(activated_account, init_cache, token_data):
-    identifier = [bytes.fromhex(activated_account.blockchain_address), token_data.get('symbol').encode('utf-8')]
+    identifier = token_data.get('symbol').encode('utf-8')
     key = cache_data_key(identifier, MetadataPointer.TOKEN_DATA)
     cache_data(key=key, data=json.dumps(token_data))
 

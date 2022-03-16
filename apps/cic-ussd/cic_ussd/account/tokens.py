@@ -53,14 +53,13 @@ def create_account_tokens_list(blockchain_address: str):
     if token_symbols_list:
         logg.debug(f'Token symbols: {token_symbols_list} for account: {blockchain_address}')
         for token_symbol in token_symbols_list:
-            entry = {}
             logg.debug(f'Processing token data for: {token_symbol}')
-            key = cache_data_key([bytes.fromhex(blockchain_address), token_symbol.encode('utf-8')], MetadataPointer.TOKEN_DATA)
+            key = cache_data_key(token_symbol.encode('utf-8'), MetadataPointer.TOKEN_DATA)
             token_data = get_cached_data(key)
             token_data = json.loads(token_data)
             logg.debug(f'Retrieved token data: {token_data} for: {token_symbol}')
             token_name = token_data.get('name')
-            entry['name'] = token_name
+            entry = {'name': token_name}
             token_symbol = token_data.get('symbol')
             entry['symbol'] = token_symbol
             token_issuer = token_data.get('issuer')
@@ -104,8 +103,7 @@ def get_cached_token_data(blockchain_address: str, token_symbol: str):
     :return:
     :rtype:
     """
-    identifier = [bytes.fromhex(blockchain_address), token_symbol.encode('utf-8')]
-    key = cache_data_key(identifier, MetadataPointer.TOKEN_DATA)
+    key = cache_data_key(token_symbol.encode("utf-8"), MetadataPointer.TOKEN_DATA)
     logg.debug(f'Retrieving token data for: {token_symbol} at: {key}')
     token_data = get_cached_data(key)
     return json.loads(token_data)
@@ -131,14 +129,12 @@ def get_default_token_symbol():
     :rtype: str
     """
     chain_str = Chain.spec.__str__()
-    cached_default_token = get_cached_default_token(chain_str)
-    if cached_default_token:
+    if cached_default_token := get_cached_default_token(chain_str):
         default_token_data = json.loads(cached_default_token)
         return default_token_data.get('symbol')
     else:
         logg.warning('Cached default token data not found. Attempting retrieval from default token API')
-        default_token_data = query_default_token(chain_str)
-        if default_token_data:
+        if default_token_data := query_default_token(chain_str):
             return default_token_data.get('symbol')
         else:
             raise SeppukuError(f'Could not retrieve default token for: {chain_str}')
