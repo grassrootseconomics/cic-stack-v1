@@ -148,7 +148,7 @@ def test_token_data_callback(activated_account,
         s_token_data_callback.apply_async().get()
     assert str(error.value) == f'Unexpected status code: {status_code}.'
 
-    token_data_key = cache_data_key([bytes.fromhex(blockchain_address), identifier], MetadataPointer.TOKEN_DATA)
+    token_data_key = cache_data_key(identifier, MetadataPointer.TOKEN_DATA)
     token_meta_key = cache_data_key(identifier, MetadataPointer.TOKEN_META_SYMBOL)
     token_info_key = cache_data_key(identifier, MetadataPointer.TOKEN_PROOF_SYMBOL)
     token_meta = get_cached_data(token_meta_key)

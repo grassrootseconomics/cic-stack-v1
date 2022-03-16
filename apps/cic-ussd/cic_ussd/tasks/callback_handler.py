@@ -178,7 +178,7 @@ def token_data_callback(result: dict, param: str, status_code: int):
     token_info = json.loads(token_info)
     token_data = collate_token_metadata(token_info=token_info, token_metadata=token_meta)
     token_data = {**token_data, **token}
-    token_data_key = cache_data_key([bytes.fromhex(param), identifier], MetadataPointer.TOKEN_DATA)
+    token_data_key = cache_data_key(identifier, MetadataPointer.TOKEN_DATA)
     cache_data(token_data_key, json.dumps(token_data))
     handle_token_symbol_list(blockchain_address=param, token_symbol=token_symbol)
 
@@ -203,7 +203,7 @@ def transaction_balances_callback(self, result: list, param: dict, status_code: 
     transaction = param
     token_symbol = transaction.get('token_symbol')
     blockchain_address = transaction.get('blockchain_address')
-    identifier = [bytes.fromhex(blockchain_address), token_symbol.encode('utf-8')]
+    identifier = token_symbol.encode('utf-8')
     wait_for_cache(identifier, f'Cached token data for: {token_symbol}', MetadataPointer.TOKEN_DATA)
     token_data = get_cached_token_data(blockchain_address, token_symbol)
     decimals = token_data.get('decimals')
@@ -232,10 +232,6 @@ def transaction_callback(result: dict, param: str, status_code: int):
     """
     if status_code != 0:
         raise ValueError(f'Unexpected status code: {status_code}.')
-
-    print(f'THE RETURNING TRANSACTION IS: {result}')
-    print(f'STATUS CODE: {status_code}')
-    print(f'WITH PARAM: {param}')
 
     chain_str = Chain.spec.__str__()
     destination_token_symbol = result.get('destination_token_symbol')

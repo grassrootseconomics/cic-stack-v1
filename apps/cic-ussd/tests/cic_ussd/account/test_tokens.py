@@ -69,8 +69,7 @@ def test_get_active_token_symbol(activated_account, set_active_token, valid_reci
 
 
 def test_get_cached_token_data(activated_account, cache_token_data, token_symbol):
-    identifier = [bytes.fromhex(activated_account.blockchain_address), token_symbol.encode('utf-8')]
-    key = cache_data_key(identifier, MetadataPointer.TOKEN_DATA)
+    key = cache_data_key(token_symbol.encode("utf-8"), MetadataPointer.TOKEN_DATA)
     token_data = json.loads(get_cached_data(key))
     assert token_data == get_cached_token_data(activated_account.blockchain_address, token_symbol)
 
