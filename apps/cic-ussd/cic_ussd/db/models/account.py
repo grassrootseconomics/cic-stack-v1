@@ -116,7 +116,7 @@ class Account(SessionBase):
         :return:
         :rtype:
         """
-        return self.failed_pin_attempts == 3 and self.get_status(session) == AccountStatus.LOCKED.name
+        return self.failed_pin_attempts > 2 and self.get_status(session) == AccountStatus.LOCKED.name
 
     def reset_pin(self, session: Session, soft: bool = False):
         """This function resets the number of failed pin attempts to zero. It checks whether a pin reset call is
