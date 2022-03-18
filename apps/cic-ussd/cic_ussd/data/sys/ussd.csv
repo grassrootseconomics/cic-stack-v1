@@ -22,7 +22,7 @@ initial_language_selection,"CON Welcome to Sarafu Network!
 11. Dhuur
 00.Bai"
 initial_pin_entry,CON Please enter a new four number PIN for your account.,CON Tafadhali weka pin mpya yenye nambari nne kwa akaunti yako,CON Tafathali ikia pin yumbya ila ina namba inya ,CON Ikira namba yaku ya thiri njeru ina namba inna.,CON Ika piniyo ya namba Nee kwa akaunti yakwako.,CON Kiyie to ket namba ni mopondo manyien e akaunt ni.,CON Tafadhal pin hareti kekhae ka namba afuri fulaa akaunti kake
-initial_pin_confirmation,CON Enter your four number PIN again,CON Weka PIN yako tena,CON Ikia PIN yaku ya namba inya ingi,CON Ikira PIN yaku ringi, CON ika nambazo nee kaheri,CON Ket namba ni mopondo manyien kendo,CON PIN kekhae Marro Dibii
+initial_pin_confirmation,CON Enter your four number PIN again,CON Weka PIN yako tena,CON Ikia PIN yaku ya namba inya ingi,CON Ikira PIN yaku ringi,CON ika nambazo nee kaheri,CON Ket namba ni mopondo manyien kendo,CON PIN kekhae Marro Dibii
 enter_given_name,"CON Enter first name
 0. Back",CON Weka jina lako la kwanza,"CON Andika isyitwa yaku ya mbee
 0. Itina","CON Ikira ritwa ria mbere
@@ -107,7 +107,7 @@ start,"CON Balance %{account_balance} %{account_token_name}
 1. Tuma
 2. Sarafu yakwa
 3. Akaunti yakwa
-4. Uteithio"," ""CON Sazo %{account_balance} %{account_token_name}
+4. Uteithio","CON Sazo %{account_balance} %{account_token_name}
 1. Huma
 2. Sarafu zangu
 3. Akaunti yangu
@@ -152,7 +152,7 @@ first_account_tokens_set,"CON Choose a number or symbol from your balances:
 %{first_account_tokens_set}
 0. Thutha
 11. Ikinya ringi
-00. Uma"," ""CON Tsagula namba au ndzora kulaa kwa sazoro:
+00. Uma","CON Tsagula namba au ndzora kulaa kwa sazoro:
 %{first_account_tokens_set}
 0. Uya nyuma
 11. Mbere
@@ -180,8 +180,8 @@ middle_account_tokens_set,"CON Choose a number or symbol from your balances:
 %{middle_account_tokens_set}
 11. Ikinya ringi
 22. Thutha
-00. Uma","Tsagula Sarafu:
- %{token_list}
+00. Uma","CON Tsagula Sarafu:
+ %{middle_account_tokens_set}
 11.Mbere
 22.Uya nyuma
 00.Ombola","CON Choose a number or symbol from your balances:
@@ -204,8 +204,8 @@ last_account_tokens_set,"CON Choose a number or symbol from your balances:
 00. Uma","CON Cagura namba kana kionereria hari matigari maku:
 %{last_account_tokens_set}
 22. Coka thutha
-00. Uma ","Tsagula Sarafu:
- %{token_list}
+00. Uma ","CON Tsagula Sarafu:
+ %{last_account_tokens_set}
 22. Uya Nyuma
 00.Ombola","CON Choose a number or symbol from your balances:
 %{last_account_tokens_set}
@@ -219,9 +219,9 @@ Enter pin to select:
 Weka nambari ya siri kuchagua:
 0. Back","CON %{token_data}
 Ikia pin yaku kusakua:
-0. Itina","%{token_info}
+0. Itina","CON %{token_data}
 Ikira pin yaku gucaghura:
-0. Thutha","%{token_info}
+0. Thutha","CON %{token_data}
 Ika piniyo kutsagula Sarafu:
 0. Uya Nyuma","CON %{token_data}
 Ket namba ni mopondo mondo iyier:","CON %{token_data}

@@ -14,6 +14,7 @@ from cic_ussd.account.metadata import get_cached_preferred_language
 from cic_ussd.db.models.account import Account
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.notifications import Notifier
+from cic_ussd.phone_number import process_phone_number, E164Format
 from cic_ussd.session.ussd_session import save_session_data
 from cic_ussd.translation import translation_for
 
@@ -123,7 +124,7 @@ def is_set_pin_guardian(account: Account, checked_number: str, preferred_languag
     else:
         failure_reason = translation_for('helpers.error.no_matching_account', preferred_language)
 
-    is_set_guardian = checked_number in set_guardians
+    is_set_guardian = checked_number in set_guardians or process_phone_number(phone_number=checked_number, region=E164Format.region) in set_guardians
     is_initiator = checked_number == account.phone_number
 
     guardianship = Guardianship()
