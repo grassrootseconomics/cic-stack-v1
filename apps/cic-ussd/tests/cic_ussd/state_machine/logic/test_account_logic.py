@@ -74,6 +74,7 @@ def test_save_metadata_attribute_to_session_data(activated_account,
 
 
 def test_update_account_status_to_active(generic_ussd_session, init_database, pending_account):
+    generic_ussd_session['data']['initial_pin'] = '1212'
     state_machine_data = ('', generic_ussd_session, pending_account, init_database)
     assert pending_account.get_status(init_database) == AccountStatus.PENDING.name
     update_account_status_to_active(state_machine_data)
