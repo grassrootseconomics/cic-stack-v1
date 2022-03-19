@@ -109,13 +109,15 @@ def parse_person_metadata(account: Account, metadata: dict):
     given_name = metadata.get('given_name')
     family_name = metadata.get('family_name')
     email = metadata.get('email')
-
-    if isinstance(metadata.get('date_of_birth'), dict):
-        date_of_birth = metadata.get('date_of_birth')
-    else:
+    dob = metadata.get('date_of_birth')
+    if isinstance(dob, dict):
+        date_of_birth = dob
+    elif isinstance(dob, str):
         date_of_birth = {
-            "year": int(metadata.get('date_of_birth')[:4])
+            "year": int(dob)
         }
+    else:
+        date_of_birth = None
     if isinstance(metadata.get('location'), dict):
         location = metadata.get('location')
     else:
