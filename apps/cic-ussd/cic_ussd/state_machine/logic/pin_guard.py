@@ -124,6 +124,14 @@ def is_set_pin_guardian(account: Account, checked_number: str, preferred_languag
     else:
         failure_reason = translation_for('helpers.error.no_matching_account', preferred_language)
 
+    # e164 is not enforced on phone numbers within the ussd setup as such all checked guardians should be checked in
+    # both e164 or entered format.
+    processed_guardian = None
+    for guardian in set_guardians:
+        processed_guardian = process_phone_number(phone_number=guardian, region=E164Format.region)
+
+    set_guardians.append(processed_guardian)
+
     is_set_guardian = checked_number in set_guardians or process_phone_number(phone_number=checked_number, region=E164Format.region) in set_guardians
     is_initiator = checked_number == account.phone_number
 
