@@ -53,8 +53,8 @@ def poller(args: Optional[Tuple],
 def wait_for_cache(identifier: Union[list, bytes],
                    resource_name: str,
                    salt: MetadataPointer,
-                   interval: int = 1,
-                   max_retry: int = 5):
+                   interval: int = 3,
+                   max_retry: int = 15):
     """
     :param identifier:
     :type identifier:
@@ -78,7 +78,7 @@ def wait_for_session_data(resource_name: str,
                           session_data_key: str,
                           ussd_session: dict,
                           interval: int = 1,
-                          max_retry: int = 5):
+                          max_retry: int = 15):
     """
     :param interval:
     :type interval:
