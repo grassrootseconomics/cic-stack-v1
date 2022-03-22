@@ -33,8 +33,9 @@ def handle_menu(account: Account, session: Session) -> Document:
         return UssdMenu.find_by_name('exit_pin_blocked')
 
     if account.has_valid_pin(session):
-        last_ussd_session = UssdSession.last_ussd_session(account.phone_number, session)
-        if last_ussd_session:
+        if last_ussd_session := UssdSession.last_ussd_session(
+            account.phone_number, session
+        ):
             return resume_last_ussd_session(last_ussd_session.state)
     else:
         return UssdMenu.find_by_name('initial_pin_entry')
