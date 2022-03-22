@@ -98,6 +98,7 @@ def pins_match(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
     :rtype: bool
     """
     user_input, ussd_session, account, session = state_machine_data
+    wait_for_session_data("Initial pin", "initial_pin", ussd_session, max_retry=15)
     initial_pin = ussd_session.get('data').get('initial_pin')
     return user_input == initial_pin
 
