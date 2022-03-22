@@ -53,8 +53,7 @@ class UssdSession:
         self.state = state
         self.user_input = user_input
 
-        session = self.store.get(external_session_id)
-        if session:
+        if session := self.store.get(external_session_id):
             session = json.loads(session)
             self.version = session.get('version') + 1
         else:
@@ -93,10 +92,7 @@ class UssdSession:
         :return: This function returns the queried data if found, else it doesn't return any value.
         :rtype: str.
         """
-        if self.data is not None:
-            return self.data.get(key)
-        else:
-            return None
+        return self.data.get(key) if self.data is not None else None
 
     def to_json(self):
         """ This function serializes the in memory ussd session object to a JSON object
@@ -190,10 +186,11 @@ def create_or_update_session(external_session_id: str,
     :rtype:
     """
     session = SessionBase.bind_session(session=session)
-    existing_ussd_session = session.query(DbUssdSession).filter_by(
-        external_session_id=external_session_id).first()
-
-    if existing_ussd_session:
+    if (
+        existing_ussd_session := session.query(DbUssdSession)
+        .filter_by(external_session_id=external_session_id)
+        .first()
+    ):
         ussd_session = update_ussd_session(ussd_session=existing_ussd_session,
                                            state=state,
                                            user_input=user_input,
@@ -242,8 +239,7 @@ def save_session_data(queue: Optional[str], session: Session, data: dict, ussd_s
     logg.debug(f'Saving: {data} session data to: {ussd_session}')
     cache = Cache.store
     external_session_id = ussd_session.get('external_session_id')
-    existing_session_data = ussd_session.get('data')
-    if existing_session_data:
+    if existing_session_data := ussd_session.get('data'):
         # replace session data entry
         keys = data.keys()
         for key in keys:

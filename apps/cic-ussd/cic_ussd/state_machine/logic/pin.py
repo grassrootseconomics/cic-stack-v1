@@ -14,9 +14,7 @@ from sqlalchemy.orm.session import Session
 from cic_ussd.db.models.account import Account
 from cic_ussd.db.models.base import SessionBase
 from cic_ussd.db.enum import AccountStatus
-from cic_ussd.encoder import create_password_hash, check_password_hash
-from cic_ussd.processor.poller import wait_for_session_data
-from cic_ussd.session.ussd_session import create_or_update_session, persist_ussd_session
+from cic_ussd.session.ussd_session import save_session_data
 
 
 logg = logging.getLogger(__file__)
@@ -70,24 +68,14 @@ def save_initial_pin_to_session_data(state_machine_data: Tuple[str, dict, Accoun
     :type state_machine_data: tuple
     """
     user_input, ussd_session, account, session = state_machine_data
-    if ussd_session.get('data'):
-        data = ussd_session.get('data')
+    data = ussd_session.get('data')
+    if data:
         data['initial_pin'] = user_input
     else:
         data = {
             'initial_pin': user_input
         }
-    external_session_id = ussd_session.get('external_session_id')
-    create_or_update_session(
-        external_session_id=external_session_id,
-        msisdn=ussd_session.get('msisdn'),
-        service_code=ussd_session.get('service_code'),
-        user_input=user_input,
-        state=ussd_session.get('state'),
-        session=session,
-        data=data
-    )
-    persist_ussd_session(external_session_id, 'cic-ussd')
+    save_session_data('cic-ussd', session, data, ussd_session)
 
 
 def pins_match(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
@@ -98,7 +86,6 @@ def pins_match(state_machine_data: Tuple[str, dict, Account, Session]) -> bool:
     :rtype: bool
     """
     user_input, ussd_session, account, session = state_machine_data
-    wait_for_session_data("Initial pin", "initial_pin", ussd_session, max_retry=15)
     initial_pin = ussd_session.get('data').get('initial_pin')
     return user_input == initial_pin
 
