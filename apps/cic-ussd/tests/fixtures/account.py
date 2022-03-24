@@ -28,7 +28,7 @@ def account_creation_data(task_uuid):
 
 
 @pytest.fixture(scope='function')
-def activated_account(init_database, set_fernet_key):
+def activated_account(init_database):
     account = Account(blockchain_address(), phone_number())
     account.create_password('0000')
     account.activate_account()
@@ -38,7 +38,7 @@ def activated_account(init_database, set_fernet_key):
 
 
 @pytest.fixture(scope='function')
-def guardian_account(init_database, set_fernet_key):
+def guardian_account(init_database):
     account = Account(blockchain_address(), phone_number())
     account.create_password('0000')
     account.activate_account()
@@ -258,7 +258,7 @@ def token_data():
 
 
 @pytest.fixture(scope='function')
-def locked_accounts_traffic(init_database, set_fernet_key):
+def locked_accounts_traffic(init_database):
     for _ in range(20):
         address = blockchain_address()
         phone = phone_number()
@@ -271,7 +271,7 @@ def locked_accounts_traffic(init_database, set_fernet_key):
 
 
 @pytest.fixture(scope='function')
-def pending_account(init_database, set_fernet_key):
+def pending_account(init_database):
     account = Account(blockchain_address(), phone_number())
     init_database.add(account)
     init_database.commit()
@@ -279,7 +279,7 @@ def pending_account(init_database, set_fernet_key):
 
 
 @pytest.fixture(scope='function')
-def pin_blocked_account(init_database, set_fernet_key):
+def pin_blocked_account(init_database):
     account = Account(blockchain_address(), phone_number())
     account.create_password('3333')
     account.failed_pin_attempts = 3
@@ -310,7 +310,7 @@ def raw_person_metadata():
 
 
 @pytest.fixture(scope='function')
-def valid_recipient(init_database, set_fernet_key):
+def valid_recipient(init_database):
     account = Account(blockchain_address(), phone_number())
     account.create_password('2222')
     account.activate_account()

@@ -16,7 +16,7 @@ from cic_ussd.db.models.task_tracker import TaskTracker
 from tests.helpers.accounts import blockchain_address, phone_number
 
 
-def test_account(init_database, set_fernet_key):
+def test_account(init_database):
     address = blockchain_address()
     phone = phone_number()
     account = Account(address, phone)

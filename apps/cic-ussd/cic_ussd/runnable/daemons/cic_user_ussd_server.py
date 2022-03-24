@@ -1,6 +1,7 @@
 """This module handles requests originating from the ussd service provider.
 """
 
+
 # standard imports
 import json
 import logging
@@ -23,7 +24,6 @@ from cic_ussd.account.tokens import query_default_token
 from cic_ussd.cache import cache_data, cache_data_key, Cache
 from cic_ussd.db import dsn_from_config
 from cic_ussd.db.models.base import SessionBase
-from cic_ussd.encoder import PasswordEncoder
 from cic_ussd.error import InitializationError
 from cic_ussd.files.local_files import create_local_file_data_stores, json_file_parser
 from cic_ussd.http.requests import get_request_endpoint, get_request_method
@@ -58,8 +58,6 @@ SessionBase.connect(data_source_name,
                     pool_size=int(config.get('DATABASE_POOL_SIZE')),
                     debug=config.true('DATABASE_DEBUG'))
 
-# set Fernet key
-PasswordEncoder.set_key(config.get('APP_PASSWORD_PEPPER'))
 
 # create in-memory databases
 ussd_menu_db = create_local_file_data_stores(file_location=config.get('USSD_MENU_FILE'),
@@ -106,17 +104,12 @@ UssdStateMachine.transitions = transitions
 
 # retrieve default token data
 chain_str = Chain.spec.__str__()
-default_token_data = query_default_token(chain_str)
-
-
-# cache default token for re-usability
-if default_token_data:
-    cache_key = cache_data_key(chain_str.encode('utf-8'), MetadataPointer.TOKEN_DEFAULT)
-    cache_data(key=cache_key, data=json.dumps(default_token_data))
-else:
+if not (default_token_data := query_default_token(chain_str)):
     raise InitializationError(f'Default token data for: {chain_str} not found.')
 
 
+cache_key = cache_data_key(chain_str.encode('utf-8'), MetadataPointer.TOKEN_DEFAULT)
+cache_data(key=cache_key, data=json.dumps(default_token_data))
 valid_service_codes = config.get('USSD_SERVICE_CODE').split(",")
 
 E164Format.region = config.get('E164_REGION')
@@ -216,9 +209,9 @@ def application(env, start_response):
         return [response_bytes]
 
     else:
-        logg.error('invalid query {}'.format(env))
+        logg.error(f'invalid query {env}')
         for r in env:
-            logg.debug('{}: {}'.format(r, env))
+            logg.debug(f'{r}: {env}')
         session.close()
         start_response('405 Play by the rules', errors_headers)
         return []

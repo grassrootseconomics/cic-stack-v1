@@ -1,7 +1,7 @@
 # standard imports
+import json
 import logging
 from typing import Optional
-import json
 
 # external imports
 import celery
@@ -9,9 +9,7 @@ from redis import Redis
 from sqlalchemy.orm.session import Session
 
 # local imports
-from cic_ussd.cache import Cache
-from cic_ussd.db.models.base import SessionBase
-from cic_ussd.db.models.ussd_session import UssdSession as DbUssdSession
+from cic_ussd.cache import get_cached_data
 
 logg = logging.getLogger(__file__)
 
@@ -142,21 +140,22 @@ def create_ussd_session(
                        )
 
 
-def update_ussd_session(ussd_session: DbUssdSession,
+def update_ussd_session(ussd_session: dict,
                         user_input: str,
                         state: str,
                         data: Optional[dict] = None) -> UssdSession:
     """"""
-    if data is None:
-        data = ussd_session.data
+    existing_data = ussd_session.get("data") or {}
+    incoming_data = data or {}
+    updated_data = {**existing_data, **incoming_data}
 
     return UssdSession(
-        external_session_id=ussd_session.external_session_id,
-        msisdn=ussd_session.msisdn,
+        external_session_id=ussd_session.get("external_session_id"),
+        msisdn=ussd_session.get("msisdn"),
         user_input=user_input,
         state=state,
-        service_code=ussd_session.service_code,
-        data=data
+        service_code=ussd_session.get("service_code"),
+        data=updated_data
     )
 
 
@@ -185,27 +184,19 @@ def create_or_update_session(external_session_id: str,
     :return:
     :rtype:
     """
-    session = SessionBase.bind_session(session=session)
-    if (
-        existing_ussd_session := session.query(DbUssdSession)
-        .filter_by(external_session_id=external_session_id)
-        .first()
-    ):
-        ussd_session = update_ussd_session(ussd_session=existing_ussd_session,
-                                           state=state,
-                                           user_input=user_input,
-                                           data=data
-                                           )
-    else:
-        ussd_session = create_ussd_session(external_session_id=external_session_id,
-                                           msisdn=msisdn,
-                                           service_code=service_code,
-                                           user_input=user_input,
-                                           state=state,
-                                           data=data
-                                           )
-    SessionBase.release_session(session=session)
-    return ussd_session
+    if not (existing_ussd_session := get_cached_data(external_session_id)):
+        return create_ussd_session(external_session_id=external_session_id,
+                                   msisdn=msisdn,
+                                   service_code=service_code,
+                                   user_input=user_input,
+                                   state=state,
+                                   data=data
+                                   )
+    existing_ussd_session = json.loads(existing_ussd_session)
+    return update_ussd_session(ussd_session=existing_ussd_session,
+                               state=state,
+                               user_input=user_input,
+                               data=data)
 
 
 def persist_ussd_session(external_session_id: str, queue: Optional[str]):
@@ -237,7 +228,6 @@ def save_session_data(queue: Optional[str], session: Session, data: dict, ussd_s
     :type ussd_session: UssdSession
     """
     logg.debug(f'Saving: {data} session data to: {ussd_session}')
-    cache = Cache.store
     external_session_id = ussd_session.get('external_session_id')
     if existing_session_data := ussd_session.get('data'):
         # replace session data entry
@@ -245,7 +235,7 @@ def save_session_data(queue: Optional[str], session: Session, data: dict, ussd_s
         for key in keys:
             existing_session_data[key] = data[key]
         data = existing_session_data
-    in_redis_ussd_session = cache.get(external_session_id)
+    in_redis_ussd_session = get_cached_data(external_session_id)
     in_redis_ussd_session = json.loads(in_redis_ussd_session)
     create_or_update_session(
         external_session_id=external_session_id,
@@ -256,4 +246,3 @@ def save_session_data(queue: Optional[str], session: Session, data: dict, ussd_s
         session=session,
         data=data
     )
-    persist_ussd_session(external_session_id=external_session_id, queue=queue)
