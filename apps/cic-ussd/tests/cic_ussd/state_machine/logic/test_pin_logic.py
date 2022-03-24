@@ -51,7 +51,7 @@ def test_save_initial_pin_to_session_data(activated_account,
                                           init_cache,
                                           init_database,
                                           persisted_ussd_session,
-                                          set_fernet_key):
+                                          ):
     state_machine_data = ('1212', cached_ussd_session.to_json(), activated_account, init_database)
     save_initial_pin_to_session_data(state_machine_data)
     ussd_session = get_cached_data(cached_ussd_session.external_session_id)

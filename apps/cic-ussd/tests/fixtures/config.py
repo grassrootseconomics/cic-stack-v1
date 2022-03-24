@@ -11,7 +11,6 @@ from confini import Config
 # local imports
 from cic_ussd.account.chain import Chain
 from cic_ussd.account.guardianship import Guardianship
-from cic_ussd.encoder import PasswordEncoder
 from cic_ussd.files.local_files import create_local_file_data_stores, json_file_parser
 from cic_ussd.menu.ussd_menu import UssdMenu
 from cic_ussd.phone_number import E164Format, Support
@@ -84,11 +83,6 @@ def load_support_phone(load_config):
 def load_ussd_menu(load_config):
     ussd_menu_db = create_local_file_data_stores(file_location=load_config.get('USSD_MENU_FILE'), table_name="ussd_menu")
     UssdMenu.ussd_menu_db = ussd_menu_db
-
-
-@pytest.fixture(scope='function')
-def set_fernet_key(load_config):
-    PasswordEncoder.set_key(load_config.get('APP_PASSWORD_PEPPER'))
 
 
 @pytest.fixture(scope='function')
