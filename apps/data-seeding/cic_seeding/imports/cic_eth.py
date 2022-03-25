@@ -94,8 +94,8 @@ class CicEthRedisTransport(ResultTransport):
 # Does not implement own sync filter.
 class CicEthImporter(Importer):
 
-    def __init__(self, config, rpc, signer, signer_address, result_transport=None, stores={}, default_tag=[]):
-        super(CicEthImporter, self).__init__(config, rpc, signer, signer_address, stores=stores, default_tag=default_tag)
+    def __init__(self, config, rpc, signer, signer_address, result_transport=None, stores={}, default_tag=[], mint_balance=False):
+        super(CicEthImporter, self).__init__(config, rpc, signer, signer_address, stores=stores, default_tag=default_tag, mint_balance=mint_balance)
         self.res = result_transport
         self.queue = config.get('CELERY_QUEUE')
         self.celery_broker_url = config.get('CELERY_BROKER_URL')

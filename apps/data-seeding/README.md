@@ -186,6 +186,8 @@ The following values are all valid arguments.
 
 ## KNOWN ISSUES
 
+- A bug in `create_import_users.py` requires `--reset` always to be set.
+
 - When the account callback in `cic_eth` fails, the `cic_eth/seed.py` script will exit with a cryptic complaint concerning a `None` value.
 
 - Sovereign import scripts use the same keystore, and running them simultaneously will mess up the transaction nonce sequence. Better would be to use two different keystore wallets so balance and users scripts can be run simultaneously.
