@@ -24,6 +24,7 @@ from chainlib.eth.nonce import RPCNonceOracle
 from chainlib.eth.error import RequestMismatchException
 from hexathon import strip_0x
 from cic_eth_registry.erc20 import ERC20Token
+from giftable_erc20_token import GiftableToken
 
 # local imports
 from cic_seeding import DirHandler
@@ -133,7 +134,11 @@ class Importer:
     max_gas = 8000000
     min_gas = 30000
 
-    def __init__(self, config, rpc, signer=None, signer_address=None, stores={}, default_tag=[]):
+    def __init__(self, config, rpc, signer=None, signer_address=None, stores={}, default_tag=[], mint_balance=False):
+        if mint_balance:
+            self._gift_tokens = self._gift_tokens_mint
+        else:
+            self._gift_tokens = self._gift_tokens_transfer
         # set up import state backend
         self.stores = {}
         self.stores['tags'] = AddressIndex(value_filter=split_filter, name='tags index')
@@ -494,18 +499,34 @@ class Importer:
     
     # Send the token transaction for the user's original balance.
     # TODO: There is nothing preventing this from being repeated.
-    def _gift_tokens(self, conn, user):
+    def _gift_tokens_transfer(self, conn, user):
         balance_full = user.original_balance * self.token_multiplier
-
         gas_oracle = RPCGasOracle(self.rpc, code_callback=self.get_max_gas)
         erc20 = ERC20(self.chain_spec, signer=self.signer, gas_oracle=gas_oracle, nonce_oracle=self.nonce_oracle)
         (tx_hash_hex, o) = erc20.transfer(self.token_address, self.signer_address, user.address, balance_full)
+
         r = conn.do(o)
 
         # export tx
         self._export_tx(tx_hash_hex, o['params'][0])
 
-        logg.info('token gift value {} submitted for {} tx {}'.format(balance_full, user, tx_hash_hex))
+        logg.info('token gift transfer value {} submitted for {} tx {}'.format(balance_full, user, tx_hash_hex))
+
+        return tx_hash_hex
+       
+
+    def _gift_tokens_mint(self, conn, user):
+        balance_full = user.original_balance * self.token_multiplier
+        gas_oracle = RPCGasOracle(self.rpc, code_callback=self.get_max_gas)
+        c = GiftableToken(self.chain_spec, signer=self.signer, gas_oracle=gas_oracle, nonce_oracle=self.nonce_oracle)
+        (tx_hash_hex, o) = c.mint_to(self.token_address, self.signer_address, user.address, balance_full)
+        
+        r = conn.do(o)
+
+        # export tx
+        self._export_tx(tx_hash_hex, o['params'][0])
+
+        logg.info('token gift mint value {} submitted for {} tx {}'.format(balance_full, user, tx_hash_hex))
 
         return tx_hash_hex
 

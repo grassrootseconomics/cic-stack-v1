@@ -35,7 +35,6 @@ cic-eth-tag -i $CHAIN_SPEC --set --tag GAS_GIFTER $gas_gifter
 accounts_index_writer=`cic-eth-create --redis-timeout 120 $DEV_DEBUG_FLAG --redis-host-callback $REDIS_HOST_CALLBACK --redis-port-callback $REDIS_PORT_CALLBACK --no-register`
 cic-eth-tag -i $CHAIN_SPEC --set --tag ACCOUNT_REGISTRY_WRITER $accounts_index_writer
 
-
 # Assign system writer for accounts index
 >&2 echo -e "\033[;96mEnable accounts index writer $accounts_index_writer to write to accounts index contract at $accounts_index_address\033[;39m"
 r=`eth-accounts-index-writer -s -w -u -i $CHAIN_SPEC -p $RPC_PROVIDER -e $accounts_index_address $DEV_DEBUG_FLAG $accounts_index_writer`

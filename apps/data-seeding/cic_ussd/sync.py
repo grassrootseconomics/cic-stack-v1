@@ -75,6 +75,7 @@ argparser.add_argument('--until', type=int, default=0, help='block to terminate 
 argparser.add_argument('--keep-alive', dest='keep_alive', action='store_true', help='continue syncing after latest block reched')
 argparser.add_argument('--gas-amount', dest='gas_amount', type=int, help='amount of gas to gift to new accounts')
 argparser.add_argument('--timeout', default=60.0, type=float, help='Callback timeout')
+argparser.add_argument('--mint', action='store_true', help='mint balances instead of transfsr')
 argparser.add_argument('--sync', type=str, choices=['all', 'deferred', 'evm', 'none'], default='all', help='Block sync mode')
 argparser.add_argument('-v', help='be verbose', action='store_true')
 argparser.add_argument('-vv', help='be more verbose', action='store_true')
@@ -108,6 +109,7 @@ config.add(args.user_dir, '_USERDIR', True)
 config.add(args.timeout, '_TIMEOUT', True)
 config.add(8, '_THREADS', True)
 config.add(False, '_RESET', True)
+config.add(args.mint, '_MINT', True)
 logg.debug('loaded config: \n{}'.format(config))
 
 signer_address = None
@@ -138,11 +140,11 @@ rpc = EthHTTPConnection(args.p)
 # TODO: need a channel for closing down this thread
 class DeferredImportThread(threading.Thread):
 
-    def __init__(self, config, chain_spec, signer, signer_address, stores, delay=1):
+    def __init__(self, config, chain_spec, signer, signer_address, stores, delay=1, mint_balance=False):
         super(DeferredImportThread, self).__init__()
 
         self.rpc = EthHTTPConnection(config.get('RPC_PROVIDER'))
-        deferred_imp = Importer(config, self.rpc, signer=signer, signer_address=signer_address, stores=stores)
+        deferred_imp = Importer(config, self.rpc, signer=signer, signer_address=signer_address, stores=stores, mint_balance=mint_balance)
         deferred_imp.prepare()
 
         deferred_syncer_backend = MemBackend(str(chain_spec), 0)
@@ -212,10 +214,10 @@ def run_account_connect(config, imp): #, offset):
     return stop
 
 
-def run_deferred_syncer(config, chain_spec, signer, signer_address, stores):
+def run_deferred_syncer(config, chain_spec, signer, signer_address, stores, mint_balance=False):
     # Spawn thread to receive the block data saved by the main thread syncer (below) for deferred processing.
     # The syncer
-    deferred_thread = DeferredImportThread(config, chain_spec, signer, signer_address, stores)
+    deferred_thread = DeferredImportThread(config, chain_spec, signer, signer_address, stores, mint_balance=mint_balance)
     deferred_thread.start()
 
     def stop():
@@ -289,7 +291,7 @@ def main():
         sync_deferred = args.sync == 'deferred'
 
     if sync_deferred:
-        stopper = run_deferred_syncer(config, chain_spec, signer, signer_address, stores)
+        stopper = run_deferred_syncer(config, chain_spec, signer, signer_address, stores, mint_balance=config.true('_MINT'))
         stoppers.append(stopper)
     else:
         logg.info('skipping deferred syncer')

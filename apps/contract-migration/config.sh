@@ -14,13 +14,18 @@ if [ -z $RPC_PROVIDER ]; then
 fi
 
 # Handle wallet
+passphrase_flag='-z'
 export WALLET_KEY_FILE=${WALLET_KEY_FILE:-`realpath ./keystore/UTC--2021-01-08T17-18-44.521011372Z--eb3907ecad74a0013c259d5874ae7f22dcbcc95c`}
 if [ ! -f $WALLET_KEY_FILE ]; then
 	>&2 echo "wallet path '$WALLET_KEY_FILE' does not point to a file"
 	exit 1
 fi
+if [ ! -z "$WALLET_PASSPHRASE" ]; then
+	passphrase_flag=
+fi
+#export WALLET_PASSPHRASE=$WALLET_PASSPRHASE
 
-export DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER=`eth-keyfile -z -d $WALLET_KEY_FILE`
+export DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER=`eth-keyfile $passphrase_flag -d $WALLET_KEY_FILE`
 noncefile=${DEV_DATA_DIR}/nonce_${DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER}
 
 # By default configuration values generated from previous runs will be used in subsequent invocations
@@ -49,6 +54,9 @@ export CIC_TRUST_ADDRESS=${CIC_TRUST_ADDRESS:-$DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER
 export CIC_DEFAULT_TOKEN_SYMBOL=$TOKEN_SYMBOL
 export TOKEN_SINK_ADDRESS=${TOKEN_SINK_ADDRESS:-$DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER}
 export DEV_TOKEN_DATA_PATH=${DEV_TOKEN_DATA_PATH:-token_data/default}
+export PGP_PRIVATEKEY_FILE=${PGP_PRIVATEKEY_FILE:-pgp/merman.priv.asc}
+export PGP_PASSPHRASE=${PGP_PASSPHRASE:-merman}
+export PGP_FINGERPRINT=${PGP_FINGERPRINT:-F3FAF668E82EF5124D5187BAEF26F4682343F692}
 
 if [ ! -f $noncefile ]; then
 	nonce=`eth-count $DEV_DEBUG_FLAG $DEV_ETH_ACCOUNT_CONTRACT_DEPLOYER`

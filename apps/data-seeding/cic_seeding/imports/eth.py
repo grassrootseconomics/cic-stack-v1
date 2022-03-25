@@ -37,8 +37,8 @@ class EthImporter(Importer):
     # TODO: cic-contracts should be providing this
     account_index_add_signature = keccak256_string_to_hex('add(address)')[:8]
 
-    def __init__(self, rpc, signer, signer_address, config, stores={}, default_tag=[]):
-        super(EthImporter, self).__init__(config, rpc, signer, signer_address, stores=stores, default_tag=default_tag)
+    def __init__(self, rpc, signer, signer_address, config, stores={}, default_tag=[], mint_balance=False):
+        super(EthImporter, self).__init__(config, rpc, signer, signer_address, stores=stores, default_tag=default_tag, mint_balance=mint_balance)
         self.keystore = DictKeystore()
         self.gas_gift_amount = int(config.get('ETH_GAS_AMOUNT'))
 

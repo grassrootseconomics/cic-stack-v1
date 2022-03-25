@@ -16,13 +16,14 @@ curl -s -X POST $META_URL/$ptr -H "Content-Type: application/json" -H "X-CIC-AUT
 # Sign the digest
 mkdir -p $t/.gnupg
 chmod 700 $t/.gnupg -R
-gpg -q --homedir $t/.gnupg --pinentry-mode loopback --passphrase merman --import pgp/merman.priv.asc
-gpg -q --homedir $t/.gnupg --pinentry-mode loopback --passphrase merman -u F3FAF668E82EF5124D5187BAEF26F4682343F692 -a -b $t/digest
+gpg -q --homedir $t/.gnupg --pinentry-mode loopback --passphrase $PGP_PASSPHRASE --import $PGP_PRIVATEKEY_FILE
+gpg -q --homedir $t/.gnupg --pinentry-mode loopback --passphrase $PGP_PASSPHRASE -u $PGP_FINGERPRINT -a -b $t/digest
 
 # Assemble the signed update request for cic-meta
 d_raw=`cat $t/req.json`
 d_sig=`cat $t/digest.asc | tr '\n' '\t' | sed -e 's/\t/\\\\n/g'`
 d_digest=`cat $t/digest`
+
 cat <<EOF > $t/req2.json
 {
 	"s": {

@@ -66,6 +66,7 @@ argparser.add_argument('--until', type=int, default=0, help='block to terminate 
 argparser.add_argument('--keep-alive', dest='keep_alive', action='store_true', help='continue syncing after latest block reched')
 argparser.add_argument('--gas-amount', dest='gas_amount', type=int, help='amount of gas to gift to new accounts')
 argparser.add_argument('--timeout', default=60.0, type=float, help='Callback timeout')
+argparser.add_argument('--mint', action='store_true', help='mint balances instead of transfsr')
 argparser.add_argument('-v', help='be verbose', action='store_true')
 argparser.add_argument('-vv', help='be more verbose', action='store_true')
 argparser.add_argument('user_dir', type=str, help='user export directory')
@@ -97,6 +98,7 @@ config.censor('PASSWORD', 'SSL')
 config.add(args.user_dir, '_USERDIR', True) 
 config.add(args.timeout, '_TIMEOUT', True)
 config.add(False, '_RESET', True)
+config.add(args.mint, '_MINT', True)
 logg.debug('loaded config: \n{}'.format(config))
 
 signer_address = None
@@ -130,7 +132,7 @@ def main():
  
     #balances = AddressIndex(value_filter=remove_zeros_filter, name='balance index')
 
-    imp = CicEthImporter(config, rpc, signer, signer_address)
+    imp = CicEthImporter(config, rpc, signer, signer_address, mint_balance=config.true('_MINT'))
     imp.prepare()
 
     o = block_latest_query()
