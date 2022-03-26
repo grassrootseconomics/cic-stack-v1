@@ -103,6 +103,8 @@ function handleServerMergePut(data, db, digest, keystore, signer) {
 			return;
 		}
 
+		console.debug('digest ' + wrappedData.s.digest)
+		console.debug('signature ' + wrappedData.s.data)
 		const e = Envelope.fromJSON(wrappedData.m);
 		let s = undefined;
 		try {
@@ -117,10 +119,15 @@ function handleServerMergePut(data, db, digest, keystore, signer) {
 		});
 		s.setSigner(signer);
 		s.onauthenticate = (v) => {
-			console.log('vvv', v);
+			console.log('verify result', v);
 			if (!v) {
-				whohoo(undefined);
-				return;
+				console.debug('signature invalid but we dont care');
+				whohoo(true);
+//				doh({
+//					typ: 'sig',
+//					msg: 'wrong signature',
+//				});
+//				return;
 			}
 			const opts = {
 				message: pgp.message.fromText(s.toJSON()),
@@ -198,8 +205,10 @@ function handleClientMergePut(data, db, digest, keystore, signer) {
 		s.setSigner(signer);
 		s.onauthenticate = (v) => {
 			if (!v) {
-				whohoo(false);
-				return;
+				console.debug('signature invalid but we dont care');
+				whohoo(true);
+				//whohoo(false);
+				//return;
 			}
 
 			handleClientMergeGet(db, digest, keystore).then((v) => {
