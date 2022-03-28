@@ -153,12 +153,12 @@ class CicUssdImporter(Importer):
         self.ussd_provider_ssl = _ussd_ssl(config)
 
 
-    def _build_ussd_request(self, phone_number, service_code, txt=None):
-        session = uuid.uuid4().hex
-        if txt == None:
+    def _build_ussd_request(self, session_id, phone_number, service_code, txt=None):
+
+        if txt is None:
             txt = ""
         data = {
-            'sessionId': session,
+            'sessionId': session_id,
             'serviceCode': service_code,
             'phoneNumber': phone_number,
             'text': txt,
@@ -198,11 +198,9 @@ class CicUssdImporter(Importer):
 
 
     def create_account(self, i, u):
+        session = uuid.uuid4().hex
         phone_number = phone_number_to_e164(u.phone, None)
-        req = self._build_ussd_request(
-                             phone_number,
-                             self.ussd_service_code,
-                             )
+        req = self._build_ussd_request(session, phone_number, self.ussd_service_code)
         logg.debug('ussd request: {} {}'.format(req.full_url, req.data))
         response = urllib.request.urlopen(req)
         response_data = response.read().decode('utf-8')
@@ -211,11 +209,7 @@ class CicUssdImporter(Importer):
         attempts = 0
         while True:
             attempts += 1
-            req = self._build_ussd_request(
-                                 phone_number,
-                                 self.ussd_service_code,
-                                 txt=language_selection,
-                                 )
+            req = self._build_ussd_request( session, phone_number, self.ussd_service_code, txt=language_selection)
             logg.debug('ussd request: {} {}'.format(req.full_url, req.data))
             response = None
             try:
