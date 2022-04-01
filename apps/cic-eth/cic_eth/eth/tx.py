@@ -116,20 +116,25 @@ def send(self, txs, chain_spec_dict):
 
     queue = self.request.delivery_info.get('routing_key')
 
+    o = raw(tx_hex)
+    err_state = False
+    conn = RPCConnection.connect(chain_spec, 'default')
+    try:
+        conn.do(o)
+    except JSONRPCException as e:
+        logg.error('send to node failed! {}'.format(e))
+        err_state = True
+
     r = None
     s_set_sent = celery.signature(
         'cic_eth.queue.state.set_sent',
         [
             chain_spec_dict,
             tx_hash_hex,
-            False
+            err_state,
             ],
             queue=queue,
         )
-
-    o = raw(tx_hex)
-    conn = RPCConnection.connect(chain_spec, 'default')
-    conn.do(o)
 
     s_set_sent.apply_async()
 

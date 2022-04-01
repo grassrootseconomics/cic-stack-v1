@@ -406,7 +406,7 @@ def refill_gas(self, recipient_address, chain_spec_dict):
     
     # set up transaction builder
     nonce_oracle = CustodialTaskNonceOracle(gas_provider, self.request.root_id, session=session)
-    gas_oracle = self.create_gas_oracle(rpc)
+    gas_oracle = self.create_gas_oracle(rpc, address=gas_provider)
     rpc_signer = RPCConnection.connect(chain_spec, 'signer')
     c = Gas(chain_spec, signer=rpc_signer, nonce_oracle=nonce_oracle, gas_oracle=gas_oracle)
 
@@ -478,15 +478,12 @@ def resend_with_higher_gas(self, txold_hash_hex, chain_spec_dict, gas=None, defa
         current_gas_price = int(r, 16)
         if tx['gasPrice'] > current_gas_price:
             logg.info('Network gas price {} is lower than overdue tx gas price {}'.format(current_gas_price, tx['gasPrice']))
-            #tx['gasPrice'] = int(tx['gasPrice'] * default_factor)
             new_gas_price = tx['gasPrice'] + 1
         else:
             new_gas_price = int(tx['gasPrice'] * default_factor)
-            #if gas_price > new_gas_price:
-            #    tx['gasPrice'] = gas_price
-            #else:
-            #    tx['gasPrice'] = new_gas_price
 
+    if new_gas_price == tx['gasPrice']:
+        new_gas_price += 1
 
     rpc_signer = RPCConnection.connect(chain_spec, 'signer')
     gas_oracle = OverrideGasOracle(price=new_gas_price, conn=rpc)

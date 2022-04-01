@@ -56,27 +56,27 @@ def get_tx_local(chain_spec, tx_hash, session=None):
     return r
 
 @celery_app.task(base=CriticalSQLAlchemyTask)
-def get_latest_txs(chain_spec_dict, count=10):
+def get_latest_txs(chain_spec_dict, count=10, status=None, not_status=None):
     chain_spec = ChainSpec.from_dict(chain_spec_dict)
-    return get_latest_txs_local(chain_spec, count=count)
+    return get_latest_txs_local(chain_spec, count=count, status=status, not_status=not_status)
 
-def get_latest_txs_local(chain_spec, count=10, session=None):
+def get_latest_txs_local(chain_spec, count=10, status=None, not_status=None, session=None):
     session = SessionBase.bind_session(session)
-    r = chainqueue.sql.query.get_latest_txs(chain_spec, count=count, session=session)
+    r = chainqueue.sql.query.get_latest_txs(chain_spec, count=count, status=status, not_status=not_status, session=session)
     SessionBase.release_session(session)
     return r
 
 @celery_app.task(base=CriticalSQLAlchemyTask)
-def get_account_tx(chain_spec_dict, address, as_sender=True, as_recipient=True, counterpart=None):
+def get_account_tx(chain_spec_dict, address, status=None, not_status=None, as_sender=True, as_recipient=True, counterpart=None):
     address = tx_normalize.wallet_address(address)
     chain_spec = ChainSpec.from_dict(chain_spec_dict)
-    return get_account_tx_local(chain_spec, address, as_sender=as_sender, as_recipient=as_recipient, counterpart=counterpart)
+    return get_account_tx_local(chain_spec, address, status=status, not_status=not_status, as_sender=as_sender, as_recipient=as_recipient, counterpart=counterpart)
 
 
-def get_account_tx_local(chain_spec, address, as_sender=True, as_recipient=True, counterpart=None, session=None):
+def get_account_tx_local(chain_spec, address, status=None, not_status=None, as_sender=True, as_recipient=True, counterpart=None, session=None):
     address = tx_normalize.wallet_address(address)
     session = SessionBase.bind_session(session)
-    r = chainqueue.sql.query.get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, counterpart=None, session=session)
+    r = chainqueue.sql.query.get_account_tx(chain_spec, address, as_sender=as_sender, as_recipient=as_recipient, counterpart=counterpart, status=status, not_status=not_status, session=session)
     SessionBase.release_session(session)
     return r
 
