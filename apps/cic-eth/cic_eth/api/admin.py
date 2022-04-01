@@ -181,9 +181,13 @@ class AdminApi:
         return s_have.apply_async()
 
 
-    def resend(self, tx_hash_hex, chain_spec, in_place=True, unlock=False):
+    def resend(self, tx_hash_hex, chain_spec, in_place=True, unlock=False, gas_price=None, gas_ratio=1.01):
 
-        logg.debug('resend {}'.format(tx_hash_hex))
+        if gas_price != None:
+            logg.debug('resend {} gas price {}'.format(tx_hash_hex, gas_price))
+        else:
+            logg.debug('resend {} gas ratio {}'.format(tx_hash_hex, gas_ratio))
+
         s_get_tx_cache = celery.signature(
             'cic_eth.queue.query.get_tx_cache',
             [
@@ -205,8 +209,8 @@ class AdminApi:
             'cic_eth.eth.gas.resend_with_higher_gas',
             [
                 chain_spec.asdict(),
-                None,
-                1.01,
+                gas_price,
+                gas_ratio,
                 ],
             queue=self.queue,
             )
@@ -241,9 +245,11 @@ class AdminApi:
                 [
                     chain_spec.asdict(),
                     address,
-                    True,
-                    False,
                     ],
+                kwargs = {
+                    'as_sender': True,
+                    'as_recipient': False,
+                },
                 queue=self.queue,
                 )
         txs = s.apply_async().get()
@@ -297,9 +303,11 @@ class AdminApi:
                 [
                     chain_spec.asdict(),
                     address,
-                    True,
-                    False,
                     ],
+                kwargs={
+                    'as_sender': True,
+                    'as_recipient': False,
+                    },
                 queue=self.queue,
                 )
         txs = s.apply_async().get()
@@ -323,7 +331,7 @@ class AdminApi:
         return s_nonce.apply_async()
 
 
-    def account(self, chain_spec, address, include_sender=True, include_recipient=True, renderer=None, w=sys.stdout):
+    def account(self, chain_spec, address, include_sender=True, include_recipient=True, renderer=None, status=None, not_status=None, w=sys.stdout):
         """Lists locally originated transactions for the given Ethereum address.
 
         Performs a synchronous call to the Celery task responsible for performing the query.
@@ -340,6 +348,10 @@ class AdminApi:
                     chain_spec.asdict(),
                     address,
                     ],
+                kwargs={
+                    'status': status,
+                    'not_status': not_status,
+                },
                 queue=self.queue,
                 )
         txs = s.apply_async().get()
@@ -385,7 +397,7 @@ class AdminApi:
 
         return tx_dict_list
 
-    def txs_latest(self, chain_spec, count=10, renderer=None, w=sys.stdout):
+    def txs_latest(self, chain_spec, count=10, renderer=None, status=None, not_status=None, w=sys.stdout):
         """Lists latest locally originated transactions.
 
         Performs a synchronous call to the Celery task responsible for performing the query.
@@ -398,7 +410,9 @@ class AdminApi:
                     chain_spec.asdict(),
                 ],
                 kwargs={
-                    "count": count
+                    "count": count,
+                    "status": status,
+                    "not_status": not_status,
                 },
                 queue=self.queue,
                 )

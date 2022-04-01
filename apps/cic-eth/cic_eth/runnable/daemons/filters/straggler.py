@@ -5,7 +5,7 @@ import logging
 import celery
 from chainqueue.sql.state import obsolete_by_cache
 
-logg = logging.getLogger()
+logg = logging.getLogger(__name__)
 
 
 

@@ -87,6 +87,7 @@ class RetrySyncer(HeadSyncer):
             tx_src = unpack(tx_signed_raw_bytes, self.chain_spec)
             tx = Tx(tx_src)
             self.filter.apply(self.conn, block, tx)
+            self.backend.reset_filter()
         self.backend.set(block.number, 0)
 
 

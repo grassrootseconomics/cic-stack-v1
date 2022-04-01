@@ -19,11 +19,13 @@ arg_flags = cic_eth.cli.argflag_std_base
 local_arg_flags = cic_eth.cli.argflag_local_taskcallback
 argparser = cic_eth.cli.ArgumentParser(arg_flags)
 argparser.add_argument('--unlock', action='store_true', help='Unlock account after resend')
+argparser.add_argument('--fee-price', dest='fee_price', type=int, help='Override new gas price')
 argparser.add_positional('tx_hash', type=str, help='Transaction hash')
 argparser.process_local_flags(local_arg_flags)
 extra_args = {
     'unlock': None,
     'tx_hash': None,
+    'fee_price': None,
     }
 args = argparser.parse_args()
 
@@ -33,11 +35,15 @@ chain_spec = ChainSpec.from_chain_str(config.get('CHAIN_SPEC'))
 
 celery_app = cic_eth.cli.CeleryApp.from_config(config)
 
+rpc = cic_eth.cli.RPC.from_config(config) #, use_signer=True)
+conn = rpc.get_default()
+
+
 
 def main():
-    api = AdminApi(None)
+    api = AdminApi(conn)
     tx_details = api.tx(chain_spec, config.get('_TX_HASH'))
-    t = api.resend(args.tx_hash, chain_spec, unlock=config.get('_UNLOCK'))
+    t = api.resend(args.tx_hash, chain_spec, unlock=config.get('_UNLOCK'), gas_price=config.get('_FEE_PRICE'))
     print(t.get_leaf())
 
 if __name__ == '__main__':

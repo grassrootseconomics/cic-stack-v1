@@ -230,11 +230,12 @@ def test_task_check_gas_low(
 
 
 @pytest.mark.parametrize(
-        '_gas_price,_gas_factor',
+        '_gas_price,_gas_factor,_gas_price_current',
         [
-        (None, 1.1),
-        (MINIMUM_FEE_PRICE * 1.1, 0.9),
-        (None, 1.3),
+        (None, 1.1, 1000000000),
+        (MINIMUM_FEE_PRICE * 1.1, 0.9, 1000000000),
+        (1, 1.1, 1),
+        (None, 1.3, 1000000000),
         ]
         )
 def test_task_resend_explicit(
@@ -247,11 +248,12 @@ def test_task_resend_explicit(
         celery_session_worker,
         _gas_price,
         _gas_factor,
+        _gas_price_current,
         ):
 
     rpc = RPCConnection.connect(default_chain_spec, 'default')
     nonce_oracle = RPCNonceOracle(agent_roles['ALICE'], conn=eth_rpc) 
-    gas_oracle = OverrideGasOracle(price=1000000000, limit=21000)
+    gas_oracle = OverrideGasOracle(price=_gas_price_current, limit=21000)
     c = Gas(default_chain_spec, signer=eth_signer, nonce_oracle=nonce_oracle, gas_oracle=gas_oracle)
     (tx_hash_hex, tx_signed_raw_hex) = c.create(agent_roles['ALICE'], agent_roles['BOB'], 100 * (10 ** 6), tx_format=TxFormat.RLP_SIGNED)
 
