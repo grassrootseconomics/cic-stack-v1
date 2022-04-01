@@ -6,12 +6,10 @@ import requests_mock
 from cic_types.condiments import MetadataPointer
 
 # local imports
-from cic_ussd.cache import cache_data_key, get_cached_data
+from cic_ussd.cache import get_cached_data
 from cic_ussd.metadata import PreferencesMetadata
 from cic_ussd.state_machine.logic.language import (change_preferred_language,
-                                                   is_valid_language_selection,
-                                                   preferred_langauge_from_selection,
-                                                   process_language_selection)
+                                                   is_valid_language_selection)
 
 # test imports
 

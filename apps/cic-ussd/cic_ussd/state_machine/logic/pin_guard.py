@@ -31,7 +31,7 @@ def save_guardian_to_session_data(state_machine_data: Tuple[str, dict, Account, 
     """
     user_input, ussd_session, account, session = state_machine_data
     session_data = ussd_session.get('data') or {}
-    session_data['guardian_phone_number'] = user_input
+    session_data['guardian_phone_number'] = user_input.replace(" ", "")
     save_session_data('cic-ussd', session, session_data, ussd_session)
 
 
@@ -44,7 +44,7 @@ def save_guarded_account_session_data(state_machine_data: Tuple[str, dict, Accou
     """
     user_input, ussd_session, account, session = state_machine_data
     session_data = ussd_session.get('data') or {}
-    session_data['guarded_account_phone_number'] = user_input
+    session_data['guarded_account_phone_number'] = user_input.replace(" ", "")
     save_session_data('cic-ussd', session, session_data, ussd_session)
 
 
@@ -71,7 +71,7 @@ def is_valid_guardian_addition(state_machine_data: Tuple[str, dict, Account, Ses
     :rtype:
     """
     user_input, ussd_session, account, session = state_machine_data
-
+    user_input = user_input.replace(" ", "")
     preferred_language = get_cached_preferred_language(account.blockchain_address)
     if not preferred_language:
         preferred_language = i18n.config.get('fallback')

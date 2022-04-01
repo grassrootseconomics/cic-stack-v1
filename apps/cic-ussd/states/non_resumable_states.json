@@ -7,5 +7,10 @@
   "exit_invalid_request",
   "exit_pin_blocked",
   "exit_pin_mismatch",
-  "exit_successful_transaction"
+  "exit_successful_transaction",
+  "exit_guardian_addition_success",
+  "exit_guardian_removal_success",
+  "exit_pin_reset_initiated_success",
+  "exit_not_authorized_for_pin_reset",
+  "exit_successful_token_selection"
 ]

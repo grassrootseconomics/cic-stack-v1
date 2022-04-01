@@ -45,10 +45,8 @@ def change_preferred_language(state_machine_data: Tuple[str, dict, Account, Sess
     :return:
     :rtype:
     """
-    process_language_selection(state_machine_data=state_machine_data)
     user_input, ussd_session, account, session = state_machine_data
-    wait_for_session_data(resource_name='Preferred language', session_data_key='preferred_language', ussd_session=ussd_session)
-    preferred_language = ussd_session.get('data').get('preferred_language')
+    preferred_language = preferred_langauge_from_selection(user_input=user_input)
     preferences_data = {
         'preferred_language': preferred_language
     }
@@ -59,21 +57,6 @@ def change_preferred_language(state_machine_data: Tuple[str, dict, Account, Sess
         queue='cic-ussd'
     )
     return s.apply_async()
-
-
-def process_language_selection(state_machine_data: Tuple[str, dict, Account, Session]):
-    """
-    :param state_machine_data:
-    :type state_machine_data:
-    :return:
-    :rtype:
-    """
-    user_input, ussd_session, account, session = state_machine_data
-    preferred_language = preferred_langauge_from_selection(user_input=user_input)
-    data = {
-        'preferred_language': preferred_language
-    }
-    save_session_data(queue='cic-ussd', session=session, data=data, ussd_session=ussd_session)
 
 
 def preferred_langauge_from_selection(user_input: str):

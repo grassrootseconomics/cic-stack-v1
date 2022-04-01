@@ -40,7 +40,8 @@ def parse_person_metadata(cached_metadata: str, display_key: str, preferred_lang
     contact_data = get_contact_data_from_vcard(user_metadata.get('vcard'))
     given_name = contact_data.get("given")
     family_name = contact_data.get("family")
-    if date_of_birth := user_metadata.get('date_of_birth'):
+    date_of_birth = user_metadata.get('date_of_birth')
+    if date_of_birth and len(date_of_birth.items()) > 0:
         year_of_birth = date_of_birth.get('year')
         present_year = datetime.datetime.now().year
         age = present_year - year_of_birth
@@ -51,7 +52,7 @@ def parse_person_metadata(cached_metadata: str, display_key: str, preferred_lang
     location = user_metadata.get('location').get('area_name')
 
     absent = translation_for('helpers.not_provided', preferred_language)
-    person_metadata = [given_name, family_name, age, gender, products, location]
+    person_metadata = [given_name, family_name, age, gender, location, products]
     person_metadata = [absent if elem is None else elem for elem in person_metadata]
 
     full_name = f'{person_metadata[0]} {person_metadata[1]}'
