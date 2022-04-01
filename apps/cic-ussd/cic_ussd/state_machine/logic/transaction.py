@@ -29,7 +29,7 @@ def is_valid_recipient(state_machine_data: Tuple[str, dict, Account, Session]) -
     """
     user_input, ussd_session, account, session = state_machine_data
     is_not_initiator = user_input != account.phone_number
-    is_present = Account.get_by_phone_number(user_input, session) is not None
+    is_present = Account.get_by_phone_number(user_input.replace(" ", ""), session) is not None
     return user_input is not None and is_present and is_not_initiator
 
 
@@ -72,7 +72,7 @@ def save_recipient_phone_to_session_data(state_machine_data: Tuple[str, dict, Ac
     user_input, ussd_session, account, session = state_machine_data
 
     session_data = ussd_session.get('data') or {}
-    session_data['recipient_phone_number'] = user_input
+    session_data['recipient_phone_number'] = user_input.replace(" ", "")
 
     save_session_data('cic-ussd', session, session_data, ussd_session)
 

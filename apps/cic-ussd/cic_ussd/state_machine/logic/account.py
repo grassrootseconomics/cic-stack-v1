@@ -117,7 +117,7 @@ def parse_person_metadata(account: Account, metadata: dict):
             "year": int(dob)
         }
     else:
-        date_of_birth = None
+        date_of_birth = {}
     if isinstance(metadata.get('location'), dict):
         location = metadata.get('location')
     else:
