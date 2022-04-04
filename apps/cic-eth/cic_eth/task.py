@@ -88,6 +88,10 @@ class BaseTask(celery.Task):
             s.apply_async()
 
 
+    def after_return(self, status, retval, task_id, args, kwargs, einfo):
+        logg.info('task {} done: status {} return {} called with {} {}'.format(task_id, status, retval, args, kwargs))
+
+
 class CriticalTask(BaseTask):
     retry_jitter = True
     retry_backoff = True
@@ -96,7 +100,8 @@ class CriticalTask(BaseTask):
 
 class CriticalSQLAlchemyTask(CriticalTask):
     autoretry_for = (
-        sqlalchemy.exc.DatabaseError,
+        #sqlalchemy.exc.DatabaseError,
+        sqlalchemy.exc.OperationalError,
         sqlalchemy.exc.TimeoutError,
         sqlalchemy.exc.ResourceClosedError,
         )
@@ -113,7 +118,8 @@ class CriticalWeb3Task(CriticalTask):
 
 class CriticalSQLAlchemyAndWeb3Task(CriticalWeb3Task):
     autoretry_for = (
-        sqlalchemy.exc.DatabaseError,
+        #sqlalchemy.exc.DatabaseError,
+        sqlalchemy.exc.OperationalError,
         sqlalchemy.exc.TimeoutError,
         ConnectionError,
         sqlalchemy.exc.ResourceClosedError,
@@ -122,7 +128,8 @@ class CriticalSQLAlchemyAndWeb3Task(CriticalWeb3Task):
 
 class CriticalSQLAlchemyAndSignerTask(CriticalTask):
      autoretry_for = (
-        sqlalchemy.exc.DatabaseError,
+        #sqlalchemy.exc.DatabaseError,
+        sqlalchemy.exc.OperationalError,
         sqlalchemy.exc.TimeoutError,
         sqlalchemy.exc.ResourceClosedError,
         )
