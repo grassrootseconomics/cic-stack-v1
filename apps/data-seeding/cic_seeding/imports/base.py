@@ -407,6 +407,7 @@ class Importer:
                try:
                    s = self.dh.get(y, dirkey)
                except ValueError:
+                   logg.error('walk could not find {} {} {}'.format(x, y, dirkey))
                    continue
                o = json.loads(s)
                p = Person.deserialize(o)
@@ -417,6 +418,7 @@ class Importer:
                callback(i, u)
 
                i += 1
+               logg.debug('processed {} {}'.format(i, u))
                sys.stdout.write('processed {} {}'.format(i, u).ljust(200) + "\r")
            
                j += 1

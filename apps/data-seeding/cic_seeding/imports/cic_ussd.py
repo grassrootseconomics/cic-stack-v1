@@ -2,6 +2,7 @@
 import logging
 import urllib.request
 import urllib.parse
+import urllib.error
 import uuid
 import os
 import json
@@ -79,12 +80,16 @@ class CicUssdConnectWorker(threading.Thread):
         self.idx = idx
    
 
+    # TODO: Add a quit channel!
     def run(self):
         i = 0
         while True:
             u = self.q.get()
             if u == None:
-                return
+                logg.debug('queue returned none for worker {}'.format(self))
+                time.sleep(0.1)
+                continue
+                #return
             self.process(i, u)
             i += 1
 
@@ -105,15 +110,20 @@ class CicUssdConnectWorker(threading.Thread):
                 r = urllib.request.urlopen(self.req)
                 address = json.load(r)
                 break 
-            except urllib.error.HTTPError:
+            except urllib.error.HTTPError as e:
                 if self.max_tries > 0 and self.max_tries == tries:
-                    raise RuntimeError('cannot find metadata resource {} -> {}'.format(ph, self.ptr))
-                time.sleep(self.delay)
+                    raise RuntimeError('cannot find metadata resource {} -> {} ({})'.format(ph, self.ptr, e))
+            except urllib.error.URLError as e:
+                if self.max_tries > 0 and self.max_tries == tries:
+                    raise RuntimeError('cannot access metadata endpoint {} -> {} ({})'.format(ph, self.ptr, e))
+
+            logg.debug('metadata pointer {} not yet available for old address {}'.format(self.ptr, u.original_address))
+            time.sleep(self.delay)
             
-            if r == None:
-                continue
+            #if r == None:
+            #   continue
     
-        logg.debug('have address {} for phone {}'.format(address, ph))
+        logg.debug('have new address {} for phone {}'.format(address, ph))
         u.add_address(address)
 
         self.imp.dh.direct('set_have_address', 'ussd_tx_src', address)
@@ -141,6 +151,8 @@ def apply_default_stores(config, semaphore, stores={}):
 # Links the user data in a separate directory for separate processing. (e.g. by CicUssdConnectWorker).
 # Also provides the sync filter that stores block transactions for deferred processing.
 class CicUssdImporter(Importer):
+
+    max_create_attempts = 10
 
     def __init__(self, config, rpc, signer, signer_address, stores={}, default_tag=[], preferences={}):
         super(CicUssdImporter, self).__init__(config, rpc, signer=signer, signer_address=signer_address, stores=stores, default_tag=default_tag)
@@ -215,7 +227,7 @@ class CicUssdImporter(Importer):
             try:
                 response = urllib.request.urlopen(req)
             except urllib.error.HTTPError as e:
-                if attempts is 5:
+                if attempts == self.max_create_attempts:
                     raise e
                 if e.code >= 500:
                     time.sleep(0.3)
