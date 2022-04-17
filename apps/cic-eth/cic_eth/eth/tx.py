@@ -12,6 +12,7 @@ from chainlib.eth.tx import (
         receipt,
         raw,
         )
+from chainlib.error import JSONRPCException
 from chainlib.connection import RPCConnection
 from chainlib.hash import keccak256_hex_to_hex
 from hexathon import (
@@ -124,6 +125,16 @@ def send(self, txs, chain_spec_dict):
         conn.do(o)
     except JSONRPCException as e:
         logg.error('send to node failed! {}'.format(e))
+        if self.debug_log:
+            s_debug = celery.signature(
+                'cic_eth.debug.debug_add',
+                [
+                    ','.join([str(chain_spec), tx_hash_hex]),
+                    str(e),
+                    ],
+                    queue=queue,
+                    )
+            s_debug.apply_async()
         err_state = True
 
     r = None
