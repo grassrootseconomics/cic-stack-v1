@@ -43,6 +43,7 @@ from cic_eth.eth import (
         nonce,
         gas,
         )
+from cic_eth import debug
 from cic_eth.admin import (
         debug,
         ctrl,
@@ -247,8 +248,7 @@ def main():
     BaseTask.default_token_decimals = default_token.decimals
     BaseTask.default_token_name = default_token.name
     BaseTask.trusted_addresses = trusted_addresses
-
-
+    BaseTask.debug_log = config.true('CELERY_DEBUG_LOG')
     MaxGasOracle.maximum_fee_units = config.get('ETH_MAX_FEE_UNITS')
 
     CriticalWeb3Task.safe_gas_refill_amount = int(config.get('ETH_GAS_HOLDER_MINIMUM_UNITS')) * int(config.get('ETH_GAS_HOLDER_REFILL_UNITS'))
@@ -258,7 +258,7 @@ def main():
         BaseTask.min_fee_price = int(config.get('ETH_MIN_FEE_PRICE'))
         CriticalWeb3Task.safe_gas_threshold_amount *= BaseTask.min_fee_price
         CriticalWeb3Task.safe_gas_refill_amount = CriticalWeb3Task.safe_gas_refill_amount + MAXIMUM_FEE_UNITS
-        CriticalWeb3Task.safe_gas_refill_amount *= BaseTask.min_fee_price
+        CriticalWeb3Task.safe_gas_refill_amount *= (BaseTask.min_fee_price + int(config.get('ETH_GAS_GIFT_MIN_PRICE_BUFFER')))
         CriticalWeb3Task.safe_gas_gifter_balance *= BaseTask.min_fee_price
 
     BaseTask.run_dir = config.get('CIC_RUN_DIR')
