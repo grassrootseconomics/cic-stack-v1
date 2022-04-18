@@ -100,7 +100,7 @@
             "description": "Manage metadata menu.",
             "display_key": "ussd.metadata_management",
             "name": "metadata_management",
-            "parent": "start"
+            "parent": "account_management"
         },
         "18": {
             "description": "Manage user's preferred language menu.",
@@ -322,7 +322,7 @@
             "description": "Pin management menu for operations related to an account's pin.",
             "display_key": "ussd.pin_management",
             "name": "pin_management",
-            "parent": "start"
+            "parent": "account_management"
         },
         "55": {
             "description": "Phone number entry for account whose pin is being reset.",
