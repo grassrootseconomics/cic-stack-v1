@@ -26,7 +26,7 @@ def filter_statement_transactions(transaction_list: list) -> list:
     :return: Transactions exclusive of the zero address transactions.
     :rtype: list
     """
-    return [tx for tx in transaction_list if tx.get('source_token') != '0x0000000000000000000000000000000000000000']
+    return [tx for tx in transaction_list if tx.get('source_token') != '0x0000000000000000000000000000000000000000' and tx.get('status') == 'SUCCESS']
 
 
 def generate(querying_party: str, queue: Optional[str], transaction: dict):

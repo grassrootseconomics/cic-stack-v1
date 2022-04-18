@@ -20,7 +20,7 @@ from tests.helpers.accounts import blockchain_address
 
 
 def test_filter_statement_transactions(transactions_list):
-    assert len(transactions_list) == 4
+    assert len(transactions_list) == 5
     assert len(filter_statement_transactions(transactions_list)) == 1
 
 
