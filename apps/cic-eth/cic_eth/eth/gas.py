@@ -296,6 +296,9 @@ def check_gas(self, tx_hashes_hex, chain_spec_dict, txs_hex=[], address=None, ga
             [
                 chain_spec_dict,
                 ],
+            kwargs={
+                'immediate_gas': gas_required,
+                },
             queue=queue,
                 )
         s_nonce.link(s_refill_gas)
@@ -330,6 +333,9 @@ def check_gas(self, tx_hashes_hex, chain_spec_dict, txs_hex=[], address=None, ga
             [
                 chain_spec_dict,
                 ],
+            kwargs={
+                'immediate_gas': gas_required,
+                },
             queue=queue,
                 )
         s_nonce.link(s_refill_gas)
@@ -355,7 +361,7 @@ def check_gas(self, tx_hashes_hex, chain_spec_dict, txs_hex=[], address=None, ga
 # TODO: if this method fails the nonce will be out of sequence. session needs to be extended to include the queue create, so that nonce is rolled back if the second sql query fails. Better yet, split each state change into separate tasks.
 # TODO: method is too long, factor out code for clarity
 @celery_app.task(bind=True, throws=(NotFoundEthException,), base=CriticalWeb3AndSignerTask)
-def refill_gas(self, recipient_address, chain_spec_dict):
+def refill_gas(self, recipient_address, chain_spec_dict, immediate_gas=0):
     """Executes a native token transaction to fund the recipient's gas expenditures.
 
     :param recipient_address: Recipient in need of gas
@@ -376,10 +382,11 @@ def refill_gas(self, recipient_address, chain_spec_dict):
     recipient_address = tx_normalize.wallet_address(recipient_address)
     zero_amount = False
     session = SessionBase.create_session()
-    status_filter = StatusBits.FINAL | StatusBits.NODE_ERROR | StatusBits.NETWORK_ERROR | StatusBits.UNKNOWN_ERROR
+    #status_filter = StatusBits.FINAL | StatusBits.NODE_ERROR | StatusBits.NETWORK_ERROR | StatusBits.UNKNOWN_ERROR | StatusBits.OBSOLETE
+    status_filter = StatusBits.FINAL | StatusBits.OBSOLETE
     q = session.query(Otx.tx_hash)
     q = q.join(TxCache)
-    q = q.filter(Otx.status.op('&')(StatusBits.FINAL.value)==0)
+    q = q.filter(Otx.status.op('&')(status_filter)==0)
     q = q.filter(TxCache.from_value!=0)
     q = q.filter(TxCache.recipient==recipient_address)
     c = q.count()
@@ -392,6 +399,7 @@ def refill_gas(self, recipient_address, chain_spec_dict):
     refill_amount = 0
     if not zero_amount:
         refill_amount = self.safe_gas_refill_amount
+    refill_amount += immediate_gas
 
     # determine sender
     gas_provider = AccountRole.get_address('GAS_GIFTER', session=session)
@@ -440,7 +448,7 @@ def refill_gas(self, recipient_address, chain_spec_dict):
 
 
 @celery_app.task(bind=True, throws=(ResendImpossibleError,), base=CriticalSQLAlchemyAndSignerTask)
-def resend_with_higher_gas(self, txold_hash_hex, chain_spec_dict, gas=None, default_factor=1.1):
+def resend_with_higher_gas(self, txold_hash_hex, chain_spec_dict, gas=None, default_factor=2):
     """Create a new transaction from an existing one with same nonce and higher gas price.
 
     :param txold_hash_hex: Transaction to re-create
@@ -515,7 +523,8 @@ def resend_with_higher_gas(self, txold_hash_hex, chain_spec_dict, gas=None, defa
                     )
         except sqlalchemy.exc.IntegrityError as e:
             logg.error('failed to create new transaction, attempting slight fee hike. {}'.format(e))
-            new_gas_price += 1
+            #new_gas_price += 1
+            new_gas_price *= default_factor
             session.rollback()
             continue
 

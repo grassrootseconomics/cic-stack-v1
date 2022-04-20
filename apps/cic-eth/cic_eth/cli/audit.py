@@ -17,6 +17,7 @@ class AuditSession:
         self.dirty = True
         self.dry_run = config.true('_DRY_RUN')
         self.methods = {}
+        self.methods_args = {}
         self.session = None
         self.rpc = None
         self.output_dir = config.get('_OUTPUT_DIR')
@@ -50,8 +51,9 @@ class AuditSession:
             self.f.close()
 
 
-    def register(self, k, m):
+    def register(self, k, m, kwargs):
         self.methods[k] = m
+        self.methods_args[k] = kwargs
         logg.info('registered method {}'.format(k))
 
 
@@ -64,7 +66,7 @@ class AuditSession:
                 self.f = open(fp, 'w')
                 w = self.f
             m = self.methods[k]
-            m(self.session, rpc=self.rpc, commit=bool(not self.dry_run), w=w)
+            m(self.session, rpc=self.rpc, commit=bool(not self.dry_run), w=w, extra_args=self.methods_args[k])
 
             if self.f != None:
                 self.f.close()

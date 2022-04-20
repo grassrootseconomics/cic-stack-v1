@@ -25,6 +25,7 @@ from chainqueue.enum import (
     StatusEnum,
     StatusBits,
     status_str,
+    status_all,
     )
 
 # local imports
@@ -60,6 +61,8 @@ argparser.add_argument('--status', dest='status', type=str, action='append', def
 argparser.add_argument('--not-status', dest='not_status', type=str, action='append', default=[], help='Add status to omit')
 argparser.add_argument('-f', '--format', dest='f', default=default_format, type=str, help='Output format')
 argparser.add_argument('--count', dest='count', default=10, type=int, help='Max number of transactions to return (DEFAULT=10)')
+argparser.add_argument('--offset', dest='offset', type=str, help='Return transactions with the given nonce or higher, inclusive')
+argparser.add_argument('--until', dest='until', type=str, help='Return transactions up to the given nonce, inclusive')
 argparser.add_argument('query', type=str, help='Transaction, transaction hash, account, "lock", if no value is passed then the latest 10 transactions (--count 10) will be returned', nargs='?')
 argparser.process_local_flags(local_arg_flags)
 args = argparser.parse_args()
@@ -71,6 +74,8 @@ extra_args = {
     'query': '_QUERY',
     'status': '_STATUS',
     'not_status': '_NOT_STATUS',
+    'offset': '_OFFSET',
+    'until': '_UNTIL',
 }
 config = cic_eth.cli.Config.from_args(args, arg_flags, local_arg_flags, extra_args=extra_args)
 
@@ -153,6 +158,18 @@ def main():
     txs  = []
     renderer = render_tx
 
+    range_type = None
+    offset = config.get('_OFFSET')
+    try:
+        offset = int(offset)
+        range_type = 'numeric'
+    except:
+        range_type = 'date'
+
+    limit = config.get('_UNTIL')
+    if limit != None and range_type == 'numeric':
+        limit = int(limit)
+
     status_flags = 0
     for v in config.get('_STATUS'):
         flag = 0
@@ -161,6 +178,9 @@ def main():
         except AttributeError:
             flag = getattr(StatusEnum, v.upper())
         status_flags |= flag
+
+    #nonce_offset = config.get('_OFFSET')
+    #nonce_limit = config.get('_UNTIL')
 
 
     not_status_flags = 0
@@ -172,6 +192,9 @@ def main():
             flag = getattr(StatusEnum, v.upper())
         not_status_flags |= flag
 
+    if status_flags == 0 and len(config.get('_STATUS')) and len(config.get('_NOT_STATUS')) == 0:
+        not_status_flags = status_all()
+        logg.info('translating request for PENDING txs to --not-status flag {}'.format(status_all()))
 
     query = config.get('_QUERY')
     tx_count = config.get('_TX_COUNT')
@@ -182,14 +205,14 @@ def main():
     except ValueError:
         pass
     if not query:
-        txs = admin_api.txs_latest(chain_spec, count=tx_count, renderer=render_account, status=status_flags, not_status=not_status_flags)
+        txs = admin_api.txs_latest(chain_spec, count=tx_count, renderer=render_account, status=status_flags, not_status=not_status_flags, offset=offset, limit=limit)
         renderer = render_account
     elif len(query) > 64:
         admin_api.tx(chain_spec, tx_raw=query, renderer=renderer)
     elif len(query) > 40:
         admin_api.tx(chain_spec, tx_hash=query, renderer=renderer)
     elif len(query) == 40:
-        txs = admin_api.account(chain_spec, query, include_recipient=False, renderer=render_account, status=status_flags, not_status=not_status_flags)
+        txs = admin_api.account(chain_spec, query, include_recipient=False, renderer=render_account, status=status_flags, not_status=not_status_flags, offset=offset, limit=limit)
         renderer = render_account
 
     elif len(query) >= 4 and query[:4] == 'lock':
