@@ -332,7 +332,7 @@ class AdminApi:
         return s_nonce.apply_async()
 
 
-    def account(self, chain_spec, address, include_sender=True, include_recipient=True, renderer=None, status=None, not_status=None, w=sys.stdout):
+    def account(self, chain_spec, address, include_sender=True, include_recipient=True, renderer=None, status=None, not_status=None, offset=None, limit=None, w=sys.stdout):
         """Lists locally originated transactions for the given Ethereum address.
 
         Performs a synchronous call to the Celery task responsible for performing the query.
@@ -352,6 +352,8 @@ class AdminApi:
                 kwargs={
                     'status': status,
                     'not_status': not_status,
+                    'offset': offset,
+                    'limit': limit,
                 },
                 queue=self.queue,
                 )
@@ -398,7 +400,7 @@ class AdminApi:
 
         return tx_dict_list
 
-    def txs_latest(self, chain_spec, count=10, renderer=None, status=None, not_status=None, w=sys.stdout):
+    def txs_latest(self, chain_spec, count=10, renderer=None, status=None, not_status=None, offset=None, limit=None, w=sys.stdout):
         """Lists latest locally originated transactions.
 
         Performs a synchronous call to the Celery task responsible for performing the query.
@@ -414,6 +416,8 @@ class AdminApi:
                     "count": count,
                     "status": status,
                     "not_status": not_status,
+                    "offset": offset,
+                    "limit": limit,
                 },
                 queue=self.queue,
                 )

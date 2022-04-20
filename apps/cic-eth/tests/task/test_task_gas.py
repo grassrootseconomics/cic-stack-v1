@@ -346,7 +346,7 @@ def test_retry_impossible(
                 tx_signed_raw_hex,
                 default_chain_spec.asdict(),
                 )
-        gas_price += 1
+        gas_price *= 2
 
     init_database.commit()
 

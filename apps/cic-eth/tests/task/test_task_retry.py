@@ -197,7 +197,7 @@ def test_a_bunch_of_retries(
             ks = list(txs.keys())
             if len(ks) > i:
                 break
-            time.sleep(0.2)
+            time.sleep(0.4)
             iii += 1
 
         assert len(ks) == i + 1

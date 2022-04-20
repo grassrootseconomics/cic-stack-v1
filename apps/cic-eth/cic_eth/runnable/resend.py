@@ -3,6 +3,7 @@ import logging
 import argparse
 import re
 import os
+import sys
 
 # third-party imports
 from chainlib.chain import ChainSpec
@@ -53,7 +54,7 @@ def main():
     r = None
     r = t.get()
     try:
-        t.get_leaf()
+        r = t.get_leaf()
     except OutOfGasError as e:
         logg.info('resend successfully queued, but is pending a gas refill. Expect a short delay: {}'.format(e))
     except ResendImpossibleError as e:
