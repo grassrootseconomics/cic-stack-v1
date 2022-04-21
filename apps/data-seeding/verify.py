@@ -571,11 +571,11 @@ class Verifier:
                 self.state.poke(k)
                 err = True
 
-        if self.results_active != None:
-            if err:
-                self.results_logs[k].error(address)
-            else:
-                self.results_logs[k].success(address)
+            if self.results_active:
+                if err:
+                    self.results_logs[k].error(address)
+                else:
+                    self.results_logs[k].success(address)
 
         self.state.count += 1
 
