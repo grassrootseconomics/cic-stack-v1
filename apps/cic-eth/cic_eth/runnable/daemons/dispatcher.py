@@ -63,7 +63,7 @@ run = True
 
 class DispatchSyncer:
 
-    yield_delay = 0.0005
+    yield_delay = 0.01
 
     def __init__(self, chain_spec):
         self.chain_spec = chain_spec
@@ -74,9 +74,9 @@ class DispatchSyncer:
         return self.chain_spec
 
 
-    def process(self, w3, txs):
+    def process(self, conn, txs):
         c = len(txs.keys())
-        logg.debug('processing {} txs {}'.format(c, list(txs.keys())))
+        logg.debug('processing {} txs at {}'.format(c, datetime.datetime.utcnow()))
         chain_str = str(self.chain_spec)
         self.session = SessionBase.create_session()
         for k in txs.keys():
@@ -89,6 +89,10 @@ class DispatchSyncer:
                 self.session.commit()
             except NotLocalTxError as e:
                 logg.warning('dispatcher was triggered with non-local tx {}'.format(tx['hash']))
+                self.session.rollback()
+                continue
+            except TxStateChangeError as e:
+                logg.error('dispatcher could not reserve tx {}: {}'.format(tx['hash'], e))
                 self.session.rollback()
                 continue
 
@@ -111,7 +115,7 @@ class DispatchSyncer:
                     )
             s_check.link(s_send)
             t = s_check.apply_async()
-            logg.info('processed {}'.format(k))
+            logg.info('processed {} at {}'.format(k, datetime.datetime.utcnow()))
         self.session.close()
         self.session = None
 

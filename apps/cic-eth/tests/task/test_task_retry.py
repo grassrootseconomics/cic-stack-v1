@@ -10,7 +10,6 @@ from chainlib.eth.gas import (
         RPCGasOracle,
         OverrideGasOracle,
         )
-
 from chainlib.eth.tx import (
         TxFormat,
         unpack,
@@ -213,3 +212,4 @@ def test_a_bunch_of_retries(
 
         init_database.commit()
         init_eth_tester.mine_blocks(1)
+

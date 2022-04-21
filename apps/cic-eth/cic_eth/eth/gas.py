@@ -8,7 +8,7 @@ from hexathon import (
         strip_0x,
         add_0x,
         )
-#from chainlib.eth.constant import ZERO_ADDRESS
+from chainlib.eth.constant import ZERO_ADDRESS
 from chainlib.chain import ChainSpec
 from chainlib.eth.address import (
         is_checksum_address,
@@ -37,6 +37,9 @@ from chainlib.eth.contract import (
 from chainlib.eth.gas import (
         Gas,
         OverrideGasOracle,
+        )
+from chainlib.eth.nonce import (
+        OverrideNonceOracle,
         )
 from chainqueue.db.models.tx import TxCache
 from chainqueue.db.models.otx import Otx
@@ -570,3 +573,17 @@ def resend_with_higher_gas(self, txold_hash_hex, chain_spec_dict, gas=None, defa
     s.apply_async()
 
     return tx_hash_hex
+
+
+def parse_gas(tx, conn, chain_spec, caller_address=ZERO_ADDRESS):
+    r = (None, None,)
+    if tx.value > 0 or len(tx.payload) == 0:
+        transfer_data = {}
+        transfer_data['to'] = tx_normalize.wallet_address(tx.inputs[0])
+        transfer_data['from'] = tx_normalize.wallet_address(tx.outputs[0])
+        transfer_data['value'] = tx.value
+        transfer_data['token_address'] = None
+        r = ('gas', transfer_data,)
+    else:
+        logg.info('value {} payload {}'.format(tx.value, tx.payload))
+    return r

@@ -13,7 +13,7 @@ logging.getLogger('chainlib').setLevel(logging.WARNING)
 
 class AuditSession:
 
-    def __init__(self, config, conn=None):
+    def __init__(self, config, chain_spec, conn=None):
         self.dirty = True
         self.dry_run = config.true('_DRY_RUN')
         self.methods = {}
@@ -22,6 +22,7 @@ class AuditSession:
         self.rpc = None
         self.output_dir = config.get('_OUTPUT_DIR')
         self.f = None
+        self.chain_spec = chain_spec
 
         dsn = dsn_from_config(config)
         SessionBase.connect(dsn, 1)
@@ -51,7 +52,7 @@ class AuditSession:
             self.f.close()
 
 
-    def register(self, k, m, kwargs):
+    def register(self, k, m, kwargs={}):
         self.methods[k] = m
         self.methods_args[k] = kwargs
         logg.info('registered method {}'.format(k))
@@ -66,7 +67,7 @@ class AuditSession:
                 self.f = open(fp, 'w')
                 w = self.f
             m = self.methods[k]
-            m(self.session, rpc=self.rpc, commit=bool(not self.dry_run), w=w, extra_args=self.methods_args[k])
+            m(self.session, self.chain_spec, rpc=self.rpc, commit=bool(not self.dry_run), w=w, extra_args=self.methods_args[k])
 
             if self.f != None:
                 self.f.close()
