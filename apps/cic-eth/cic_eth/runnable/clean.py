@@ -92,7 +92,7 @@ elif args.f[:1] != 't':
     
 dsn = dsn_from_config(config)
 
-def process_final(session, rpc=None, commit=False, w=sys.stdout):
+def process_final(session, chain_spec, rpc=None, commit=False, w=sys.stdout, extra_args=None):
     unclean_items = []
     nonces = {}
 
@@ -305,7 +305,7 @@ def process_final(session, rpc=None, commit=False, w=sys.stdout):
 
 def main():
     runs = []
-    o = AuditSession(config, conn=conn)
+    o = AuditSession(config, chain_spec, conn=conn)
     o.register('final', process_final)
     o.run()
 

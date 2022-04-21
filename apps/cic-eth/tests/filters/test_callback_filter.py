@@ -25,6 +25,13 @@ from hexathon import (
 
 # local imports
 from cic_eth.runnable.daemons.filters.callback import CallbackFilter
+from cic_eth.eth.erc20 import (
+        parse_transfer,
+        parse_transferfrom,
+        )
+from cic_eth.eth.account import (
+        parse_giftto,
+        )
 
 logg = logging.getLogger()
 
@@ -63,7 +70,7 @@ def test_transfer_tx(
     tx.apply_receipt(rcpt)
 
     fltr = CallbackFilter(default_chain_spec, None, None, caller_address=contract_roles['CONTRACT_DEPLOYER'])
-    (transfer_type, transfer_data) = fltr.parse_transfer(tx, eth_rpc)
+    (transfer_type, transfer_data) = parse_transfer(tx, eth_rpc, fltr.chain_spec, fltr.caller_address)
 
     assert transfer_type == 'transfer'
 
@@ -110,7 +117,7 @@ def test_transfer_from_tx(
     tx.apply_receipt(rcpt)
 
     fltr = CallbackFilter(default_chain_spec, None, None, caller_address=contract_roles['CONTRACT_DEPLOYER'])
-    (transfer_type, transfer_data) = fltr.parse_transferfrom(tx, eth_rpc)
+    (transfer_type, transfer_data) = parse_transferfrom(tx, eth_rpc, fltr.chain_spec, fltr.caller_address)
 
     assert transfer_type == 'transferfrom'
 
@@ -157,7 +164,7 @@ def test_faucet_gift_to_tx(
     tx.apply_receipt(rcpt)
 
     fltr = CallbackFilter(default_chain_spec, None, None, caller_address=contract_roles['CONTRACT_DEPLOYER'])
-    (transfer_type, transfer_data) = fltr.parse_giftto(tx, eth_rpc)
+    (transfer_type, transfer_data) = parse_giftto(tx, eth_rpc, fltr.chain_spec, fltr.caller_address)
 
     assert transfer_type == 'tokengift'
     assert transfer_data['token_address'] == foo_token

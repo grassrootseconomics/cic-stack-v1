@@ -563,3 +563,27 @@ def default_token(self):
         'name': self.default_token_name,
         'decimals': self.default_token_decimals,
         }
+
+
+def parse_transfer(tx, conn, chain_spec, caller_address=ZERO_ADDRESS):
+    if not tx.payload:
+        return (None, None)
+    r = ERC20.parse_transfer_request(tx.payload)
+    transfer_data = {}
+    transfer_data['to'] = tx_normalize.wallet_address(r[0])
+    transfer_data['value'] = r[1]
+    transfer_data['from'] = tx_normalize.wallet_address(tx.outputs[0])
+    transfer_data['token_address'] = tx.inputs[0]
+    return ('transfer', transfer_data)
+
+
+def parse_transferfrom(tx, conn, chain_spec, caller_address=ZERO_ADDRESS):
+    if not tx.payload:
+        return (None, None)
+    r = ERC20.parse_transfer_from_request(tx.payload)
+    transfer_data = {}
+    transfer_data['from'] = tx_normalize.wallet_address(r[0])
+    transfer_data['to'] = tx_normalize.wallet_address(r[1])
+    transfer_data['value'] = r[2]
+    transfer_data['token_address'] = tx.inputs[0]
+    return ('transferfrom', transfer_data)

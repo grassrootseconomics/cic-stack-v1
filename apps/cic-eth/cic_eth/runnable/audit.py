@@ -74,7 +74,7 @@ elif args.f[:1] != 't':
     raise ValueError('unknown output format {}'.format(args.f))
    
 
-def process_block(session, rpc=None, commit=False, w=sys.stdout):
+def process_block(session, chain_spec, rpc=None, commit=False, w=sys.stdout, extra_args=None):
     filter_status = StatusBits.OBSOLETE | StatusBits.FINAL | StatusBits.QUEUED | StatusBits.RESERVED
     straggler_accounts = []
     r = session.execute('select tx_cache.sender, otx.nonce, bit_or(status) as statusaggr from otx inner join tx_cache on otx.id = tx_cache.otx_id group by tx_cache.sender, otx.nonce having bit_or(status) & {} = 0 order by otx.nonce'.format(filter_status))
@@ -93,7 +93,7 @@ def process_block(session, rpc=None, commit=False, w=sys.stdout):
 
 
 
-def process_error(session, rpc=None, commit=False, w=sys.stdout):
+def process_error(session, chain_spec, rpc=None, commit=False, w=sys.stdout, extra_args=None):
     filter_status = StatusBits.FINAL | StatusBits.QUEUED | StatusBits.RESERVED
     error_status = StatusBits.LOCAL_ERROR | StatusBits.NODE_ERROR | StatusBits.UNKNOWN_ERROR
     straggler_accounts = []
@@ -136,7 +136,7 @@ def main():
 
 
     logg.info('will run {}'.format(runs))
-    o = AuditSession(config)
+    o = AuditSession(config, chain_spec)
     g = globals()
     for v in runs:
         m = g['process_' + v]
