@@ -97,8 +97,12 @@ logg.debug(f'config loaded from {args.c}:\n{config}')
 
 
 preferences_data = {}
-with open(f"{args.user_dir}/preferences.json", "r") as f:
+fp = os.path.join(args.user_dir, 'preferences.json')
+try:
+    f = open(fp, 'r')
     preferences_data = json.load(f)
+except FileNotFoundError:
+    pass
 
 
 if __name__ == '__main__':
