@@ -203,9 +203,15 @@ def application(env, start_response):
             return []
         logg.debug('session {} started for {}'.format(external_session_id, phone_number))
 
-
-        response = handle_menu_operations(external_session_id, phone_number, args.q, service_code, session, user_input)
-
+        response = None
+        try:
+            response = handle_menu_operations(external_session_id, phone_number, args.q, service_code, session,
+                                              user_input)
+        except Exception as error:
+            logg.debug(f"Error: {error} occurred preceding session release rollback.")
+            SessionBase.release_rollback_session(session)
+            start_response('500 Internal Server Error', errors_headers)
+            return []
 
         response_bytes, headers = with_content_headers(headers, response)
         start_response('200 OK,', headers)
