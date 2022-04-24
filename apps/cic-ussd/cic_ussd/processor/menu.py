@@ -400,14 +400,13 @@ class MenuProcessor:
         decimals = token_data.get('decimals')
         available_balance = get_cached_display_balance(decimals, [self.identifier, token_symbol.encode('utf-8')])
         transaction_amount = session_data.get('transaction_amount')
-        transaction_amount = to_wei(decimals=decimals, value=transaction_amount)
         recipient_phone_number = self.ussd_session.get('data').get('recipient_phone_number')
         recipient = Account.get_by_phone_number(recipient_phone_number, self.session)
         tx_recipient_information = recipient.standard_metadata_id()
         return translation_for(
             self.display_key,
             preferred_language,
-            amount=from_wei(decimals, transaction_amount),
+            amount=transaction_amount,
             token_symbol=token_symbol,
             recipient_information=tx_recipient_information,
             token_balance=available_balance
@@ -444,9 +443,6 @@ class MenuProcessor:
         if not preferred_language:
             preferred_language = i18n.config.get('fallback')
         token_symbol = get_active_token_symbol(self.account.blockchain_address)
-        token_data = get_cached_token_data(self.account.blockchain_address, token_symbol)
-        decimals = token_data.get('decimals')
-        transaction_amount = to_wei(decimals, amount)
         recipient_phone_number = self.ussd_session.get('data').get('recipient_phone_number')
         recipient = Account.get_by_phone_number(phone_number=recipient_phone_number, session=self.session)
         tx_recipient_information = recipient.standard_metadata_id()
@@ -454,7 +450,7 @@ class MenuProcessor:
         return translation_for(
             self.display_key,
             preferred_language,
-            transaction_amount=from_wei(decimals, transaction_amount),
+            transaction_amount=amount,
             token_symbol=token_symbol,
             recipient_information=tx_recipient_information,
             sender_information=tx_sender_information
