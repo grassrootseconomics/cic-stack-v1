@@ -131,7 +131,7 @@ class ImportUser:
 # Any initialization producing side-effects are defined in prepare(). The same should be the case for any child class.
 class Importer:
 
-    max_gas = 8000000
+    max_gas = 3000000
     min_gas = 30000
 
     def __init__(self, config, rpc, signer=None, signer_address=None, stores={}, default_tag=[], mint_balance=False):

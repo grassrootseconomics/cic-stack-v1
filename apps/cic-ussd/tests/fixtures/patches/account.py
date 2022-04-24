@@ -48,7 +48,7 @@ def mock_get_adjusted_balance(mocker, task_uuid):
     def get_adjusted_balance(self, token_symbol, balance, timestamp):
         sync_res = mocker.patch('celery.result.AsyncResult')
         sync_res.id = task_uuid
-        sync_res.result = 45931650.64654012
+        sync_res.get.return_value = balance - 180
         query_args['balance'] = balance
         query_args['timestamp'] = timestamp
         query_args['token_symbol'] = token_symbol

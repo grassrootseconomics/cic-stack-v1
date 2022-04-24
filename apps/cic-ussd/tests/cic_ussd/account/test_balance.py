@@ -1,16 +1,17 @@
 # standard imports
 
+
 # external imports
 import pytest
 from cic_types.condiments import MetadataPointer
 
 # local imports
-from cic_ussd.account.balance import (calculate_available_balance,
+from cic_ussd.account.balance import (BalancesHandler,
                                       get_balances,
                                       get_cached_adjusted_balance,
-                                      get_cached_available_balance)
+                                      get_cached_display_balance)
+from cic_ussd.account.transaction import from_wei
 from cic_ussd.account.chain import Chain
-from cic_ussd.account.tokens import get_cached_token_data_list
 from cic_ussd.cache import cache_data_key, get_cached_data
 from cic_ussd.error import CachedDataNotFoundError
 
@@ -44,18 +45,20 @@ def test_sync_get_balances(activated_account,
     assert res == balances
 
 
-@pytest.mark.parametrize('balance_incoming, balance_network, balance_outgoing, available_balance', [
+@pytest.mark.parametrize('balance_incoming, balance_network, balance_outgoing, display_balance', [
     (0, 50000000, 0, 50.00),
     (5000000, 89000000, 67000000, 27.00)
 ])
-def test_calculate_available_balance(activated_account,
-                                     available_balance,
-                                     balance_incoming,
-                                     balance_network,
-                                     balance_outgoing,
-                                     cache_balances,
-                                     cache_default_token_data,
-                                     load_chain_spec):
+def test_balances(activated_account,
+                  balance_incoming,
+                  balance_network,
+                  balance_outgoing,
+                  cache_balances,
+                  cache_default_token_data,
+                  load_chain_spec,
+                  display_balance,
+                  token_symbol,
+                  mock_get_adjusted_balance):
     balances = {
         'address': activated_account.blockchain_address,
         'converters': [],
@@ -63,7 +66,11 @@ def test_calculate_available_balance(activated_account,
         'balance_outgoing': balance_outgoing,
         'balance_incoming': balance_incoming
     }
-    assert calculate_available_balance(balances, 6) == available_balance
+    balances = BalancesHandler(balances=balances, decimals=6)
+    chain_str = Chain.spec.__str__()
+    assert balances.display_balance() == display_balance
+    assert balances.spendable_balance(chain_str, token_symbol) == from_wei(
+        decimals=6, value=(balance_network - balance_outgoing - 180))
 
 
 def test_get_cached_available_balance(activated_account,
@@ -73,16 +80,16 @@ def test_get_cached_available_balance(activated_account,
                                       load_chain_spec,
                                       token_symbol):
     identifier = [bytes.fromhex(activated_account.blockchain_address), token_symbol.encode('utf-8')]
-    cached_available_balance = get_cached_available_balance(6, identifier)
-    available_balance = calculate_available_balance(balances[0], 6)
-    assert cached_available_balance == available_balance
+    cached_display_balance = get_cached_display_balance(6, identifier)
+    balances = BalancesHandler(balances=balances[0], decimals=6)
+    display_balance = balances.display_balance()
+    assert cached_display_balance == display_balance
     address = blockchain_address()
     with pytest.raises(CachedDataNotFoundError) as error:
         identifier = [bytes.fromhex(address), token_symbol.encode('utf-8')]
-        key = cache_data_key(identifier=identifier, salt=MetadataPointer.BALANCES)
-        cached_available_balance = get_cached_available_balance(6, identifier)
-        assert cached_available_balance is None
-    assert str(error.value) == f'No cached available balance at {key}'
+        cached_display_balance = get_cached_display_balance(6, identifier)
+        assert cached_display_balance is None
+    assert str(error.value) == 'No cached display balance.'
 
 
 def test_get_cached_adjusted_balance(activated_account, cache_adjusted_balances, token_symbol):

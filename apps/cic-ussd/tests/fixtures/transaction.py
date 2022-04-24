@@ -4,8 +4,6 @@ from datetime import datetime
 import pytest
 
 # local import
-from cic_ussd.account.balance import get_cached_available_balance
-
 
 # tests imports
 
@@ -45,7 +43,7 @@ def statement(activated_account):
             'direction_tag': 'To',
             'metadata_id': activated_account.standard_metadata_id(),
             'phone_number': activated_account.phone_number,
-            'timestamp': datetime.now().strftime('%d/%m/%y, %H:%M')
+            'timestamp': datetime.now().timestamp()
         }
     ]
 

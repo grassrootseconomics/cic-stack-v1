@@ -1,10 +1,12 @@
 # standard imports
+import enum
 import json
 import logging
 from typing import Optional
 
 # external imports
 from cic_types.models.person import Person
+from cic_types.condiments import MetadataPointer
 
 # local imports
 from cic_ussd.metadata import PreferencesMetadata
@@ -21,8 +23,7 @@ def get_cached_preferred_language(blockchain_address: str) -> Optional[str]:
     """
     identifier = bytes.fromhex(blockchain_address)
     preferences_metadata_handler = PreferencesMetadata(identifier)
-    cached_preferences_metadata = preferences_metadata_handler.get_cached_metadata()
-    if cached_preferences_metadata:
+    if cached_preferences_metadata := preferences_metadata_handler.get_cached_metadata():
         preferences_metadata = json.loads(cached_preferences_metadata)
         return preferences_metadata.get('preferred_language')
     return None
@@ -41,3 +42,7 @@ def parse_account_metadata(account_metadata: dict) -> str:
     family_name = deserialized_person.family_name
     phone_number = deserialized_person.tel
     return f'{given_name} {family_name} {phone_number}'
+
+
+class UssdMetadataPointer(enum.Enum):
+    BALANCE_SPENDABLE = ":cic.balance.adjusted_spendable"

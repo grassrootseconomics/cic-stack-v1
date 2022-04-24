@@ -128,13 +128,20 @@ enter_transaction_recipient,"CON Enter phone number
 0. Uya Nyuma","CON Ket namba simu ngama iorone
 0. Chien","CON Namba simuu kekhai
 0. Dheebi"
-enter_transaction_amount,"CON Enter amount
-0. Back","CON Weka kiwango
-0. Rudi","CON Ikia kiwango
-0. Itina","CON Ikira muigana
-0. Thutha","CON Ika chaasi cha kuhuma.
-0. Uya nyuma","CON Ket giko mari
-0. Chien","CON Agham kekhai
+enter_transaction_amount,"CON Maximum: %{spendable_amount}
+Enter amount
+0. Back","CON Kiwango cha juu: %{spendable_amount}
+Weka kiwango
+0. Rudi","CON Kewango kenene: %{spendable_amount}
+Ikia kiwango
+0. Itina","CON Gikiri kia iguru: %{spendable_amount}
+Ikira muigana
+0. Thutha","CON Chiwango cha dzulu: %{spendable_amount}
+Ika chaasi cha kuhuma.
+0. Uya nyuma","CON Giko: %{spendable_amount}
+Ket giko mari
+0. Chien","CON Kiwango ta Gubaa: %{spendable_amount}
+Agham kekhai
 0. Dheebi"
 first_account_tokens_set,"CON Choose a number or symbol from your balances:
 %{first_account_tokens_set}
@@ -921,7 +928,7 @@ exit_successful_transaction,"CON Your request has been sent. %{recipient_informa
 00. Thutha
 99. Uma","CON Mavoyogo gahumwa. %{recipient_information} undaphokera %{transaction_amount} %{token_symbol} kuombola kwa %{sender_information}.
 00. Uya Nyuma
-99. Ombola","CON Kwayo ni oseor. %{recipient_information} oboyudo %{transaction_amount} %{token_symbol} kowuok kuom %{sender_information}
+99. Ombola","CON Kwayo ni oseor. %{recipient_information} boyudo %{transaction_amount} %{token_symbol} kowuok kuom %{sender_information}
 00. Dog chien
 99. Wuogi","CON Qarqar kake yaergad. %{recipient_information} inargat %{transaction_amount} %{token_symbol} kutoka kwa %{sender_information}
 00. Dheebi

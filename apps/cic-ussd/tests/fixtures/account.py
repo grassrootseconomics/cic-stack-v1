@@ -7,11 +7,12 @@ import pytest
 from cic_types.condiments import MetadataPointer
 
 # local imports
+from cic_ussd.account.balance import BalancesHandler
 from cic_ussd.account.chain import Chain
-from cic_ussd.account.tokens import set_active_token
 from cic_ussd.cache import cache_data, cache_data_key
 from cic_ussd.db.enum import AccountStatus
 from cic_ussd.db.models.account import Account
+from cic_ussd.account.metadata import UssdMetadataPointer
 
 # test imports
 from tests.helpers.accounts import blockchain_address, phone_number
@@ -317,3 +318,13 @@ def valid_recipient(init_database):
     init_database.add(account)
     init_database.commit()
     return account
+
+
+@pytest.fixture(scope='function')
+def cache_spendable_balance(activated_account, balances, load_chain_spec, token_symbol, mock_get_adjusted_balance):
+    balance_handler = BalancesHandler(balances=balances[0], decimals=6)
+    chain_str = Chain.spec.__str__()
+    spendable_balance = balance_handler.spendable_balance(chain_str=chain_str, token_symbol=token_symbol)
+    identifier = bytes.fromhex(activated_account.blockchain_address)
+    s_key = cache_data_key([identifier, token_symbol.encode('utf-8')], UssdMetadataPointer.BALANCE_SPENDABLE)
+    cache_data(s_key, spendable_balance)

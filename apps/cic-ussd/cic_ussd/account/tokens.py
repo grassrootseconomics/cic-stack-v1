@@ -9,7 +9,7 @@ from cic_eth.api import Api
 from cic_types.condiments import MetadataPointer
 
 # local imports
-from cic_ussd.account.balance import get_cached_available_balance
+from cic_ussd.account.balance import get_cached_display_balance
 from cic_ussd.account.chain import Chain
 from cic_ussd.cache import cache_data, cache_data_key, get_cached_data
 from cic_ussd.error import CachedDataNotFoundError, SeppukuError
@@ -71,7 +71,7 @@ def create_account_tokens_list(blockchain_address: str):
             decimals = token_data.get('decimals')
             identifier = [bytes.fromhex(blockchain_address), token_symbol.encode('utf-8')]
             wait_for_cache(identifier, f'Cached available balance for token: {token_symbol}', MetadataPointer.BALANCES)
-            token_balance = get_cached_available_balance(decimals=decimals, identifier=identifier)
+            token_balance = get_cached_display_balance(decimals=decimals, identifier=identifier)
             entry['balance'] = token_balance
             token_list_entries.append(entry)
     account_tokens_list = order_account_tokens_list(token_list_entries, bytes.fromhex(blockchain_address))
