@@ -84,13 +84,7 @@ class BalancesHandler:
         :rtype: float
         """
         spendable = self.network_balance - self.outgoing_balance
-        timestamp = datetime.now() + timedelta(seconds=180)
-        timestamp = int(time.mktime(timestamp.timetuple()))
-        try:
-            max_spendable_balance = get_adjusted_balance(spendable, chain_str, timestamp, token_symbol)
-        except KeyError:
-            max_spendable_balance = spendable
-        return from_wei(decimals=self.decimals, value=max_spendable_balance)
+        return from_wei(decimals=self.decimals, value=spendable)
 
 
 def get_adjusted_balance(balance: int, chain_str: str, timestamp: int, token_symbol: str):
