@@ -18,6 +18,7 @@ from cic_ussd.state_machine import UssdStateMachine
 from cic_ussd.state_machine.logic.manager import States
 from cic_ussd.translation import generate_locale_files, Languages
 from cic_ussd.validator import validate_presence
+from cic_ussd.time import TimezoneHandler
 
 logg = logging.getLogger(__name__)
 
@@ -105,3 +106,8 @@ def set_locale_files(load_config, tmpdir_factory):
                           translation_builder_path=load_config.get('LOCALE_FILE_BUILDERS'))
     i18n.load_path.append(tmpdir_path)
     i18n.set('fallback', load_config.get('LOCALE_FALLBACK'))
+
+
+@pytest.fixture(scope='function')
+def load_timezone(load_config):
+    TimezoneHandler.timezone = load_config.get("TIME_ZONE")

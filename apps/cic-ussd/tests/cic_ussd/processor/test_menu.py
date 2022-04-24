@@ -6,7 +6,7 @@ import os
 from cic_types.condiments import MetadataPointer
 
 # local imports
-from cic_ussd.account.balance import get_cached_available_balance
+from cic_ussd.account.balance import get_cached_display_balance
 from cic_ussd.account.metadata import get_cached_preferred_language
 from cic_ussd.account.statement import (
     get_cached_statement,
@@ -35,7 +35,7 @@ def test_account_balance(activated_account, cache_balances, cache_preferences, c
     decimals = token_data.get("decimals")
     identifier = bytes.fromhex(blockchain_address)
     balances_identifier = [identifier, token_symbol.encode('utf-8')]
-    available_balance = get_cached_available_balance(decimals, balances_identifier)
+    available_balance = get_cached_display_balance(decimals, balances_identifier)
     with_available_balance = 'ussd.account_balances.available_balance'
     resp = response(activated_account, with_available_balance, with_available_balance[5:], init_database,
                     generic_ussd_session)
@@ -277,7 +277,7 @@ def test_reset_guarded_pin_authorization(activated_account, cache_preferences, g
 
 def test_start(activated_account, cache_balances, cache_preferences, cache_token_data, cache_token_data_list,
                cache_token_symbol_list, celery_session_worker, generic_ussd_session, init_database, load_chain_spec,
-               mock_sync_balance_api_query, set_active_token):
+               mock_sync_balance_api_query, set_active_token, mock_get_adjusted_balance):
     blockchain_address = activated_account.blockchain_address
     preferred_language = get_cached_preferred_language(blockchain_address)
     token_symbol = get_active_token_symbol(blockchain_address)
@@ -285,7 +285,7 @@ def test_start(activated_account, cache_balances, cache_preferences, cache_token
     decimals = token_data.get("decimals")
     identifier = bytes.fromhex(blockchain_address)
     balances_identifier = [identifier, token_symbol.encode('utf-8')]
-    available_balance = get_cached_available_balance(decimals, balances_identifier)
+    available_balance = get_cached_display_balance(decimals, balances_identifier)
     start = 'ussd.start'
     resp = response(activated_account, start, start[5:], init_database, generic_ussd_session)
     assert resp == translation_for(start,
@@ -397,7 +397,7 @@ def test_exit_insufficient_balance(activated_account, cache_balances, cache_pref
     decimals = token_data.get("decimals")
     identifier = bytes.fromhex(blockchain_address)
     balances_identifier = [identifier, token_symbol.encode('utf-8')]
-    available_balance = get_cached_available_balance(decimals, balances_identifier)
+    available_balance = get_cached_display_balance(decimals, balances_identifier)
     tx_recipient_information = valid_recipient.standard_metadata_id()
     exit_insufficient_balance = 'ussd.exit_insufficient_balance'
     generic_ussd_session['data'] = {

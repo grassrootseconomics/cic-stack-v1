@@ -8,14 +8,14 @@ import i18n.config
 from cic_types.condiments import MetadataPointer
 
 # local imports
-from cic_ussd.account.balance import (calculate_available_balance,
+from cic_ussd.account.balance import (BalancesHandler,
                                       get_account_tokens_balance,
                                       get_adjusted_balance,
                                       get_balances,
                                       get_cached_adjusted_balance,
-                                      get_cached_available_balance)
+                                      get_cached_display_balance)
 from cic_ussd.account.chain import Chain
-from cic_ussd.account.metadata import get_cached_preferred_language
+from cic_ussd.account.metadata import get_cached_preferred_language, UssdMetadataPointer
 from cic_ussd.account.statement import (
     get_cached_statement,
     parse_statement_transactions,
@@ -31,7 +31,6 @@ from cic_ussd.cache import cache_data_key, cache_data, get_cached_data
 from cic_ussd.db.models.account import Account
 from cic_ussd.metadata import PersonMetadata
 from cic_ussd.phone_number import Support
-from cic_ussd.processor.poller import wait_for_session_data
 from cic_ussd.processor.util import parse_person_metadata, ussd_menu_list, latest_input
 from cic_ussd.session.ussd_session import save_session_data
 from cic_ussd.state_machine.logic.language import preferred_langauge_from_selection
@@ -66,7 +65,7 @@ class MenuProcessor:
         with_available_balance = f'{self.display_key}.available_balance'
         with_fees = f'{self.display_key}.with_fees'
         decimals = token_data.get('decimals')
-        available_balance = get_cached_available_balance(decimals, [self.identifier, token_symbol.encode('utf-8')])
+        available_balance = get_cached_display_balance(decimals, [self.identifier, token_symbol.encode('utf-8')])
         if not adjusted_balance:
             return translation_for(key=with_available_balance,
                                    preferred_language=preferred_language,
@@ -275,14 +274,20 @@ class MenuProcessor:
         balances = get_balances(blockchain_address, chain_str, token_symbol, False)[0]
         key = cache_data_key([self.identifier, token_symbol.encode('utf-8')], MetadataPointer.BALANCES)
         cache_data(key, json.dumps(balances))
-        available_balance = calculate_available_balance(balances, decimals)
+        balance_handler = BalancesHandler(balances=balances, decimals=decimals)
+        display_balance = balance_handler.display_balance()
+        adjusted_spendable_balance = balance_handler.spendable_balance(chain_str=chain_str, token_symbol=token_symbol)
+        s_key = cache_data_key([self.identifier, token_symbol.encode('utf-8')],
+                               UssdMetadataPointer.BALANCE_SPENDABLE)
+        cache_data(s_key, adjusted_spendable_balance)
         now = datetime.now()
         if (now - self.account.created).days >= 30:
-            if available_balance <= 0:
-                logg.info(f'Not retrieving adjusted balance, available balance: {available_balance} is insufficient.')
+            if display_balance <= 0:
+                logg.info(f'Not retrieving adjusted balance, available balance: {display_balance} is insufficient.')
             else:
                 timestamp = int((now - timedelta(30)).timestamp())
-                adjusted_balance = get_adjusted_balance(to_wei(decimals, available_balance), chain_str, timestamp, token_symbol)
+                adjusted_balance = get_adjusted_balance(to_wei(decimals, display_balance), chain_str, timestamp,
+                                                        token_symbol)
                 key = cache_data_key([self.identifier, token_symbol.encode('utf-8')], MetadataPointer.BALANCES_ADJUSTED)
                 cache_data(key, json.dumps(adjusted_balance))
 
@@ -294,7 +299,7 @@ class MenuProcessor:
         if not preferred_language:
             preferred_language = i18n.config.get('fallback')
         return translation_for(
-            self.display_key, preferred_language, account_balance=available_balance, account_token_name=token_symbol
+            self.display_key, preferred_language, account_balance=display_balance, account_token_name=token_symbol
         )
 
     def token_selection_pin_authorization(self) -> str:
@@ -310,6 +315,16 @@ class MenuProcessor:
         token_location = selected_token.get('location')
         token_data = f'{token_name} ({token_symbol})\n{token_issuer}\n{token_contact}\n{token_location}\n'
         return self.pin_authorization(token_data=token_data)
+
+    def enter_transaction_amount(self):
+        preferred_language = get_cached_preferred_language(self.account.blockchain_address)
+        if not preferred_language:
+            preferred_language = i18n.config.get('fallback')
+        token_symbol = get_active_token_symbol(self.account.blockchain_address)
+        key = cache_data_key([self.identifier, token_symbol.encode('utf-8')],
+                             UssdMetadataPointer.BALANCE_SPENDABLE)
+        spendable_amount = get_cached_data(key)
+        return translation_for(self.display_key, preferred_language, spendable_amount=f"{spendable_amount} {token_symbol}")
 
     def transaction_pin_authorization(self) -> str:
         """
@@ -385,7 +400,7 @@ class MenuProcessor:
         token_symbol = get_active_token_symbol(self.account.blockchain_address)
         token_data = get_cached_token_data(self.account.blockchain_address, token_symbol)
         decimals = token_data.get('decimals')
-        available_balance = get_cached_available_balance(decimals, [self.identifier, token_symbol.encode('utf-8')])
+        available_balance = get_cached_display_balance(decimals, [self.identifier, token_symbol.encode('utf-8')])
         transaction_amount = session_data.get('transaction_amount')
         transaction_amount = to_wei(decimals=decimals, value=transaction_amount)
         recipient_phone_number = self.ussd_session.get('data').get('recipient_phone_number')
@@ -540,6 +555,9 @@ def response(account: Account, display_key: str, menu_name: str, session: Sessio
 
     if menu_name == 'exit_successful_token_selection':
         return menu_processor.exit_successful_token_selection()
+
+    if menu_name == "enter_transaction_amount":
+        return menu_processor.enter_transaction_amount()
 
     preferred_language = i18n.config.get('fallback')
     if account:

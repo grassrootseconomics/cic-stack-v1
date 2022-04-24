@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const http = require('http');
+const https = require('https');
 
 const cic = require('@cicnet/cic-client-meta');
 const crdt = require('@cicnet/crdt-meta');
@@ -34,7 +34,7 @@ function sendit(uid, envelope) {
 	console.log('meta url ' + config.get('META_PROVIDER'));
 	url = url.replace(new RegExp('^(.+://[^/]+)/*$'), '$1/');
 	console.log('posting to url: ' + url + uid);
-	const req = http.request(url + uid, opts, (res) => {
+	const req = https.request(url + uid, opts, (res) => {
 		res.on('data', process.stdout.write);
 		res.on('end', () => {
         if (!res.complete) {

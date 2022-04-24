@@ -9,7 +9,7 @@ import celery
 from cic_types.condiments import MetadataPointer
 
 # local imports
-from cic_ussd.account.balance import get_balances, calculate_available_balance
+from cic_ussd.account.balance import get_balances, BalancesHandler
 from cic_ussd.account.statement import generate
 from cic_ussd.cache import Cache, cache_data, cache_data_key, get_cached_data
 from cic_ussd.account.chain import Chain
@@ -143,11 +143,9 @@ def statement_callback(self, result, param: str, status_code: int):
         recipient_transaction, sender_transaction = transaction_actors(transaction)
         if recipient_transaction.get('blockchain_address') == param:
             recipient_transaction['alt_blockchain_address'] = sender_transaction.get('blockchain_address')
-            recipient_transaction['timestamp'] = datetime.utcfromtimestamp(transaction.get('timestamp')).strftime('%d/%m/%y, %H:%M')
             generate(param, queue, recipient_transaction)
         if sender_transaction.get('blockchain_address') == param:
             sender_transaction['alt_blockchain_address'] = recipient_transaction.get('blockchain_address')
-            sender_transaction['timestamp'] = datetime.utcfromtimestamp(transaction.get('timestamp')).strftime('%d/%m/%y, %H:%M')
             generate(param, queue, sender_transaction)
 
 
@@ -207,8 +205,9 @@ def transaction_balances_callback(self, result: list, param: dict, status_code: 
     wait_for_cache(identifier, f'Cached token data for: {token_symbol}', MetadataPointer.TOKEN_DATA)
     token_data = get_cached_token_data(blockchain_address, token_symbol)
     decimals = token_data.get('decimals')
-    available_balance = calculate_available_balance(balances_data, decimals)
-    transaction['available_balance'] = available_balance
+    balances_handler = BalancesHandler(balances_data, decimals)
+    display_balance = balances_handler.display_balance()
+    transaction['display_balance'] = display_balance
     queue = self.request.delivery_info.get('routing_key')
 
     s_process_account_metadata = celery.signature(

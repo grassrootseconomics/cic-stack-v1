@@ -2,8 +2,7 @@
 import datetime
 import json
 import logging
-import time
-from typing import List, Union
+from typing import List
 
 # external imports
 from cic_types.models.person import get_contact_data_from_vcard
@@ -100,3 +99,4 @@ def ussd_menu_list(fallback: str, menu_list: list, split: int = 3) -> List[str]:
         except IndexError:
             menu_list_reprs.append(fallback)
     return menu_list_reprs
+

@@ -1,6 +1,7 @@
 # standard imports
 import datetime
 import logging
+from backports.zoneinfo import ZoneInfo
 
 # third-party imports
 import celery
@@ -10,6 +11,7 @@ from cic_ussd.account.tokens import get_cached_token_data
 from cic_ussd.account.transaction import from_wei
 from cic_ussd.notifications import Notifier
 from cic_ussd.phone_number import Support
+from cic_ussd.time import TimezoneHandler
 
 celery_app = celery.current_app
 logg = logging.getLogger(__file__)
@@ -31,14 +33,14 @@ def transaction(notification_data: dict):
     token_data = get_cached_token_data(blockchain_address, token_symbol)
     decimals = token_data.get('decimals')
     amount = token_value if token_value == 0 else from_wei(decimals, token_value)
-    balance = notification_data.get('available_balance')
+    balance = notification_data.get('display_balance')
     phone_number = notification_data.get('phone_number')
     preferred_language = notification_data.get('preferred_language')
 
     alt_metadata_id = notification_data.get('alt_metadata_id')
     metadata_id = notification_data.get('metadata_id')
     transaction_type = notification_data.get('transaction_type')
-    timestamp = datetime.datetime.now().strftime('%d-%m-%y, %H:%M %p')
+    timestamp = datetime.datetime.now(tz=ZoneInfo(TimezoneHandler.timezone)).strftime('%d-%m-%y, %H:%M %p')
 
     if transaction_type == 'tokengift':
         notifier.send_sms_notification(

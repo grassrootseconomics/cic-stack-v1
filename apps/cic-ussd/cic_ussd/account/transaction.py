@@ -106,6 +106,7 @@ def transaction_actors(transaction: dict) -> Tuple[Dict, Dict]:
     source_token_symbol = transaction.get('source_token_symbol')
     source_token_value = transaction.get('source_token_value') or transaction.get('from_value')
     source_token_decimals = transaction.get('source_token_decimals')
+    timestamp = transaction.get("timestamp")
 
     recipient_transaction_data = {
         "token_symbol": destination_token_symbol,
@@ -113,6 +114,7 @@ def transaction_actors(transaction: dict) -> Tuple[Dict, Dict]:
         "token_decimals": destination_token_decimals,
         "blockchain_address": recipient_blockchain_address,
         "role": "recipient",
+        "timestamp": timestamp
     }
     sender_transaction_data = {
         "blockchain_address": sender_blockchain_address,
@@ -120,6 +122,7 @@ def transaction_actors(transaction: dict) -> Tuple[Dict, Dict]:
         "token_value": source_token_value,
         "token_decimals": source_token_decimals,
         "role": "sender",
+        "timestamp": timestamp
     }
     return recipient_transaction_data, sender_transaction_data
 

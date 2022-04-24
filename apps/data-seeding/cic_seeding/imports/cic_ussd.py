@@ -221,27 +221,31 @@ class CicUssdImporter(Importer):
         attempts = 0
         while True:
             attempts += 1
-            req = self._build_ussd_request( session, phone_number, self.ussd_service_code, txt=language_selection)
-            logg.debug('ussd request: {} {}'.format(req.full_url, req.data))
-            response = None
-            try:
-                response = urllib.request.urlopen(req)
-            except urllib.error.HTTPError as e:
-                if attempts == self.max_create_attempts:
-                    raise e
-                if e.code >= 500:
-                    time.sleep(0.3)
-                    continue
-                raise e
-            response_data = response.read().decode('utf-8')
-            logg.debug('ussd response: {}'.format(response_data))
-            if len(response_data) < 3:
-                raise RuntimeError('Unexpected response length')
-            elif response_data[:3] == 'END':
-                logg.debug('detected ussd END, so user should have been created now')
+            if response_data == "CON Tafadhali weka pin mpya yenye nambari nne kwa akaunti yako" or response_data == "CON Please enter a new four number PIN for your account.":
+                logg.debug('user is already created skipping')
                 break
-            logg.debug('ussd response is still CON, retrying')
-            time.sleep(0.1)
+            else:
+                req = self._build_ussd_request(session, phone_number, self.ussd_service_code, txt=language_selection)
+                logg.debug('ussd request: {} {}'.format(req.full_url, req.data))
+                response = None
+                try:
+                    response = urllib.request.urlopen(req)
+                except urllib.error.HTTPError as e:
+                    if attempts == self.max_create_attempts:
+                        raise e
+                    if e.code >= 500:
+                        time.sleep(0.3)
+                        continue
+                    raise e
+                response_data = response.read().decode('utf-8')
+                logg.debug('ussd response: {}'.format(response_data))
+                if len(response_data) < 3:
+                    raise RuntimeError('Unexpected response length')
+                elif response_data[:3] == 'END':
+                    logg.debug('detected ussd END, so user should have been created now')
+                    break
+                logg.debug('ussd response is still CON, retrying')
+                time.sleep(0.1)
 
 
     def process_meta_custom_tags(self, i, u):

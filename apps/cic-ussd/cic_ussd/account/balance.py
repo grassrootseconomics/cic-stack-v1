@@ -1,7 +1,8 @@
 # standard imports
-
 import json
 import logging
+import time
+from datetime import datetime, timedelta
 from typing import Union, Optional
 
 # third-party imports
@@ -60,22 +61,36 @@ def get_balances(address: str,
         return balance_request_task.get()
 
 
-def calculate_available_balance(balances: dict, decimals: int) -> float:
-    """This function calculates an account's balance at a specific point in time by computing the difference from the
-    outgoing balance and the sum of the incoming and network balances.
-    :param balances: incoming, network and outgoing balances.
-    :type balances: dict
-    :param decimals:
-    :type decimals: int
-    :return: Token value of the available balance.
-    :rtype: float
-    """
-    incoming_balance = balances.get('balance_incoming')
-    outgoing_balance = balances.get('balance_outgoing')
-    network_balance = balances.get('balance_network')
+class BalancesHandler:
+    def __init__(self, balances: dict, decimals: int):
+        self.decimals = decimals
+        self.incoming_balance = balances.get('balance_incoming')
+        self.network_balance = balances.get('balance_network')
+        self.outgoing_balance = balances.get('balance_outgoing')
 
-    available_balance = (network_balance + incoming_balance) - outgoing_balance
-    return from_wei(decimals=decimals, value=available_balance)
+    def display_balance(self) -> float:
+        """This function calculates an account's balance at a specific point in time by computing the difference from the
+        outgoing balance and the sum of the incoming and network balances.
+        :return: Token value of the display balance.
+        :rtype: float
+        """
+        display = (self.network_balance + self.incoming_balance) - self.outgoing_balance
+        return from_wei(decimals=self.decimals, value=display)
+
+    def spendable_balance(self, chain_str: str, token_symbol: str):
+        """This function calculates an account's spendable balance at a given point in time by computing the difference
+        of outgoing balance from the network balance.
+        :return: Token value of the spendable balance.
+        :rtype: float
+        """
+        spendable = self.network_balance - self.outgoing_balance
+        timestamp = datetime.now() + timedelta(seconds=180)
+        timestamp = int(time.mktime(timestamp.timetuple()))
+        try:
+            max_spendable_balance = get_adjusted_balance(spendable, chain_str, timestamp, token_symbol)
+        except KeyError:
+            max_spendable_balance = spendable
+        return from_wei(decimals=self.decimals, value=max_spendable_balance)
 
 
 def get_adjusted_balance(balance: int, chain_str: str, timestamp: int, token_symbol: str):
@@ -91,27 +106,36 @@ def get_adjusted_balance(balance: int, chain_str: str, timestamp: int, token_sym
     :return:
     :rtype:
     """
-    logg.debug(f'retrieving adjusted balance on chain: {chain_str}')
+    logg.debug(f'retrieving adjusted balance on chain: {chain_str} for balance: {balance}')
     demurrage_api = DemurrageApi(chain_str=chain_str)
-    return demurrage_api.get_adjusted_balance(token_symbol, balance, timestamp).result
+    return demurrage_api.get_adjusted_balance(token_symbol, balance, timestamp).get()
 
 
-def get_cached_available_balance(decimals: int, identifier: Union[list, bytes]) -> float:
+def get_cached_balances(identifier: Union[list, bytes]):
+    """
+    :param identifier: An identifier needed to create a unique pointer to a balances resource.
+    :type identifier: bytes | list
+    :return:
+    :rtype:
+    """
+    key = cache_data_key(identifier=identifier, salt=MetadataPointer.BALANCES)
+    return get_cached_data(key=key)
+
+
+def get_cached_display_balance(decimals: int, identifier: Union[list, bytes]) -> float:
     """This function attempts to retrieve balance data from the redis cache.
     :param decimals:
     :type decimals: int
-    :param identifier: An identifier needed to create a unique pointer to a balances resource.
-    :type identifier: bytes | list
+    :param identifier: A list containing bytes representation of an address and an encoded token symbol
     :raises CachedDataNotFoundError: No cached balance data could be found.
     :return: Operational balance of an account.
     :rtype: float
     """
-    key = cache_data_key(identifier=identifier, salt=MetadataPointer.BALANCES)
-    cached_balances = get_cached_data(key=key)
-    if cached_balances:
-        return calculate_available_balance(balances=json.loads(cached_balances), decimals=decimals)
-    else:
-        raise CachedDataNotFoundError(f'No cached available balance at {key}')
+
+    if not (cached_balances := get_cached_balances(identifier=identifier)):
+        raise CachedDataNotFoundError('No cached display balance.')
+    balances = BalancesHandler(balances=json.loads(cached_balances), decimals=decimals)
+    return balances.display_balance()
 
 
 def get_cached_adjusted_balance(identifier: Union[list, bytes]):

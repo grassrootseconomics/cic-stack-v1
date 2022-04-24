@@ -31,6 +31,7 @@ from cic_ussd.http.responses import with_content_headers
 from cic_ussd.menu.ussd_menu import UssdMenu
 from cic_ussd.phone_number import Support, E164Format
 from cic_ussd.processor.ussd import handle_menu_operations
+from cic_ussd.time import TimezoneHandler
 from cic_ussd.runnable.server_base import exportable_parser, logg
 from cic_ussd.session.ussd_session import UssdSession as InMemoryUssdSession
 from cic_ussd.state_machine import UssdStateMachine
@@ -131,6 +132,7 @@ Languages.load_languages_dict(config.get('LANGUAGES_FILE'))
 languages = Languages()
 languages.cache_system_languages()
 
+TimezoneHandler.timezone = config.get("TIME_ZONE")
 
 def application(env, start_response):
     """Loads python code for application to be accessible over web server
@@ -202,14 +204,7 @@ def application(env, start_response):
         logg.debug('session {} started for {}'.format(external_session_id, phone_number))
 
 
-        response = None
-        try:
-            response = handle_menu_operations(external_session_id, phone_number, args.q, service_code, session, user_input)
-        except Exception as error:
-            logg.debug(f"Error: {error} occurred preceding session release rollback.")
-            SessionBase.release_rollback_session(session)
-            start_response('500 Internal Server Error', errors_headers)
-            return []
+        response = handle_menu_operations(external_session_id, phone_number, args.q, service_code, session, user_input)
 
 
         response_bytes, headers = with_content_headers(headers, response)

@@ -43,10 +43,10 @@ def cache_statement(parsed_transaction: dict, querying_party: str):
     :return:
     :rtype:
     """
-    cached_statement = get_cached_statement(querying_party)
-    statement_transactions = []
-    if cached_statement:
+    if cached_statement := get_cached_statement(querying_party):
         statement_transactions = json.loads(cached_statement)
+    else:
+        statement_transactions = []
     if parsed_transaction not in statement_transactions:
         statement_transactions.append(parsed_transaction)
     data = json.dumps(statement_transactions)
@@ -84,8 +84,7 @@ def parse_transaction(transaction: dict) -> dict:
         key = cache_data_key(identifier=identifier, salt=MetadataPointer.TOKEN_LAST_SENT)
         cache_data(key, token_symbol)
     account = validate_transaction_account(blockchain_address, role, session)
-    alt_account = session.query(Account).filter_by(blockchain_address=alt_blockchain_address).first()
-    if alt_account:
+    if alt_account := session.query(Account).filter_by(blockchain_address=alt_blockchain_address).first():
         transaction['alt_metadata_id'] = alt_account.standard_metadata_id()
     else:
         transaction['alt_metadata_id'] = 'GRASSROOTS ECONOMICS'

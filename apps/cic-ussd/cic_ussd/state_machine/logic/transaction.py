@@ -1,4 +1,5 @@
 # standard imports
+import json
 import logging
 from typing import Tuple
 
@@ -7,8 +8,9 @@ import celery
 from sqlalchemy.orm.session import Session
 
 # local imports
-from cic_ussd.account.balance import get_cached_available_balance
+from cic_ussd.cache import cache_data_key, get_cached_data
 from cic_ussd.account.chain import Chain
+from cic_ussd.account.metadata import UssdMetadataPointer
 from cic_ussd.account.tokens import get_active_token_symbol, get_cached_token_data
 from cic_ussd.account.transaction import OutgoingTransaction
 from cic_ussd.db.models.account import Account
@@ -59,9 +61,10 @@ def has_sufficient_balance(state_machine_data: Tuple[str, dict, Account, Session
     user_input, ussd_session, account, session = state_machine_data
     identifier = bytes.fromhex(account.blockchain_address)
     token_symbol = get_active_token_symbol(account.blockchain_address)
-    token_data = get_cached_token_data(account.blockchain_address, token_symbol)
-    decimals = token_data.get('decimals')
-    return cash_rounding_precision(user_input) <= get_cached_available_balance(decimals, [identifier, token_symbol.encode('utf-8')])
+    key = cache_data_key([identifier, token_symbol.encode('utf-8')],
+                         UssdMetadataPointer.BALANCE_SPENDABLE)
+    spendable_balance = get_cached_data(key)
+    return cash_rounding_precision(user_input) <= float(spendable_balance)
 
 
 def save_recipient_phone_to_session_data(state_machine_data: Tuple[str, dict, Account, Session]):

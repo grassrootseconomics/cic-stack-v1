@@ -59,7 +59,7 @@ def test_get_cached_statement(activated_account, cache_statement, statement):
     assert cached_statement[0].get('blockchain_address') == statement[0].get('blockchain_address')
 
 
-def test_parse_statement_transactions(cache_default_token_data, statement):
+def test_parse_statement_transactions(cache_default_token_data, statement, load_timezone):
     parsed_transactions = parse_statement_transactions(statement)
     parsed_transaction = parsed_transactions[0]
     parsed_transaction.startswith('Sent')

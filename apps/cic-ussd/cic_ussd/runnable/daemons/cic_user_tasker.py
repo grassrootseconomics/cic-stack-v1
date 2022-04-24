@@ -22,6 +22,7 @@ from cic_ussd.phone_number import E164Format, Support
 from cic_ussd.session.ussd_session import UssdSession as InMemoryUssdSession
 from cic_ussd.state_machine.logic.manager import States
 from cic_ussd.translation import generate_locale_files
+from cic_ussd.time import TimezoneHandler
 from cic_ussd.validator import validate_presence
 
 logging.basicConfig(level=logging.WARNING)
@@ -101,6 +102,8 @@ States.load_non_resumable_states(config.get("MACHINE_NON_RESUMABLE_STATES"))
 
 E164Format.region = config.get('E164_REGION')
 Support.phone_number = config.get('OFFICE_SUPPORT_PHONE')
+
+TimezoneHandler.timezone = config.get("TIME_ZONE")
 
 
 # set up celery
