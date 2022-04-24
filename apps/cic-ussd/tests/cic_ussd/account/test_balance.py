@@ -57,8 +57,7 @@ def test_balances(activated_account,
                   cache_default_token_data,
                   load_chain_spec,
                   display_balance,
-                  token_symbol,
-                  mock_get_adjusted_balance):
+                  token_symbol):
     balances = {
         'address': activated_account.blockchain_address,
         'converters': [],
@@ -70,7 +69,7 @@ def test_balances(activated_account,
     chain_str = Chain.spec.__str__()
     assert balances.display_balance() == display_balance
     assert balances.spendable_balance(chain_str, token_symbol) == from_wei(
-        decimals=6, value=(balance_network - balance_outgoing - 180))
+        decimals=6, value=(balance_network - balance_outgoing))
 
 
 def test_get_cached_available_balance(activated_account,

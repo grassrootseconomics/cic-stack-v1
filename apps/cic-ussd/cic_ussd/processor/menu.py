@@ -338,11 +338,9 @@ class MenuProcessor:
         token_symbol = get_active_token_symbol(self.account.blockchain_address)
         token_data = get_cached_token_data(self.account.blockchain_address, token_symbol)
         user_input = self.ussd_session.get('data').get('transaction_amount')
-        decimals = token_data.get('decimals')
-        transaction_amount = to_wei(decimals=decimals, value=user_input)
         return self.pin_authorization(
             recipient_information=tx_recipient_information,
-            transaction_amount=from_wei(decimals, transaction_amount),
+            transaction_amount=user_input,
             token_symbol=token_symbol,
             sender_information=tx_sender_information
         )
