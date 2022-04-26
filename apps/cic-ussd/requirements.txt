@@ -7,7 +7,7 @@ cffi==1.14.6
 cic-eth~=0.12.7
 cic-notify~=0.4.4
 cic-translations~=0.0.3
-cic-types~=0.2.1a8
+cic-types~=0.2.1
 confini~=0.5.2
 cic-eth-aux-erc20-demurrage-token~=0.0.3
 phonenumbers==8.12.12
