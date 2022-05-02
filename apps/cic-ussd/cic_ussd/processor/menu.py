@@ -113,7 +113,7 @@ class MenuProcessor:
                 self.display_key, preferred_language, last_transaction_set=transaction_sets[2]
             )
 
-    def add_guardian_pin_authorization(self):
+    def guardian_pin_authorization(self):
         guardian_information = self.guardian_metadata()
         return self.pin_authorization(guardian_information=guardian_information)
 
@@ -517,8 +517,8 @@ def response(account: Account, display_key: str, menu_name: str, session: Sessio
     if menu_name == 'guardian_list':
         return menu_processor.guardian_list()
 
-    if menu_name == 'add_guardian_pin_authorization':
-        return menu_processor.add_guardian_pin_authorization()
+    if 'guardian_pin_authorization' in menu_name:
+        return menu_processor.guardian_pin_authorization()
 
     if menu_name == 'reset_guarded_pin_authorization':
         return menu_processor.reset_guarded_pin_authorization()
