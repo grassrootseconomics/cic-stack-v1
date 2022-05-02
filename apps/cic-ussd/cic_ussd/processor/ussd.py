@@ -50,7 +50,6 @@ def handle_menu(account: Account, session: Session) -> Document:
         if last_ussd_session := UssdSession.last_ussd_session(
                 account.phone_number, session
         ):
-            print(f"RESUMING LAST STATE: {last_ussd_session.state} OF USSD SESSION: {last_ussd_session.to_json()}")
             return resume_last_ussd_session(last_ussd_session.state)
     else:
         return UssdMenu.find_by_name('initial_pin_entry')
@@ -193,13 +192,16 @@ def handle_account_menu_operations(account: Account,
         ussd_session_in_cache = json.loads(existing_ussd_session)
         menu = get_menu(account, session, user_input, ussd_session_in_cache)
         session_data = ussd_session_in_cache.get("data")
-        ussd_session = create_or_update_session(
-            external_session_id, phone_number, service_code, user_input, menu.get('name'), session, session_data)
     else:
         menu = get_menu(account, session, user_input, None)
-        ussd_session = create_or_update_session(
-            external_session_id, phone_number, service_code, user_input, menu.get('name'), session, {})
+        session_data = {}
+        # handle passing date from resumed state.
+        if last_ussd_session := UssdSession.last_ussd_session(phone_number=phone_number, session=session):
+            if last_ussd_session.state == menu.get("name") and last_ussd_session.data:
+                session_data = last_ussd_session.data
 
+    ussd_session = create_or_update_session(
+        external_session_id, phone_number, service_code, user_input, menu.get('name'), session, session_data)
     menu_response = response(
         account, menu.get('display_key'), menu.get('name'), session, ussd_session.to_json())
 
