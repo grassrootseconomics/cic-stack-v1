@@ -21,6 +21,7 @@ from cic_ussd.account.statement import (
     parse_statement_transactions,
     query_statement)
 from cic_ussd.account.tokens import (create_account_tokens_list,
+                                     get_cached_default_token,
                                      get_active_token_symbol,
                                      get_cached_token_data,
                                      get_cached_token_symbol_list,
@@ -280,7 +281,7 @@ class MenuProcessor:
         s_key = cache_data_key([self.identifier, token_symbol.encode('utf-8')],
                                UssdMetadataPointer.BALANCE_SPENDABLE)
         cache_data(s_key, adjusted_spendable_balance)
-        now = datetime.now()
+        """now = datetime.now()
         if (now - self.account.created).days >= 30:
             if display_balance <= 0:
                 logg.info(f'Not retrieving adjusted balance, available balance: {display_balance} is insufficient.')
@@ -289,7 +290,7 @@ class MenuProcessor:
                 adjusted_balance = get_adjusted_balance(to_wei(decimals, display_balance), chain_str, timestamp,
                                                         token_symbol)
                 key = cache_data_key([self.identifier, token_symbol.encode('utf-8')], MetadataPointer.BALANCES_ADJUSTED)
-                cache_data(key, json.dumps(adjusted_balance))
+                cache_data(key, json.dumps(adjusted_balance))"""
 
         query_statement(blockchain_address)
         token_symbols_list = get_cached_token_symbol_list(blockchain_address)
