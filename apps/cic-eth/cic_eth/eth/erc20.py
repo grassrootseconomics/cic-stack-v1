@@ -510,17 +510,16 @@ def token_info(self, tokens, chain_spec_dict, proofs=[]):
         token_chain_object = ERC20Token(chain_spec, rpc, add_0x(token['address']))
         token_chain_object.load(rpc)
 
-        token_symbol_proof_hex = to_identifier(token_chain_object.symbol)
+        """token_symbol_proof_hex = to_identifier(token_chain_object.symbol)
         token_proofs = [token_symbol_proof_hex]
         if len(proofs) > 0:
-            token_proofs += proofs[i]
+            token_proofs += proofs[i]"""
 
         tokens[i] = {
             'decimals': token_chain_object.decimals,
             'name': token_chain_object.name,
             'symbol': token_chain_object.symbol,
             'address': tx_normalize.executable_address(token_chain_object.address),
-            'proofs': token_proofs,
             'converters': tokens[i]['converters'],
                 }   
         i += 1
