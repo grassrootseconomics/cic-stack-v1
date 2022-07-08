@@ -12,7 +12,10 @@ from chainlib.eth.address import is_same_address
 from chainlib.eth.error import RequestMismatchException
 from cic_eth_registry import CICRegistry
 from cic_eth_registry.erc20 import ERC20Token
-from cic_eth_registry.error import UnknownContractError
+from cic_eth_registry.error import (
+        UnknownContractError,
+        NotAContractError,
+        )
 from eth_token_index import TokenUniqueSymbolIndex
 import celery
 
