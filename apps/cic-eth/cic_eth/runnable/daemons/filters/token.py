@@ -51,6 +51,9 @@ class TokenFilter(SyncFilter):
         except UnknownContractError:
             logg.debug('token {} not in registry, skipping'.format(token.symbol))
             return None
+        except NotAContractError:
+            logg.error('alleged erc20 token at address {} is not a contraact, skipping'.format(token_address))
+            return None
 
         if is_same_address(r, ZERO_ADDRESS):
             return None
