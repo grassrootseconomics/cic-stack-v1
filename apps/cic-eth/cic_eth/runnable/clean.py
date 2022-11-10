@@ -102,7 +102,7 @@ def process_final(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
     r = session.execute('select tx_cache.sender, otx.nonce, bit_or(status) as statusaggr from otx inner join tx_cache on otx.id = tx_cache.otx_id group by tx_cache.sender, otx.nonce having bit_or(status) & {} > 0 and bit_or(status) != {} and bit_or(status) != {} order by tx_cache.sender, otx.nonce'.format(StatusBits.FINAL, StatusEnum.SUCCESS, StatusEnum.REVERTED))
     i = 0
     for v in r:
-        logg.info('detected unclean run {} for sender {} nonce {} aggregate status {} ({})'.format(i, v[0], v[1], status_str(v[2]), v[2]))
+        logg.info('detected unclean run {} for sender {} nonce {} aggregate status {} ({})'.format(i, v[0], v[1], status_str(v[2]), v[2]))
         i += 1
         unclean_items.append((v[0], v[1],))
 
@@ -172,7 +172,7 @@ def process_final(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
             if typ == 'network':
                 final_network_item = item
             items[typ].append(item)
-            logg.debug('tx {} sender {} nonce {} registered as {}'.format(vv[1], sender, nonce, typ))
+            logg.debug('tx {} sender {} nonce {} registered as {}'.format(vv[1], sender, nonce, typ))
 
 
         # Given an RPC, we can indeed verify whether this tx is actually known to the network
@@ -217,7 +217,7 @@ def process_final(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
 
                     tx = Tx(tx_src, block=block, rcpt=rcpt)
 
-                    logg.info('verified rpc tx {} created {} updated {} is in block {} index {} status {}'.format(tx.hash, v[6], v[7], tx.block.number, tx.index, tx.status.name))
+                    logg.info('verified rpc tx {} created {} updated {} is in block {} index {} status {}'.format(tx.hash, v[6], v[7], tx.block.number, tx.index, tx.status.name))
 
                     if final_network_item != None and hex_uniform(strip_0x(final_network_item[1])) == hex_uniform(strip_0x(tx.hash)):
                         edit_items.append(item)
@@ -255,7 +255,7 @@ def process_final(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
                     if commit:
                         session.commit()
 
-                    logg.info('{} sender {} nonce {} tx {} status change {} ({}) -> {} ({})'.format(v[5], v[3], v[4], v[1], status_str(v[2]), v[2], status_str(o.status), o.status))
+                    logg.info('{} sender {} nonce {} tx {} status change {} ({}) -> {} ({})'.format(v[5], v[3], v[4], v[1], status_str(v[2]), v[2], status_str(o.status), o.status))
             w.write(sender + ',' + str(nonce) + '\n')
             continue
 
@@ -275,14 +275,14 @@ def process_final(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
                 new_status_mask -= StatusBits.OBSOLETE
                 if o.status & (StatusBits.FINAL | StatusBits.IN_NETWORK) > 0:
                     if v[2] & StatusBits.NETWORK_ERROR > 0 and o.status & StatusBits.NETWORK_ERROR == 0:
-                        logg.info('queue final status {} ({}) records success for {} but tx failed on network'.format(status_str(o.status), o.status, v[1]))
+                        logg.info('queue final status {} ({}) records success for {} but tx failed on network'.format(status_str(o.status), o.status, v[1]))
                         new_status_set |= StatusBits.NETWORK_ERROR
                     else:
-                        logg.debug('final status {} ({}) checks out in queued entry, not changing'.format(status_str(o.status), o.status))
+                        logg.debug('final status {} ({}) checks out in queued entry, not changing'.format(status_str(o.status), o.status))
                         continue
                 effetive_typ = 'network'
             elif o.status == StatusBits.FINAL:
-                logg.warning('inconclusive final status {} ({}) for {}, not changing'.format(status_str(o.status), o.status, v[1]))
+                logg.warning('inconclusive final status {} ({}) for {}, not changing'.format(status_str(o.status), o.status, v[1]))
                 continue
             o.status = o.status | new_status_set
             o.status = o.status & new_status_mask
@@ -299,7 +299,7 @@ def process_final(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
             if commit:
                 session.commit()
 
-            logg.info('{} sender {} nonce {} tx {} status change {} ({}) -> {} ({})'.format(effective_typ, v[3], v[4], v[1], status_str(v[2]), v[2], status_str(o.status), o.status))
+            logg.info('{} sender {} nonce {} tx {} status change {} ({}) -> {} ({})'.format(effective_typ, v[3], v[4], v[1], status_str(v[2]), v[2], status_str(o.status), o.status))
 
 
 

@@ -127,7 +127,7 @@ def process_nonce(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
         nonce = v[1]
         signed_tx = v[2]
         if last_nonce == -1:
-            logg.info('starting at tx {} nonce {}'.format(v[0], nonce))
+            logg.info('starting at tx {} nonce {}'.format(v[0], nonce))
             last_nonce = nonce
             current_delta = 0
             start_nonce = nonce
@@ -140,7 +140,7 @@ def process_nonce(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
             last_nonce = nonce
             continue
 
-        logg.info('nonce gap found on tx {} nonce {} last nonce {} old delta {} new delta {}'.format(v[0], nonce, last_nonce, current_delta, delta))
+        logg.info('nonce gap found on tx {} nonce {} last nonce {} old delta {} new delta {}'.format(v[0], nonce, last_nonce, current_delta, delta))
         deltas[nonce] = current_delta + delta
         current_delta += delta
         if first_gap == 0:

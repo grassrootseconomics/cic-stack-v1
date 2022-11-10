@@ -80,7 +80,7 @@ def process_block(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
     r = session.execute('select tx_cache.sender, otx.nonce, bit_or(status) as statusaggr from otx inner join tx_cache on otx.id = tx_cache.otx_id group by tx_cache.sender, otx.nonce having bit_or(status) & {} = 0 order by otx.nonce'.format(filter_status))
     i = 0
     for v in r:
-        logg.info('detected blockage {} in account {} in state {} ({})'.format(i, v[0], status_str(v[2]), v[2]))
+        logg.info('detected blockage {} in account {} in state {} ({})'.format(i, v[0], status_str(v[2]), v[2]))
         straggler_accounts.append((v[0], v[1],))
         i += 1
     #session.flush()
@@ -88,7 +88,7 @@ def process_block(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
     for v in straggler_accounts:
         r = session.execute('select tx_hash from otx inner join tx_cache on otx.id = tx_cache.otx_id where sender = \'{}\' and nonce = {} order by otx.date_created desc'.format(v[0], v[1]))
         vv = r.first()
-        logg.debug('sender {} nonce {} -> {}'.format(v[0], v[1], vv[0]))
+        logg.debug('sender {} nonce {} -> {}'.format(v[0], v[1], vv[0]))
         w.write(vv[0] + '\n')
 
 
@@ -100,7 +100,7 @@ def process_error(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
     r = session.execute('select tx_cache.sender, otx.nonce, bit_or(status) as statusaggr from otx inner join tx_cache on otx.id = tx_cache.otx_id group by tx_cache.sender, otx.nonce having bit_or(status) & {} = 0 and bit_or(status) & {} > 0 order by otx.nonce'.format(filter_status, error_status))
     i = 0
     for v in r:
-        logg.info('detected errored state {} in account {} with aggregate state {} ({})'.format(i, v[0], status_str(v[2]), v[2]))
+        logg.info('detected errored state {} in account {} with aggregate state {} ({})'.format(i, v[0], status_str(v[2]), v[2]))
         straggler_accounts.append((v[0], v[1],))
         i += 1
 
@@ -108,7 +108,7 @@ def process_error(session, chain_spec, rpc=None, commit=False, w=sys.stdout, ext
         r = session.execute('select tx_hash, status from otx inner join tx_cache on otx.id = tx_cache.otx_id where sender = \'{}\' and nonce = {} order by otx.date_created desc limit 1'.format(v[0], v[1]))
         vv = r.first()
         if vv[1] & error_status > 0 and vv[1] & StatusBits.IN_NETWORK == 0:
-            logg.debug('sender {} nonce {} -> {}'.format(v[0], v[1], vv[0]))
+            logg.debug('sender {} nonce {} -> {}'.format(v[0], v[1], vv[0]))
             w.write(vv[0] + '\n')
         else:
             logg.warning('sender {} nonce {} caught in error state, but the errored tx is not the most recent one. it will need to be handled manually')

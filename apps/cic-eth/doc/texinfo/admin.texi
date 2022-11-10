@@ -9,7 +9,7 @@ In contrast to the client API module, this API does not currently implement a pl
 
 @appendixsection registry
 
-Returns the @code{ContractRegistry} this instance of @code{cic-eth-tasker} is running on.
+Returns the @code{ContractRegistry} this instance of @code{cic-eth-tasker} is running on.
 
 @appendixsection proxy-do
 

@@ -2,11 +2,11 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import * as handlers from './handlers';
+import * as handlers from './handlers';
 import { PGPKeyStore, PGPSigner, Config } from '@cicnet/crdt-meta';
 import { SqliteAdapter, PostgresAdapter } from '../../src/db';
 
-import { standardArgs } from './args';
+import { standardArgs } from './args';
 
 let configPath = '/usr/local/etc/cic-meta';
 
@@ -35,9 +35,9 @@ const dbConfig = {
 };
 let db = undefined;
 if (config.get('DATABASE_ENGINE') == 'sqlite') {
-       	db = new SqliteAdapter(dbConfig);
-} else if (config.get('DATABASE_ENGINE') == 'postgres')  {
-       	db = new PostgresAdapter(dbConfig);
+	db = new SqliteAdapter(dbConfig);
+} else if (config.get('DATABASE_ENGINE') == 'postgres') {
+	db = new PostgresAdapter(dbConfig);
 } else {
 	throw 'database engine ' + config.get('DATABASE_ENGINE') + 'not implemented';
 }
@@ -62,19 +62,19 @@ async function migrateDatabase(cb) {
 				return;
 			}
 			console.warn('db check for table "store" fail', e);
-			
+
 			console.debug('using schema path', config.get('DATABASE_SCHEMA_SQL_PATH'));
 			const sql = fs.readFileSync(config.get('DATABASE_SCHEMA_SQL_PATH'), 'utf-8');
 			db.query(sql, (e, rs) => {
 				if (e !== undefined && e !== null) {
 					console.error('db initialization fail', e);
 					return;
-				} 
+				}
 				cb();
 			});
 
 		});
-	} catch(e) {
+	} catch (e) {
 		console.warn('table store does not exist', e);
 	}
 }
@@ -91,7 +91,7 @@ const re_digest = /^\/([a-fA-F0-9]{64})\/?$/;
 function parseDigest(url) {
 	const digest_test = url.match(re_digest);
 	if (digest_test === null) {
-		throw 'invalid digest';	
+		throw 'invalid digest';
 	}
 	return digest_test[1].toLowerCase();
 }
@@ -113,7 +113,7 @@ async function processRequest(req, res) {
 
 
 	if (!['PUT', 'GET', 'POST'].includes(req.method)) {
-		res.writeHead(405, {"Content-Type": "text/plain"});
+		res.writeHead(405, { "Content-Type": "text/plain" });
 		res.end();
 		return;
 	}
@@ -123,13 +123,13 @@ async function processRequest(req, res) {
 	let immutablePost = false;
 	try {
 		digest = parseDigest(req.url);
-	} catch(e) {
+	} catch (e) {
 		if (req.url == '/') {
 			immutablePost = true;
 			modDetail = 'immutable';
-		} else {
+		} else {
 			console.error('url is not empty (' + req.url + ') and not valid digest error: ' + e)
-			res.writeHead(400, {"Content-Type": "text/plain"});
+			res.writeHead(400, { "Content-Type": "text/plain" });
 			res.end();
 			return;
 		}
@@ -140,7 +140,7 @@ async function processRequest(req, res) {
 		switch (mergeHeader) {
 			case "client":
 				if (immutablePost) {
-					res.writeHead(400, 'Valid digest missing', {"Content-Type": "text/plain"});
+					res.writeHead(400, 'Valid digest missing', { "Content-Type": "text/plain" });
 					res.end();
 					return;
 				}
@@ -148,7 +148,7 @@ async function processRequest(req, res) {
 				break;
 			case "server":
 				if (immutablePost) {
-					res.writeHead(400, 'Valid digest missing', {"Content-Type": "text/plain"});
+					res.writeHead(400, 'Valid digest missing', { "Content-Type": "text/plain" });
 					res.end();
 					return;
 				}
@@ -173,7 +173,7 @@ async function processRequest(req, res) {
 	req.on('end', async (d) => {
 		data = Buffer.concat(data);
 		let inputContentType = req.headers['content-type'];
-		let debugString = 'executing mode ' + mod ;
+		let debugString = 'executing mode ' + mod;
 		if (data !== undefined) {
 			debugString += ' for content type ' + inputContentType + ' length ' + data.length;
 		}
@@ -181,13 +181,13 @@ async function processRequest(req, res) {
 		let content;
 		let contentType = 'application/json';
 		let statusCode = 200;
-		let r:any = undefined;
+		let r: any = undefined;
 		try {
 			switch (mod) {
 				case 'put:automerge:client':
 					r = await handlers.handleClientMergePut(data, db, digest, keystore, signer);
 					if (r == false) {
-						res.writeHead(403, {"Content-Type": "text/plain"});
+						res.writeHead(403, { "Content-Type": "text/plain" });
 						res.end();
 						return;
 					}
@@ -195,17 +195,17 @@ async function processRequest(req, res) {
 					break;
 
 				case 'get:automerge:client':
-					content = await handlers.handleClientMergeGet(db, digest, keystore);	
+					content = await handlers.handleClientMergeGet(db, digest, keystore);
 					break;
 
 				case 'post:automerge:server':
-					content = await handlers.handleServerMergePost(data, db, digest, keystore, signer);	
+					content = await handlers.handleServerMergePost(data, db, digest, keystore, signer);
 					break;
 
 				case 'put:automerge:server':
-					r = await handlers.handleServerMergePut(data, db, digest, keystore, signer);	
+					r = await handlers.handleServerMergePut(data, db, digest, keystore, signer);
 					if (r == false) {
-						res.writeHead(403, {"Content-Type": "text/plain"});
+						res.writeHead(403, { "Content-Type": "text/plain" });
 						res.end();
 						return;
 					}
@@ -216,9 +216,9 @@ async function processRequest(req, res) {
 				//	break;
 
 				case 'get:automerge:none':
-					r = await handlers.handleNoMergeGet(db, digest, keystore);	
+					r = await handlers.handleNoMergeGet(db, digest, keystore);
 					if (r === false) {
-						res.writeHead(404, {"Content-Type": "text/plain"});
+						res.writeHead(404, { "Content-Type": "text/plain" });
 						res.end();
 						return;
 					}
@@ -238,11 +238,11 @@ async function processRequest(req, res) {
 					break;
 
 				default:
-					res.writeHead(400, {"Content-Type": "text/plain"});
+					res.writeHead(400, { "Content-Type": "text/plain" });
 					res.end();
 					return;
 			}
-		} catch(e) {
+		} catch (e) {
 			console.error('fail', mod, digest, e);
 			let code = 500;
 			let msg = 'uncaught exception';
@@ -252,14 +252,14 @@ async function processRequest(req, res) {
 					msg = e.msg;
 				}
 			}
-			res.writeHead(code, msg, {"Content-Type": "text/plain"});
+			res.writeHead(code, msg, { "Content-Type": "text/plain" });
 			res.end();
 			return;
 		}
 
 		if (content === undefined) {
 			console.error('empty content', mod, digest, data);
-			res.writeHead(404, {"Content-Type": "text/plain"});
+			res.writeHead(404, { "Content-Type": "text/plain" });
 			res.end();
 			return;
 		}

@@ -118,7 +118,7 @@ def have_gas_minimum(chain_spec, address, min_gas, session=None, rpc=None):
     except ValueError:
         r = strip_0x(r)
         r = int(r, 16)
-    logg.debug('have gas minimum {} have gas {} minimum is {}'.format(address, r, min_gas))
+    logg.debug('have gas minimum {} have gas {} minimum is {}'.format(address, r, min_gas))
     if r < min_gas:
         return False
     return True
@@ -425,7 +425,7 @@ def refill_gas(self, recipient_address, chain_spec_dict, immediate_gas=0):
     c = Gas(chain_spec, signer=rpc_signer, nonce_oracle=nonce_oracle, gas_oracle=gas_oracle)
 
     # build and add transaction
-    logg.debug('tx send gas amount {} from provider {} to {}'.format(refill_amount, gas_provider, recipient_address))
+    logg.debug('tx send gas amount {} from provider {} to {}'.format(refill_amount, gas_provider, recipient_address))
     try:
         (tx_hash_hex, tx_signed_raw_hex) = c.create(gas_provider, recipient_address, refill_amount, tx_format=TxFormat.RLP_SIGNED)
     except ConnectionError as e:
@@ -491,7 +491,7 @@ def resend_with_higher_gas(self, txold_hash_hex, chain_spec_dict, gas=None, defa
         r = rpc.do(o)
         current_gas_price = int(r, 16)
         if tx['gasPrice'] > current_gas_price:
-            logg.info('Network gas price {} is lower than overdue tx gas price {}'.format(current_gas_price, tx['gasPrice']))
+            logg.info('Network gas price {} is lower than overdue tx gas price {}'.format(current_gas_price, tx['gasPrice']))
             new_gas_price = tx['gasPrice'] + 1
         else:
             new_gas_price = int(tx['gasPrice'] * default_factor)
@@ -506,7 +506,7 @@ def resend_with_higher_gas(self, txold_hash_hex, chain_spec_dict, gas=None, defa
         gas_oracle = OverrideGasOracle(price=new_gas_price, conn=rpc)
 
         c = TxFactory(chain_spec, signer=rpc_signer, gas_oracle=gas_oracle)
-        logg.debug('change gas price from old {} to new {} for tx {}'.format(tx['gasPrice'], new_gas_price, tx))
+        logg.debug('change gas price from old {} to new {} for tx {}'.format(tx['gasPrice'], new_gas_price, tx))
         tx['gasPrice'] = new_gas_price
         try:
             (tx_hash_hex, tx_signed_raw_hex) = c.build_raw(tx)

@@ -308,7 +308,7 @@ def test_task_resend_explicit(
         raise NotLocalTxError(r)
 
     tx_after = unpack(bytes.fromhex(strip_0x(otx.signed_tx)), default_chain_spec)
-    logg.debug('gasprices before {} after {}'.format(tx_before['gasPrice'], tx_after['gasPrice']))
+    logg.debug('gasprices before {} after {}'.format(tx_before['gasPrice'], tx_after['gasPrice']))
     assert tx_after['gasPrice'] > tx_before['gasPrice']
 
 

@@ -9,7 +9,7 @@ There are two API classes, @var{Api} and @var{AdminApi}. The former is described
 
 API calls are constructed by creating @emph{Celery task signatures} and linking them together, sequentially and/or in parallell. In turn, the tasks themselves may spawn other asynchronous tasks. This means that the code in @file{cic_eth.api.*} does not necessarily specify the full task graph that will be executed for any one command.
 
-The operational guarantee that tasks will be executed, not forgotten, and retried under certain circumstances is deferred to @var{Celery}. On top of this, the @var{chainqueue} component ensures that semantic state changes that the @code{Celery} tasks ask of it are valid.
+The operational guarantee that tasks will be executed, not forgotten, and retried under certain circumstances is deferred to @var{Celery}. On top of this, the @var{chainqueue} component ensures that semantic state changes that the @code{Celery} tasks ask of it are valid.
 
 
 @anchor{cic-eth-locking}

@@ -142,7 +142,7 @@ def render_lock(o, **kwargs):
         if flags & v:
             lockstrings.append(LockEnum(v).name)
 
-    s = '{} {} {}'.format(
+    s = '{} {} {}'.format(
         o['address'],
         o['date'],
         ",".join(lockstrings),

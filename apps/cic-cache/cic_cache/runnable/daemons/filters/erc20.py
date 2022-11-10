@@ -30,7 +30,7 @@ class ERC20TransferFilter(TagSyncFilter):
 
     # TODO: Verify token in declarator / token index
     def filter(self, conn, block, tx, db_session=None):
-        logg.debug('filter {} {}'.format(block, tx))
+        logg.debug('filter {} {}'.format(block, tx))
         token = None
         try:
             token = ERC20Token(self.chain_spec, conn, tx.inputs[0])
@@ -55,7 +55,7 @@ class ERC20TransferFilter(TagSyncFilter):
         token_recipient = transfer_data[0]
         token_value = transfer_data[1]
 
-        logg.debug('matched erc20 token transfer {} ({}) to {} value {}'.format(token.name, token.address, transfer_data[0], transfer_data[1]))
+        logg.debug('matched erc20 token transfer {} ({}) to {} value {}'.format(token.name, token.address, transfer_data[0], transfer_data[1]))
 
         cic_cache_db.add_transaction(
                 db_session,

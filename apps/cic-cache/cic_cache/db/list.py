@@ -312,10 +312,10 @@ def tag_transaction(
     r = session.execute(s, {'a': name, 'b': domain}).fetchall()
     tag_id = r[0].values()[0]
 
-    logg.debug('type {} {}'.format(type(tag_id), type(tx_id)))
+    logg.debug('type {} {}'.format(type(tag_id), type(tx_id)))
 
     if tag_id == None:
-        raise ValueError('unknown tag name {} domain {}'.format(name, domain))
+        raise ValueError('unknown tag name {} domain {}'.format(name, domain))
 
     s = text("INSERT INTO tag_tx_link (tag_id, tx_id) VALUES (:a, :b)")
     r = session.execute(s, {'a': int(tag_id), 'b': int(tx_id)})

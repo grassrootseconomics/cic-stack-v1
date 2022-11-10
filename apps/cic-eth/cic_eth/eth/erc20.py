@@ -116,7 +116,7 @@ def check_allowance(self, tokens, holder_address, value, chain_spec_dict, spende
     r = rpc.do(o)
     allowance = c.parse_allowance(r)
     if allowance < value:
-        errstr = 'allowance {} insufficent to transfer {} {} by {} on behalf of {}'.format(allowance, value, t['symbol'], spender_address, holder_address)
+        errstr = 'allowance {} insufficent to transfer {} {} by {} on behalf of {}'.format(allowance, value, t['symbol'], spender_address, holder_address)
         logg.error(errstr)
         raise YouAreBrokeError(errstr)
 

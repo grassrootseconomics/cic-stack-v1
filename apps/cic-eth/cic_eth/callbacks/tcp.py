@@ -18,7 +18,7 @@ logg = celery_app.log.get_default_logger()
 def tcp(self, result, destination, status_code):
     s = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
     (host, port) = destination.split(':')
-    logg.debug('tcp callback to {} {}'.format(host, port))
+    logg.debug('tcp callback to {} {}'.format(host, port))
     s.connect((host, int(port)))
     data = {
             'root_id': self.request.root_id,

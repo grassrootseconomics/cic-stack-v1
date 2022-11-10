@@ -17,7 +17,7 @@ celery_app = celery.current_app
 class NoopCalculator:
 
     def amount_since(self, amount, timestamp):
-        logg.debug('noopcalculator amount {} timestamp {}'.format(amount, timestamp))
+        logg.debug('noopcalculator amount {} timestamp {}'.format(amount, timestamp))
         return amount
 
 
@@ -31,7 +31,7 @@ class DemurrageCalculationTask(celery.Task):
         token_address = registry.by_name(token_symbol, sender_address=sender_address)
         try:
             c = DemurrageCalculator.from_contract(rpc, chain_spec, token_address, sender_address=sender_address)
-            logg.info('found demurrage calculator for ERC20 {} @ {}'.format(token_symbol, token_address))
+            logg.info('found demurrage calculator for ERC20 {} @ {}'.format(token_symbol, token_address))
         except:
             logg.warning('Token {} at address {} does not appear to be a demurrage contract. Calls to balance adjust for this token will always return the same amount'.format(token_symbol, token_address))
             c = NoopCalculator()
