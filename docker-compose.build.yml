@@ -35,4 +35,4 @@ services:
       context: apps/contract-migration
       dockerfile: docker/Dockerfile
       cache_from:
-        - ${IMAGE_BASE_URL:-ghcr.io/grassrootseconomics/cic-stack}/cic-ussd:latest
+        - ${IMAGE_BASE_URL:-ghcr.io/grassrootseconomics/cic-stack}/cic-contract-bootstrap:latest
