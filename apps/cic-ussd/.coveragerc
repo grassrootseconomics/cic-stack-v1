@@ -1,7 +1,0 @@
-[report]
-omit =
-	venv/*
-	scripts/*
-	cic_ussd/db/migrations/*
-	cic_ussd/runnable/*
-	cic_ussd/version.py

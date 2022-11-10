@@ -1,3 +1,0 @@
-[<reference> first name entry]-> [<input> Enter first name]
-[Enter first name]-> [add first name to session data]
-[add first name to session data]-> [<reference> last name entry]
