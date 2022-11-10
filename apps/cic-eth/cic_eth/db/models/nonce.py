@@ -114,7 +114,7 @@ class Nonce(SessionBase):
         #    logg.debug('locking nonce table for address {}'.format(address))
         #nonce = Nonce.__get(conn, address)
         nonce = Nonce.__get(session, address)
-        logg.debug('get nonce {} for address {}'.format(nonce, address))
+        logg.debug('get nonce {} for address {}'.format(nonce, address))
         if nonce == None:
             nonce = initial_if_not_exists
             logg.debug('setting default nonce to {} for address {}'.format(nonce, address))

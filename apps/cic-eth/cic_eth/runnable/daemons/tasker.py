@@ -262,7 +262,7 @@ def main():
         CriticalWeb3Task.safe_gas_gifter_balance *= BaseTask.min_fee_price
 
     BaseTask.run_dir = config.get('CIC_RUN_DIR')
-    logg.info('default token set to {} {}'.format(BaseTask.default_token_symbol, BaseTask.default_token_address))
+    logg.info('default token set to {} {}'.format(BaseTask.default_token_symbol, BaseTask.default_token_address))
    
     liveness.linux.set(rundir=config.get('CIC_RUN_DIR'))
     celery_app.worker_main(argv)

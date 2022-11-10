@@ -11,12 +11,12 @@ Daemon executable scripts are located in the @file{cic_eth.runnable.daemons} pac
 
 This is the heart of the custodial system. Tasker is the parent process for the celery workers executing all tasks interacting with and changing the state of the queue and the chain. It is also the only service that interfaces with the signer/keystore.
 
-The other @var{cic-eth} daemons all interface with this component, along with any client adapter bridging an end-user gateway (e.g. @var{cic-ussd}). However, the service itself does not have to be actively running for the other services to run; @var{Celery} handles queueing up the incoming tasks until the @var{tasker} comes back online.@footnote{Whereas this is true, there is currently no fail-safe implemented to handles the event of task backlog overflow in Celery. Furthermore, no targeted testing has yet been performed to asses the stability of the system over time if a sudden, sustained surge of resumed task executions occurs. It may be advisable to suspend activity that adds new queue items to the system if volume is high and/or the @var{cic-eth} outage endures. However, there is no panacea for this condition, as every usage scenario is different}
+The other @var{cic-eth} daemons all interface with this component, along with any client adapter bridging an end-user gateway (e.g. @var{cic-ussd}). However, the service itself does not have to be actively running for the other services to run; @var{Celery} handles queueing up the incoming tasks until the @var{tasker} comes back online.@footnote{Whereas this is true, there is currently no fail-safe implemented to handles the event of task backlog overflow in Celery. Furthermore, no targeted testing has yet been performed to asses the stability of the system over time if a sudden, sustained surge of resumed task executions occurs. It may be advisable to suspend activity that adds new queue items to the system if volume is high and/or the @var{cic-eth} outage endures. However, there is no panacea for this condition, as every usage scenario is different}
 
 The tasker has a set of pre-requisites that must be fulfilled before it will start
 
 @itemize
-@item It must be given a valid @var{ContractRegistry} address, which must include valid references to all contracts specified in @ref{cic-eth-dependencies-smart-contracts,Smart contract dependencies}
+@item It must be given a valid @var{ContractRegistry} address, which must include valid references to all contracts specified in @ref{cic-eth-dependencies-smart-contracts,Smart contract dependencies}
 @item The gas gifter balance must be above the minimum threshold (See "eth" section in configurations).
 @item There must be a valid alembic migration record in the storage database
 @item The redis backend must be reachable and writable
@@ -30,7 +30,7 @@ Implements the @var{chainsyncer}, and registers the filters described in @ref{ci
 
 The @var{tracker} has the same requisities for the @var{ContractRegistry} as the @var{tasker}.
 
-@strong{Important! Guarantees of filter executions has some caveats. Refer to the @var{chainsyncer} documentation for more details.}
+@strong{Important! Guarantees of filter executions has some caveats. Refer to the @var{chainsyncer} documentation for more details.}
 
 
 @anchor{cic-eth-services-dispatcher}

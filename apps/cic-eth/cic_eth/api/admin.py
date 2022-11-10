@@ -373,7 +373,7 @@ class AdminApi:
             tx_dict = s.apply_async().get()
             if tx_dict['sender'] == address:
                 if tx_dict['nonce'] - last_nonce > 1:
-                    logg.error('nonce gap; {} followed {} for address {} tx {}'.format(tx_dict['nonce'], last_nonce, tx_dict['sender'], tx_hash))
+                    logg.error('nonce gap; {} followed {} for address {} tx {}'.format(tx_dict['nonce'], last_nonce, tx_dict['sender'], tx_hash))
                     errors.append('nonce')
                 elif tx_dict['nonce'] == last_nonce:
                     logg.info('nonce {} duplicate for address {} in tx {}'.format(tx_dict['nonce'], tx_dict['sender'], tx_hash))

@@ -31,7 +31,7 @@ def celery_config():
             },
         'result_backend': 'file://{}'.format(rq),
             }
-    logg.debug('cleaning up celery filesystem backend files {} {} {}'.format(bq, bp, rq))
+    logg.debug('cleaning up celery filesystem backend files {} {} {}'.format(bq, bp, rq))
     shutil.rmtree(bq)
     shutil.rmtree(bp)
     shutil.rmtree(rq)

@@ -45,7 +45,7 @@ def parse_transaction(chain_spec, rpc, tx, sender_address=None):
         transfer_data = ERC20.parse_transfer_request(tx['input'])
         tx_address = transfer_data[0]
         tx_token_value = transfer_data[1]
-        logg.debug('matched transfer transaction {} in block {} sender {} recipient {} value {}'.format(tx['hash'], tx['block_number'], tx['from'], tx_address, tx_token_value))
+        logg.debug('matched transfer transaction {} in block {} sender {} recipient {} value {}'.format(tx['hash'], tx['block_number'], tx['from'], tx_address, tx_token_value))
         return (tx_address, tx_token_value)
     except RequestMismatchException:
         pass
@@ -57,7 +57,7 @@ def parse_transaction(chain_spec, rpc, tx, sender_address=None):
         o = c.token_amount(tx['to'], sender_address=sender_address, height=tx['block_number'])
         r = rpc.do(o)
         tx_token_value = Faucet.parse_token_amount(r)
-        logg.debug('matched giveto transaction {} in block {} sender {} recipient {} value {}'.format(tx['hash'], tx['block_number'], tx['from'], tx_address, tx_token_value))
+        logg.debug('matched giveto transaction {} in block {} sender {} recipient {} value {}'.format(tx['hash'], tx['block_number'], tx['from'], tx_address, tx_token_value))
         return (tx_address, tx_token_value)
 
     except RequestMismatchException:
@@ -114,7 +114,7 @@ def list_tx_by_bloom(self, bloomspec, address, chain_spec_dict):
                 tx_index_bytes = tx_index.to_bytes(4, 'big')
                 composite = block_height_bytes + tx_index_bytes
                 if tx_filter.check(composite):
-                    logg.debug('filter matched block {} tx {}'.format(block_height, tx_index))
+                    logg.debug('filter matched block {} tx {}'.format(block_height, tx_index))
 
                     o = transaction_by_block(block['hash'], tx_index)
                     try:

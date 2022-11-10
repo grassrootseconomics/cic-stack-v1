@@ -33,7 +33,7 @@ class StragglerFilter:
 
             t = None
             if gas_balance < self.gas_balance_threshold:
-                logg.info('WAITFORGAS tx ignored since gas balance {} is below threshold {}'.format(gas_balance, self.gas_balance_threshold))
+                logg.info('WAITFORGAS tx ignored since gas balance {} is below threshold {}'.format(gas_balance, self.gas_balance_threshold))
                 s_touch = celery.signature(
                         'cic_eth.queue.state.set_checked',
                         [

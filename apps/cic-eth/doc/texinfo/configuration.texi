@@ -9,7 +9,7 @@ Configuration parameters are grouped by configuration filename.
 @item registry_address
 Ethereum address of the @var{ContractRegistry} contract
 @item chain_spec
-String representation of the connected blockchain according to the @var{chainlib} @var{ChainSpec} format.
+String representation of the connected blockchain according to the @var{chainlib} @var{ChainSpec} format.
 @item tx_retry_delay
 Minimum time in seconds to wait before retrying a transaction
 @item trust_address

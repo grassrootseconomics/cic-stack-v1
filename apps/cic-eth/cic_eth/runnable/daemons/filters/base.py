@@ -14,4 +14,4 @@ class SyncFilter:
 
 
     def to_logline(self, block, tx, v):
-        return '{} exec {} match {} block {} tx {}: {}'.format(self, self.exec_count, self.match_count, block.number, tx.index, v)
+        return '{} exec {} match {} block {} tx {}: {}'.format(self, self.exec_count, self.match_count, block.number, tx.index, v)

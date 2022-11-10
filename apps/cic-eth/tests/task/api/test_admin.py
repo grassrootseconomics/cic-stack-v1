@@ -297,7 +297,7 @@ def test_fix_nonce(
         hsh = tx_normalize.tx_hash(k)
         otx = Otx.load(hsh, session=init_database)
         init_database.refresh(otx)
-        logg.debug('checking nonce {} tx {} status {}'.format(3, otx.tx_hash, otx.status))
+        logg.debug('checking nonce {} tx {} status {}'.format(3, otx.tx_hash, otx.status))
         if add_0x(k) == tx_hashes[3]:
             assert otx.status & StatusBits.OBSOLETE == StatusBits.OBSOLETE
         else:

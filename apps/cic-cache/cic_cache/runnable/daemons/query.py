@@ -43,7 +43,7 @@ def parse_query_account(r):
     if len(g) > 4:
         offset = int(r[6])
 
-    logg.debug('account query is address {} offset {} limit {}'.format(address, offset, limit))
+    logg.debug('account query is address {} offset {} limit {}'.format(address, offset, limit))
 
     return (address, offset, limit,)
 

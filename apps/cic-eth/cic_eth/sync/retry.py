@@ -139,7 +139,7 @@ class RetrySyncer(HeadSyncer):
         elif before_ts > syncer_ts:
             syncer_at = before
             before = datetime.datetime.fromtimestamp(syncer_ts) - delta
-            logg.warning('tracker is lagging! adjusting retry threshold from {} to {}'.format(syncer_at, before))
+            logg.warning('tracker is lagging! adjusting retry threshold from {} to {}'.format(syncer_at, before))
 
         logg.debug('retrier process entries before {}'.format(before))
       

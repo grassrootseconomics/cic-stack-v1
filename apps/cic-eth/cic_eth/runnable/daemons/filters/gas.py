@@ -43,7 +43,7 @@ class GasFilter(SyncFilter):
 
             logline = None
             if len(r) == 0:
-                logline = 'unsolicited gas refill tx {}; cannot find {} among senders'.format(tx_hash_hex, tx.outputs[0])
+                logline = 'unsolicited gas refill tx {}; cannot find {} among senders'.format(tx_hash_hex, tx.outputs[0])
                 logline = self.to_logline(block, tx, logline)
                 logg.info(logline)
                 SessionBase.release_session(session)

@@ -81,7 +81,7 @@ def test_shift_nonce(
         for k in txs.keys():
             hsh = add_0x(k)
             otx = Otx.load(hsh, session=init_database)
-            logg.debug('checking nonce {} tx {} status {}'.format(i, otx.tx_hash, otx.status))
+            logg.debug('checking nonce {} tx {} status {}'.format(i, otx.tx_hash, otx.status))
             if add_0x(k) == tx_hashes[i-42]:
                 assert otx.status & StatusBits.OBSOLETE == StatusBits.OBSOLETE
             else:

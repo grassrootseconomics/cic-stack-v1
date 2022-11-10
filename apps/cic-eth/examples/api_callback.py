@@ -33,7 +33,7 @@ def custom_callback(result_from_chain, static_param_from_api, status_code_from_c
 
     r.rpush(r_key, result_from_chain)
     l = r.llen(r_key)
-    logg.debug('i {} l {} result {} url {} statuscode {} message {}'.format(
+    logg.debug('i {} l {} result {} url {} statuscode {} message {}'.format(
         i,
         l,
         result_from_chain,

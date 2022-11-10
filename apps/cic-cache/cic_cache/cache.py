@@ -72,7 +72,7 @@ class BloomCache(Cache):
             tx = r[1].to_bytes(4, byteorder='big')
             f_block.add(block)
             f_blocktx.add(block + tx)
-            logg.debug('added block {} tx {} lo {} hi {}'.format(r[0], r[1], lowest_block, highest_block))
+            logg.debug('added block {} tx {} lo {} hi {}'.format(r[0], r[1], lowest_block, highest_block))
         return (lowest_block, highest_block, f_block.to_bytes(), f_blocktx.to_bytes(),)
 
 
@@ -107,7 +107,7 @@ class BloomCache(Cache):
             tx = r[1].to_bytes(4, byteorder='big')
             f_block.add(block)
             f_blocktx.add(block + tx)
-            logg.debug('added block {} tx {} lo {} hi {}'.format(r[0], r[1], lowest_block, highest_block))
+            logg.debug('added block {} tx {} lo {} hi {}'.format(r[0], r[1], lowest_block, highest_block))
         return (lowest_block, highest_block, f_block.to_bytes(), f_blocktx.to_bytes(),)
 
 

@@ -22,7 +22,7 @@ function handleNoMergeGet(db, digest, keystore) {
 			if (immutable) {
 				if (rs.rows[0]['mime_type'] === undefined) {
 					mimeType = 'application/octet-stream';
-				} else {
+				} else {
 					mimeType = rs.rows[0]['mime_type'];
 				}
 			} else {
@@ -38,7 +38,7 @@ function handleNoMergeGet(db, digest, keystore) {
 				};
 				pgp.decrypt(opts).then((plainText) => {
 					let r;
-				     	if (immutable) {
+					if (immutable) {
 						r = plainText.data;
 					} else {
 						mimeType = 'application/json';
@@ -109,7 +109,7 @@ function handleServerMergePut(data, db, digest, keystore, signer) {
 		let s = undefined;
 		try {
 			s = e.unwrap();
-		} catch(e) {
+		} catch (e) {
 			console.error(e)
 			whohoo(undefined);
 		}
@@ -123,11 +123,11 @@ function handleServerMergePut(data, db, digest, keystore, signer) {
 			if (!v) {
 				console.debug('signature invalid but we dont care');
 				whohoo(true);
-//				doh({
-//					typ: 'sig',
-//					msg: 'wrong signature',
-//				});
-//				return;
+				//				doh({
+				//					typ: 'sig',
+				//					msg: 'wrong signature',
+				//				});
+				//				return;
 			}
 			const opts = {
 				message: pgp.message.fromText(s.toJSON()),
@@ -169,7 +169,7 @@ function handleClientMergeGet(db, digest, keystore) {
 				};
 				pgp.decrypt(opts).then((plainText) => {
 					let d;
-					if (typeof(plainText.data) == 'string') {
+					if (typeof (plainText.data) == 'string') {
 						d = plainText.data;
 					} else {
 						d = new TextDecoder().decode(plainText.data);
@@ -196,7 +196,7 @@ function handleClientMergePut(data, db, digest, keystore, signer) {
 		try {
 			const e = Envelope.fromJSON(data);
 			s = e.unwrap();
-		} catch(e) {
+		} catch (e) {
 			whohoo(false);
 			console.error(e)
 			return;
@@ -230,7 +230,7 @@ function handleClientMergePut(data, db, digest, keystore, signer) {
 						whohoo(true);
 					});
 				}).catch((e) => {
-					doh(e);	
+					doh(e);
 				});
 			});
 		};
@@ -240,7 +240,7 @@ function handleClientMergePut(data, db, digest, keystore, signer) {
 
 
 function handleImmutablePost(data, db, digest, keystore, contentType) {
-	return new Promise<Array<string|boolean>>((whohoo, doh) => {
+	return new Promise<Array<string | boolean>>((whohoo, doh) => {
 		let data_binary = data;
 		const h = crypto.createHash('sha256');
 		h.update(data_binary);
@@ -249,7 +249,7 @@ function handleImmutablePost(data, db, digest, keystore, contentType) {
 
 		if (digest) {
 			if (r != digest) {
-				doh('hash mismatch: ' + r + ' != ' +  digest);
+				doh('hash mismatch: ' + r + ' != ' + digest);
 				return;
 			}
 		} else {
@@ -263,14 +263,14 @@ function handleImmutablePost(data, db, digest, keystore, contentType) {
 				return;
 			}
 			let message;
-			if (typeof(data) == 'string') {
+			if (typeof (data) == 'string') {
 				data_binary = new TextEncoder().encode(data);
 				message = pgp.message.fromText(data);
 			} else {
 				message = pgp.message.fromBinary(data);
 			}
 
-					const opts = {
+			const opts = {
 				message: message,
 				publicKeys: keystore.getEncryptKeys(),
 			};
@@ -284,10 +284,10 @@ function handleImmutablePost(data, db, digest, keystore, contentType) {
 					whohoo([true, digest]);
 				});
 			}).catch((e) => {
-				doh(e);	
+				doh(e);
 			});
 		}).catch((e) => {
-			doh(e);	
+			doh(e);
 		});
 	});
 }

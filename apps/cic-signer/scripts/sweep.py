@@ -76,7 +76,7 @@ def main():
     if config.get('_UNSAFE'):
         sink_address = to_checksum_address(sink_address)
     if not is_checksum_address(sink_address):
-        sys.stderr.write('Invalid sink address {}\n'.format(sink_address))
+        sys.stderr.write('Invalid sink address {}\n'.format(sink_address))
         sys.exit(1)
 
     if (config.get('_RPC_SEND')):
@@ -110,7 +110,7 @@ def main():
 
         transfer_amount = account_balance - gas_cost
         if transfer_amount <= 0:
-            logg.warning('address {} has balance {} which is less than gas cost {}, skipping'.format(account, account_balance, gas_cost))
+            logg.warning('address {} has balance {} which is less than gas cost {}, skipping'.format(account, account_balance, gas_cost))
             continue
 
         nonce_oracle = RPCNonceOracle(account, conn)

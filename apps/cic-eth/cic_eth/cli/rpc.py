@@ -48,7 +48,7 @@ class RPC:
 
 
     def __str__(self):
-        return 'RPC factory, chain {}, rpc {}, signer {}'.format(self.chain_spec, self.rpc_provider, self.signer_provider)
+        return 'RPC factory, chain {}, rpc {}, signer {}'.format(self.chain_spec, self.rpc_provider, self.signer_provider)
 
 
 # TOOD: re-implement file backend option from omittec code:
