@@ -1,6 +1,6 @@
 ARG DOCKER_REGISTRY="ghcr.io/grassrootseconomics"
 
-FROM $DOCKER_REGISTRY/base-image:v1
+FROM $DOCKER_REGISTRY/base-image/python:v1
 
 # Copy just the requirements and install....this _might_ give docker a hint on caching but we 
 # do load these all into setup.py later

@@ -1,6 +1,6 @@
 ARG DOCKER_REGISTRY="ghcr.io/grassrootseconomics"
 
-FROM $DOCKER_REGISTRY/base-image:v1
+FROM $DOCKER_REGISTRY/base-image/python:v1
 
 WORKDIR /root
 
