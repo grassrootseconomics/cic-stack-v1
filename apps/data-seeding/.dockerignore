@@ -1,8 +1,0 @@
-.git
-.cache
-.dot
-**/doc
-node_modules/
-**/venv
-**/.venv
-
