@@ -38,7 +38,6 @@ extra_args = {
     'include': '_INCLUDE',
     'exclude': '_EXCLUDE',
     'after': '_AFTER',
-    'before': '_BEFORE',
     'o': '_OUTPUT_DIR',
 }
 
@@ -50,7 +49,6 @@ argparser.add_argument('--include', dest='include', action='append', type=str, h
 argparser.add_argument('--exclude', dest='exclude', action='append', type=str, help='Exclude audit module')
 argparser.add_argument('-o', '--output-dir', dest='o', type=str, help='Output transaction hashes to this directory')
 argparser.add_argument('--after', type=int, help='Only match transactions after this timetstamp')
-argparser.add_argument('--before', type=int, help='Only match transactions before this timestamp (default: 60 seconds ago)')
 argparser.process_local_flags(local_arg_flags)
 args = argparser.parse_args()
 
@@ -83,19 +81,14 @@ def process_otx(session, chain_spec, rpc=None, commit=False, w=sys.stdout, extra
                 status = StatusBits.NETWORK_ERROR
             status_result = v[3] | status
             logg.info('setting final bit (result {}) on tx {} mined in block {} index {}'.format(status_str(status_result), v[0], block_number, tx_index))
-            session.execute('update otx set status = status | {}, block = {} where tx_hash = \'{}\''.format(status, block_number, v[0]))
+            session.execute('update otx set status = {}, block = {} where tx_hash = \'{}\''.format(status, block_number, v[0]))
             session.execute('update tx_cache set tx_index = {} where otx_id = {}'.format(tx_index, v[2]))
+            session.execute('insert into otx_state_log (otx_id, date, status) values ({}, \'{}\', {})'.format(v[2], datetime.datetime.utcnow(), status)) 
             session.commit()
 
 
 
 def main():
-    before = config.get('_BEFORE')
-    if before == None:
-        before = datetime.datetime.now() - datetime.timedelta(60)
-    else:
-        before = datetime.datetime.fromtimestamp(before)
-    config.add(before, '_BEFORE', True)
     after = config.get('_AFTER')
     if after != None:
         after = datetime.datetime.fromtimestamp(after)
