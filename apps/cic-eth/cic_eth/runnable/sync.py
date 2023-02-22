@@ -81,7 +81,7 @@ def process_otx(session, chain_spec, rpc=None, commit=False, w=sys.stdout, extra
                 status = StatusBits.NETWORK_ERROR
             status_result = v[3] | status
             logg.info('setting final bit (result {}) on tx {} mined in block {} index {}'.format(status_str(status_result), v[0], block_number, tx_index))
-            session.execute('update otx set status = {}, block = {} where tx_hash = \'{}\''.format(status, block_number, v[0]))
+            session.execute('update otx set status = {}, block = {}, date_updated = \'{}\' where tx_hash = \'{}\''.format(status, block_number, datetime.datetime.utcnow(), v[0]))
             session.execute('update tx_cache set tx_index = {} where otx_id = {}'.format(tx_index, v[2]))
             session.execute('insert into otx_state_log (otx_id, date, status) values ({}, \'{}\', {})'.format(v[2], datetime.datetime.utcnow(), status)) 
             session.commit()
