@@ -73,14 +73,12 @@ def process_otx(session, chain_spec, rpc=None, commit=False, w=sys.stdout, extra
         rr = conn.do(o)
         if rr != None:
             rr = snake_and_camel(rr)
-            logg.info('rr {}'.format(rr))
             block_number = int(rr['block_number'], 16)
             tx_index = int(rr['transaction_index'], 16)
             status = StatusBits.FINAL | StatusBits.MANUAL
-            if rr['status'] == 0:
+            if int(rr['status'], 16) == 0:
                 status = StatusBits.NETWORK_ERROR
-            status_result = v[3] | status
-            logg.info('setting final bit (result {}) on tx {} mined in block {} index {}'.format(status_str(status_result), v[0], block_number, tx_index))
+            logg.info('setting final bit ({} -> {}) on tx {} mined in block {} index {}'.format(status_str(v[3]), status_str(status), v[0], block_number, tx_index))
             session.execute('update otx set status = {}, block = {}, date_updated = \'{}\' where tx_hash = \'{}\''.format(status, block_number, datetime.datetime.utcnow(), v[0]))
             session.execute('update tx_cache set tx_index = {} where otx_id = {}'.format(tx_index, v[2]))
             session.execute('insert into otx_state_log (otx_id, date, status) values ({}, \'{}\', {})'.format(v[2], datetime.datetime.utcnow(), status)) 
