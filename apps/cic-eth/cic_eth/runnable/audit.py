@@ -134,7 +134,6 @@ def main():
                     runs.append(v)
                     logg.info('explicit include "{}"'.format(v))
 
-
     logg.info('will run {}'.format(runs))
     o = AuditSession(config, chain_spec)
     g = globals()
